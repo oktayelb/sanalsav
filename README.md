@@ -40,7 +40,7 @@ Modeli harf verisi üzerinde çalışmaya zorlamak yerine harfleri (ve böylece 
 Verilen dillerin sözcük listelerini tek tek (her bir ortak sözcük bazında) inceleyen, halihazırdaki Ön dil savına uymayan bir kural geldiğinde yeni bir katman ekleyen bir yaklaşım. 
 
 
-
+Sorun şu ki yeterince farklı harfler varsayılarak (p1,p2,p3,p4,p5...) bu problem nafile bir şekilde çözülebilir, ancak bizim yöntemlerimize bunu asgari harf ile yapmayı öğretmemiz gerekli. 
 
 
 
