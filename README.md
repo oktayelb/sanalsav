@@ -42,5 +42,6 @@ Verilen dillerin sözcük listelerini tek tek (her bir ortak sözcük bazında) 
 
 Sorun şu ki yeterince farklı harfler varsayılarak (p1,p2,p3,p4,p5...) bu problem nafile bir şekilde çözülebilir, ancak bizim yöntemlerimize bunu asgari harf ile yapmayı öğretmemiz gerekli. 
 
+Aynı şekilde bir sorun: aşırı spesifik fazlaca kuralla da  bu ön dil serisi çözüme ulaşabilir, ancak bir  olabilecek en "genel" kuralları istiyoruz. Yani aslında kural sayısını minimize etmek ve kuralları genelleştirmek de bir hedef. 
 
 
