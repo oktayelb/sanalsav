@@ -113,3 +113,42 @@ def yol(a, b):
     """İki harf arasındaki en kısa doğal yol (uç noktalar dahil)."""
     a, b = taban(a), taban(b)
     return list(_YOLLAR[(a, b)])
+
+
+def yollar(a, b, en_çok=12):
+    """İki harf arasındaki BÜTÜN en kısa doğal yollar (en fazla en_çok).
+
+    Ara katman çakışmalarında harf etiketlemeden önce eşdeğer uzunlukta
+    başka bir doğal yol denemek için kullanılır.
+    """
+    a, b = taban(a), taban(b)
+    if a == b:
+        return [[a]]
+    uz = {a: 0}
+    sıra = [a]
+    i = 0
+    while i < len(sıra):
+        d = sıra[i]
+        i += 1
+        if d == BOŞ and d != a:
+            continue
+        for e in _KOMŞULUK[d]:
+            if e not in uz:
+                uz[e] = uz[d] + 1
+                sıra.append(e)
+    if b not in uz:
+        return []
+    sonuçlar = []
+
+    def geri(v, kuyruk):
+        if len(sonuçlar) >= en_çok:
+            return
+        if v == a:
+            sonuçlar.append([a] + kuyruk)
+            return
+        for u in sorted(_KOMŞULUK[v]):
+            if uz.get(u) == uz[v] - 1 and (u == a or u != BOŞ):
+                geri(u, [v] + kuyruk)
+
+    geri(b, [])
+    return sonuçlar

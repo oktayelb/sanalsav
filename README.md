@@ -94,12 +94,23 @@ ortak ataya bağlanabildiğinden, sisteme "ne kadar az harf o kadar iyi" kısıt
 Yeni bir Ön Dil harfi ancak en az --türetim-eşiği kadar konumu kurtarıyorsa türetilir;
 daha seyrek karşılıklıklar kural dışı (istisna) bırakılır ve raporda ✗ ile işaretlenir.
 Böylece harf sayısı ile düzenlilik arasındaki ödünleşim ölçülebilir hale gelir
-(--tarama ile eğri yazdırılır). Türkçe ~ İngilizce Swadesh-100 için:
+(--tarama ile eğri yazdırılır).
+
+Harf türetimi ve etiketleme ayrıca iki "son çare" mekanizmasıyla geciktirilir:
+
+1. KONAK HARF: Bağlamla ayrışmayan bir grup için yeni harf türetmeden önce, biraz
+   daha uzak ama uyumlu GERÇEK bir harf (çocuk alfabelerindeki boşta duran q, w, x
+   gibi harfler dahil) ya da zaten türetilmiş bir harf konak olarak denenir.
+2. EŞDEĞER YOL: Ara katmanlarda zinciri çakışan bir kural, harf etiketlenmeden önce
+   harf grafiğindeki aynı uzunluktaki BAŞKA bir doğal yola kaydırılmayı dener.
+
+İkisi de doğrulama döngüsünün içinde çalıştığından düzenlilik garantisi bozulmaz;
+yalnız harf dağarcığı küçülür. Türkçe ~ İngilizce Swadesh-100 için:
 
     eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
-       1           144         115    416        0     %100.0
-       3            68          39    169       87     % 56.5
-       8            39          10     88      148     % 26.0
+       1           108          76    369        0     %100.0
+       3            62          30    140       92     % 54.0
+       8            38           9     86      148     % 26.0
 
 Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
 akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
@@ -114,9 +125,9 @@ olmayan maddeler de listede bırakıldı):
 
     eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
            harf / kural / düzenlilik   harf / kural / düzenlilik
-       1   144  / 416   / %100         91  / 179   / %100
-       3    68  / 169   / %56.5        40  /  50   / %81.5
-       8    39  /  88   / %26.0        31  /  31   / %73.5
+       1   108  / 369   / %100         72  / 162   / %100
+       3    62  / 140   / %54.0        39  /  46   / %80.5
+       8    38  /  86   / %26.0        31  /  31   / %73.5
 
 Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 8'de yalnız 2
 türetilmiş harf ve 31 kuralla düzenlilik %73.5'te tutunuyor (kalan istisnaların çoğu

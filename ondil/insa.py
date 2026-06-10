@@ -24,7 +24,7 @@ Uygulanan yöntem, README'deki 1. ve 4. varsayımsal yöntemlerin bileşimidir:
 
 from dataclasses import dataclass, field
 
-from sesbiçim.harf import BOŞ, HARFLER, alt_yazı, taban, uzaklık, yol
+from sesbiçim.harf import BOŞ, HARFLER, alt_yazı, taban, uzaklık, yol, yollar
 from sesbiçim.ünsüz import ÜNSÜZLER
 
 from .hizalama import hizala
@@ -44,6 +44,7 @@ class Grup:
     korrlar: tuple = ()
     zincir: list = None  # [token, ara..., refleks]; kimliğe eşitse None
     etiketli: bool = False
+    yedek_yolları: list = None  # çakışmada denenecek eşdeğer doğal yollar
 
 
 @dataclass
@@ -130,6 +131,35 @@ def _proto_kelimeler(hizalamalar, atama):
     return [[atama[ç] for ç in sütunlar] for sütunlar in hizalamalar]
 
 
+# Yedek konak harf ararken göze alınan ortalama ek yol adımı.
+# Büyük tutmak harf sayısını düşürür ama zincirleri (dolayısıyla kural
+# sayısını) uzatır; 0.5 ikisini dengeler.
+GEVŞEKLİK = 0.5
+
+
+def _konak_adayları(çler, korr_yerleri, kullanılan_tokenlar):
+    """Bir kural grubunun taşınabileceği konak harfler, puan sırasıyla.
+
+    Asgari harf hedefinin asıl aracı: çakışan bir grup için yeni harf
+    türetmeden önce, biraz daha uzak ama boşta/uyumlu GERÇEK bir harf
+    (ya da zaten türetilmiş bir harf) konak olarak denenir.
+    """
+    toplam = sum(len(korr_yerleri[ç]) for ç in çler)
+
+    def puan(p):
+        return sum(
+            len(korr_yerleri[ç]) * (uzaklık(p, ç[0]) + uzaklık(p, ç[1]))
+            for ç in çler
+        ) / toplam
+
+    adaylar = [(puan(p), 0, p) for p in HARFLER]
+    for t in kullanılan_tokenlar:
+        if t != taban(t):
+            adaylar.append((puan(taban(t)) + 0.01, 1, t))
+    adaylar.sort()
+    return adaylar
+
+
 # ---------------------------------------------------------------------------
 # 3. aşama: çakışma çözümü (önce bağlam, sonra harf türetimi)
 # ---------------------------------------------------------------------------
@@ -140,12 +170,17 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1):
     Sıklığı en yüksek refleks "her yerde" kuralı olur; diğerleri için
     kendilerini bütün öbür reflekslerden ayıran bir bağlam aranır.
 
-    Ayrışmayan grup için tutumluluk (asgari harf) kısıtı uygulanır:
-    yeni bir Ön Dil harfi ancak en az "eşik" konumu kurtarıyorsa
-    türetilir; daha seyrek gruplar kural dışı (istisna) bırakılır.
+    Ayrışmayan grup için sırasıyla:
+    1) yedek konak harf denenir (boşta/uyumlu gerçek bir harf ya da zaten
+       türetilmiş bir harf; yeni harf İCAT ETMEDEN çözme girişimi),
+    2) konak bulunamazsa tutumluluk eşiği uygulanır: yeni bir Ön Dil
+       harfi ancak en az "eşik" konumu kurtarıyorsa türetilir; daha
+       seyrek gruplar kural dışı (istisna) bırakılır.
     """
     türetilmiş = []
     düzensiz = [set(), set()]  # dal başına kural dışı bırakılan karşılıklıklar
+    denenmiş = {}  # korr -> bu korrun başarısız olduğu konak harfler
+    deneme_hakkı = 4000  # güvenlik sınırı; aşılırsa doğrudan türetime dönülür
 
     def sıklık(çler):
         return sum(len(korr_yerleri[ç]) for ç in çler)
@@ -184,10 +219,28 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1):
             break
 
         tok, dal, çler = sorunlu
+        for ç in çler:
+            denenmiş.setdefault(ç, set()).add(tok)
         if sıklık(çler) < eşik:
-            # harf türetmeye değmez: bu karşılıklıklar istisna kalır
+            # harf türetmeye (ve konak aramaya) değmez: istisna kalır
             düzensiz[dal].update(çler)
             continue
+        if deneme_hakkı > 0:
+            adaylar = _konak_adayları(çler, korr_yerleri, set(atama.values()))
+            en_iyi = adaylar[0][0]
+            yeni_konak = None
+            for puanı, _, p in adaylar:
+                if puanı > en_iyi + GEVŞEKLİK:
+                    break
+                if p == tok or any(p in denenmiş.get(ç, ()) for ç in çler):
+                    continue
+                yeni_konak = p
+                break
+            if yeni_konak is not None:
+                deneme_hakkı -= 1
+                for ç in sorted(çler):
+                    atama[ç] = yeni_konak
+                continue
         b = taban(tok)
         sayaç[b] = sayaç.get(b, 1) + 1
         yeni = b + alt_yazı(sayaç[b])
@@ -332,6 +385,23 @@ def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezle
     return çakışan
 
 
+def _yol_değiştir(g):
+    """Çakışan zincire, harf etiketlemeden önce eşdeğer başka yol dener."""
+    if not g.zincir or len(g.zincir) <= 2 or g.etiketli:
+        return False
+    if g.yedek_yolları is None:
+        g.yedek_yolları = [
+            [g.token] + p[1:]
+            for p in yollar(taban(g.token), g.zincir[-1])
+        ]
+    while g.yedek_yolları:
+        aday = g.yedek_yolları.pop(0)
+        if aday != g.zincir:
+            g.zincir = aday
+            return True
+    return False
+
+
 def _etiketle(gruplar, sayaç):
     """Çakışan zincirlerin ara harflerine ayırt edici alt simge takılır."""
     def uygula(g):
@@ -433,12 +503,16 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
         )
         if not çakışan:
             break
-        yeni_etiket = False
+        değişiklik = False
         for g in gruplar:
-            if id(g) in çakışan and etiket_uygula(g):
-                yeni_etiket = True
+            if id(g) not in çakışan:
+                continue
+            if _yol_değiştir(g):  # önce eşdeğer doğal yol dene
+                değişiklik = True
+            elif etiket_uygula(g):  # son çare: ara harf etiketi
+                değişiklik = True
                 etiketli_sayısı += 1
-        if not yeni_etiket:
+        if not değişiklik:
             break  # ayrıştırılamayan kalıntı; istisna olarak raporlanır
 
     tablolar = _katman_tablosu(gruplar, katman)
