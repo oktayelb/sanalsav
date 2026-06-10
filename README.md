@@ -45,3 +45,5 @@ Sorun şu ki yeterince farklı harfler varsayılarak (p1,p2,p3,p4,p5...) bu prob
 Aynı şekilde bir sorun: aşırı spesifik fazlaca kuralla da  bu ön dil serisi çözüme ulaşabilir, ancak bir  olabilecek en "genel" kuralları istiyoruz. Yani aslında kural sayısını minimize etmek ve kuralları genelleştirmek de bir hedef. 
 
 En sonki proto dil ile çocuk dillerin arasındaki mesafe sabit olmak zorunda dersek/demezsek neler olacağı bilinmeli.  İki dil de proto dile 3 dil uzakta olursa farklı, birisi bir dil diğeri üç dil uzak olursa farklı olur. Bu düşüncenin doğal sonucu olarak bir dili diğerinin atası varsayıp "ikisi arasında" (ikisine gelen değil de bir dilder diğerine) bir proto dil eşleşmesi yaptırılabilir. Yani herhangi iki dil arasında ses kuralları bulmaya dönüşüyor.
+
+Projenin sonluk hedefi verilen herhangi iki dil arasında akrabalık ilişkisi gösteren varsayımsal diller oluşturmaktır.
