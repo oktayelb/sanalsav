@@ -50,6 +50,13 @@ def main(argv=None):
     p.add_argument("--rapor", default="rapor.txt", help="rapor dosyası")
     p.add_argument("--en-az-katman", type=int, default=0,
                    help="dallar için en az katman sayısı")
+    p.add_argument("--türetim-eşiği", type=int, default=3,
+                   help="yeni bir Ön Dil harfi en az bu kadar konumu "
+                        "kurtarmalı; altında kalan karşılıklıklar istisna "
+                        "sayılır (1 = sınırsız harf, eski davranış)")
+    p.add_argument("--tarama", action="store_true",
+                   help="farklı eşik değerleri için harf/düzenlilik "
+                        "ödünleşim tablosunu yazdır")
     args = p.parse_args(argv)
 
     ad1 = args.ad1 or pathlib.Path(args.dil1).stem.capitalize()
@@ -70,7 +77,23 @@ def main(argv=None):
     harfleri_doğrula(ad2, [s for _, s in l2])
 
     çiftler = [(a1, s1, s2) for (a1, s1), (_, s2) in zip(l1, l2)]
-    seri = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman)
+
+    if args.tarama:
+        print("Eşik taraması (harf sayısı ~ düzenlilik ödünleşimi):")
+        print(f"  {'eşik':>4}  {'Ön Dil harfi':>12}  {'türetilmiş':>10}  "
+              f"{'kural':>6}  {'istisna':>7}  {'düzenlilik':>10}")
+        for eşik in (1, 2, 3, 4, 5, 8):
+            s = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman, eşik)
+            dağarcık = {t for w in s.proto_kelimeler for t in w}
+            türetilmiş = sum(1 for t in dağarcık if any(c in "₀₁₂₃₄₅₆₇₈₉" for c in t))
+            kural = sum(len(k) for dal in (0, 1) for k in s.tablolar[dal].values())
+            düzenlilik = 100.0 * (2 * len(çiftler) - len(s.istisnalar)) / (2 * len(çiftler))
+            print(f"  {eşik:>4}  {len(dağarcık):>12}  {türetilmiş:>10}  "
+                  f"{kural:>6}  {len(s.istisnalar):>7}  %{düzenlilik:>9.1f}")
+        print()
+
+    seri = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman,
+                        args.türetim_eşiği)
     metin = rapor_üret(seri)
 
     pathlib.Path(args.rapor).write_text(metin + "\n", encoding="utf-8")

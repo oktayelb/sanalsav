@@ -19,6 +19,7 @@
     "ı": (0, 1, 0),  # kapalı arka düz
     "u": (0, 1, 1),  # kapalı arka yuvarlak
     "e": (1, 0, 0),  # orta ön düz
+    "ə": (2, 0, 0),  # açık ön düz (Azerbaycan yazısı)
     "ö": (1, 0, 1),  # orta ön yuvarlak
     "o": (1, 1, 1),  # orta arka yuvarlak
     "a": (2, 1, 0),  # açık arka düz

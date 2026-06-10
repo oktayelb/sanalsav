@@ -64,8 +64,16 @@ def rapor_üret(seri):
     S.append("-" * 72)
     S.append("1. ÖZET")
     S.append("-" * 72)
+    kural_dışı_tür = sum(len(d) for d in seri.düzensiz)
+    kural_dışı_konum = sum(
+        len(seri.korr_yerleri[ç]) for dal in (0, 1) for ç in seri.düzensiz[dal]
+    )
     S.append(f"  sözcük çifti                    : {n}")
     S.append(f"  harf karşılıklığı türü          : {len(seri.atama)}")
+    S.append(f"  türetim eşiği (tutumluluk)      : {seri.türetim_eşiği} "
+             f"(yeni harf en az bu kadar konumu kurtarmalı)")
+    S.append(f"  kural dışı bırakılan            : {kural_dışı_tür} karşılıklık türü, "
+             f"{kural_dışı_konum} konum")
     S.append(f"  Ön Dil harf dağarcığı           : {len(proto_dağarcık)} "
              f"(temel {len(temel)} + türetilmiş {len(türetilmiş)})")
     S.append(f"  katman sayısı                   : {ad0} dalı {seri.katman[0]}, "
@@ -135,12 +143,16 @@ def rapor_üret(seri):
     S.append("4. SÖZLÜK VE TÜRETİMLER")
     S.append("-" * 72)
     S.append("  Her satır: Ön Dil biçimi > ara Ön Dil biçimleri > çocuk dil.")
+    S.append("  (✗ imli türetimler kural dışı karşılıklık içerir; 5. bölüm.)")
     S.append("")
+    bozuklar = {(kno, dal) for kno, dal, _, _ in seri.istisnalar}
     for kno, (anlam, a, b) in enumerate(seri.çiftler):
         proto = "*" + _biçim_yaz(seri.proto_kelimeler[kno])
         S.append(f"  {kno + 1:>3}. {anlam}  ({a} ~ {b})   Ön Dil: {proto}")
-        S.append(f"       {ad0:<9}: {_türetim_satırı(seri.türevler[kno][0])}")
-        S.append(f"       {ad1:<9}: {_türetim_satırı(seri.türevler[kno][1])}")
+        for dal, ad in ((0, ad0), (1, ad1)):
+            im = "  ✗" if (kno, dal) in bozuklar else ""
+            S.append(f"       {ad:<9}: "
+                     f"{_türetim_satırı(seri.türevler[kno][dal])}{im}")
     S.append("")
 
     S.append("-" * 72)
@@ -161,10 +173,12 @@ def rapor_üret(seri):
     oran = 100.0 * len(türetilmiş) / max(1, len(proto_dağarcık))
     S.append(f"  Ön Dil dağarcığının %{oran:.0f} kadarı türetilmiş (zorlama) harftir")
     S.append(f"  ve {ad0} ile {ad1} listelerini ortak ataya bağlamak için toplam")
-    S.append(f"  {kural_sayısı[0] + kural_sayısı[1]} kural gerekmiştir. Gerçekten akraba dillerde aynı yöntem")
-    S.append("  çok daha az türetilmiş harf ve çok daha az kuralla sonuç verir;")
-    S.append("  dolayısıyla bu maliyet, iki listenin akrabalık derecesinin sayısal")
-    S.append("  bir ölçüsü olarak okunabilir. README'de istenen dört işlem türü")
+    S.append(f"  {kural_sayısı[0] + kural_sayısı[1]} kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf")
+    S.append("  sayısı düşer ama düzenlilik de düşer: harf sayısı ile istisna")
+    S.append("  sayısı arasındaki bu ödünleşim eğrisi (bkz. --tarama) iki listenin")
+    S.append("  akrabalık derecesinin sayısal ölçüsüdür; akraba dillerde az harfle")
+    S.append("  yüksek düzenlilik aynı anda elde edilir, akraba olmayanlarda")
+    S.append("  edilemez. README'de istenen dört işlem türü")
     S.append("  (tekil değişim, grupça değişim, göçüşüm, ekleme/silme) kuralların")
     S.append("  bileşimiyle kapsanmış; k -> f gibi sıçramalar yerine her kural")
     S.append("  harf grafiğindeki en kısa doğal yola (k > g > ğ > ...) bölünerek")

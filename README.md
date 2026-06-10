@@ -86,3 +86,40 @@ KULLANIM
 
 Çıktı: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
 *ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor.txt).
+
+TUTUMLULUK KISITI (ASGARİ HARF)
+
+43. satırdaki kaygının çözümü: sınırsız harf türetimiyle her iki liste "nafile" biçimde
+ortak ataya bağlanabildiğinden, sisteme "ne kadar az harf o kadar iyi" kısıtı eklendi.
+Yeni bir Ön Dil harfi ancak en az --türetim-eşiği kadar konumu kurtarıyorsa türetilir;
+daha seyrek karşılıklıklar kural dışı (istisna) bırakılır ve raporda ✗ ile işaretlenir.
+Böylece harf sayısı ile düzenlilik arasındaki ödünleşim ölçülebilir hale gelir
+(--tarama ile eğri yazdırılır). Türkçe ~ İngilizce Swadesh-100 için:
+
+    eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
+       1           144         115    416        0     %100.0
+       3            68          39    169       87     % 56.5
+       8            39          10     88      148     % 26.0
+
+Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
+akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
+kendisi, iki dilin akrabalık derecesinin sayısal ölçüsüdür.
+
+DOĞRULAMA: TÜRKÇE ~ AZERBAYCANCA KARŞILAŞTIRMASI
+
+Yöntemin akrabalık ölçüsü olarak çalıştığını sınamak için aynı tarama, akraba olduğu
+bilinen Türkçe ~ Azerbaycanca çifti üzerinde yinelendi (diller/azerbaycanca.txt;
+anlamca standart karşılıklar kullanıldığından it, sümük, od, yaxşı gibi kökendaş
+olmayan maddeler de listede bırakıldı):
+
+    eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
+           harf / kural / düzenlilik   harf / kural / düzenlilik
+       1   144  / 416   / %100         91  / 179   / %100
+       3    68  / 169   / %56.5        40  /  50   / %81.5
+       8    39  /  88   / %26.0        31  /  31   / %73.5
+
+Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 8'de yalnız 2
+türetilmiş harf ve 31 kuralla düzenlilik %73.5'te tutunuyor (kalan istisnaların çoğu
+zaten kökendaş olmayan maddeler), akraba olmayan çiftte ise %26'ya çöküyor. Düzenli
+kurallar da gerçek ses denkliklerini kendiliğinden buluyor: k -> q (kadın ~ qadın),
+t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) gibi.

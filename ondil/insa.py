@@ -69,6 +69,8 @@ class Seri:
     türevler: list  # [kelime][dal] -> katman katman biçimler
     istisnalar: list  # (kelime, dal, beklenen, bulunan)
     türetilmiş: list  # bağlamla ayrışmayınca türetilen Ön Dil harfleri
+    düzensiz: list = None  # dal başına kural dışı bırakılan karşılıklıklar
+    türetim_eşiği: int = 1
     etiketli_sayısı: int = 0
 
 
@@ -132,14 +134,18 @@ def _proto_kelimeler(hizalamalar, atama):
 # 3. aşama: çakışma çözümü (önce bağlam, sonra harf türetimi)
 # ---------------------------------------------------------------------------
 
-def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç):
+def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1):
     """Aynı Ön Dil harfi bir dalda iki ayrı sese gidiyorsa ayrıştırır.
 
     Sıklığı en yüksek refleks "her yerde" kuralı olur; diğerleri için
     kendilerini bütün öbür reflekslerden ayıran bir bağlam aranır.
-    Ayrışmayan grup, yeni türetilmiş bir Ön Dil harfine taşınır.
+
+    Ayrışmayan grup için tutumluluk (asgari harf) kısıtı uygulanır:
+    yeni bir Ön Dil harfi ancak en az "eşik" konumu kurtarıyorsa
+    türetilir; daha seyrek gruplar kural dışı (istisna) bırakılır.
     """
     türetilmiş = []
+    düzensiz = [set(), set()]  # dal başına kural dışı bırakılan karşılıklıklar
 
     def sıklık(çler):
         return sum(len(korr_yerleri[ç]) for ç in çler)
@@ -149,6 +155,8 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç):
         kova = {}
         for ç, tok in atama.items():
             for dal in DALLAR:
+                if ç in düzensiz[dal]:
+                    continue
                 kova.setdefault((tok, dal), {}).setdefault(ç[dal], set()).add(ç)
 
         sorunlu = None
@@ -167,7 +175,7 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç):
                     for y in korr_yerleri[ç2]
                 ]
                 if ayır(kendi, diğer, protolar) is None:
-                    sorunlu = (tok, çler)
+                    sorunlu = (tok, dal, çler)
                     break
             if sorunlu:
                 break
@@ -175,7 +183,11 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç):
         if sorunlu is None:
             break
 
-        tok, çler = sorunlu
+        tok, dal, çler = sorunlu
+        if sıklık(çler) < eşik:
+            # harf türetmeye değmez: bu karşılıklıklar istisna kalır
+            düzensiz[dal].update(çler)
+            continue
         b = taban(tok)
         sayaç[b] = sayaç.get(b, 1) + 1
         yeni = b + alt_yazı(sayaç[b])
@@ -207,7 +219,7 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç):
                 Grup(token=tok, dal=dal, refleks=refleks, bağlam=bağlam,
                      korrlar=tuple(sorted(çler)))
             )
-    return gruplar, türetilmiş, protolar
+    return gruplar, türetilmiş, protolar, düzensiz
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +288,7 @@ def _gezinge(g, token, L):
 
 
 def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezler,
-                     katman, tablolar):
+                     katman, tablolar, düzensiz):
     çakışan = set()
     met_kelime = {}
     for kno, sütun, _ in metatezler:
@@ -286,19 +298,30 @@ def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezle
         for dal in DALLAR:
             gezingeler = []
             grup_sırası = []
+            atla = []  # kural dışı (istisna) konumlar denetlenmez
             for ç in sütunlar:
-                g = grup_bul[(atama[ç], dal, ç[dal])]
-                gezingeler.append(_gezinge(g, atama[ç], katman[dal]))
-                grup_sırası.append(g)
+                tok = atama[ç]
+                if ç in düzensiz[dal]:
+                    gezingeler.append([tok] * (katman[dal] + 1))
+                    grup_sırası.append(None)
+                    atla.append(True)
+                else:
+                    g = grup_bul[(tok, dal, ç[dal])]
+                    gezingeler.append(_gezinge(g, tok, katman[dal]))
+                    grup_sırası.append(g)
+                    atla.append(False)
             if dal == 1:
                 for s in met_kelime.get(kno, []):
                     gezingeler[s], gezingeler[s + 1] = gezingeler[s + 1], gezingeler[s]
                     grup_sırası[s], grup_sırası[s + 1] = grup_sırası[s + 1], grup_sırası[s]
+                    atla[s], atla[s + 1] = atla[s + 1], atla[s]
             for j in range(1, katman[dal] + 1):
                 konumlar = [p for p in range(len(gezingeler))
                             if gezingeler[p][j - 1] != BOŞ]
                 w = [gezingeler[p][j - 1] for p in konumlar]
                 for idx, p in enumerate(konumlar):
+                    if atla[p]:
+                        continue
                     beklenen = gezingeler[p][j]
                     kural = _kural_seç(tablolar[dal].get(j, []), w, idx)
                     bulunan = kural.hedef if kural else w[idx]
@@ -363,7 +386,8 @@ def kör_türet(proto, dal, tablolar, katman, metatez_kuralları):
 # ana akış
 # ---------------------------------------------------------------------------
 
-def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0):
+def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
+                 türetim_eşiği=1):
     sözcükler = [(list(a), list(b)) for _, a, b in çiftler]
 
     hizalamalar = []
@@ -382,8 +406,8 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0):
     atama = {ç: _aday_seç(ç) for ç in korr_yerleri}
 
     sayaç = {}
-    gruplar, türetilmiş, protolar = _çakışma_çöz(
-        atama, korr_yerleri, hizalamalar, sayaç
+    gruplar, türetilmiş, protolar, düzensiz = _çakışma_çöz(
+        atama, korr_yerleri, hizalamalar, sayaç, türetim_eşiği
     )
 
     for g in gruplar:
@@ -405,7 +429,7 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0):
         tablolar = _katman_tablosu(gruplar, katman)
         çakışan = _çakışmaları_bul(
             len(çiftler), hizalamalar, atama, grup_bul, metatezler,
-            katman, tablolar,
+            katman, tablolar, düzensiz,
         )
         if not çakışan:
             break
@@ -449,5 +473,7 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0):
         türevler=türevler,
         istisnalar=istisnalar,
         türetilmiş=türetilmiş,
+        düzensiz=düzensiz,
+        türetim_eşiği=türetim_eşiği,
         etiketli_sayısı=etiketli_sayısı,
     )
