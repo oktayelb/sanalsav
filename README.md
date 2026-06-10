@@ -47,3 +47,7 @@ Aynı şekilde bir sorun: aşırı spesifik fazlaca kuralla da  bu ön dil seris
 En sonki proto dil ile çocuk dillerin arasındaki mesafe sabit olmak zorunda dersek/demezsek neler olacağı bilinmeli.  İki dil de proto dile 3 dil uzakta olursa farklı, birisi bir dil diğeri üç dil uzak olursa farklı olur. Bu düşüncenin doğal sonucu olarak bir dili diğerinin atası varsayıp "ikisi arasında" (ikisine gelen değil de bir dilder diğerine) bir proto dil eşleşmesi yaptırılabilir. Yani herhangi iki dil arasında ses kuralları bulmaya dönüşüyor.
 
 Projenin sonluk hedefi verilen herhangi iki dil arasında akrabalık ilişkisi gösteren varsayımsal diller oluşturmaktır.
+
+"ÖNEMLİ"
+
+Bu proje yapılırken dillerdeki sözcüklerin okunuşu değil, yazılışı esas alınmalıdır. Yazılış esası üzerinden ilerlenmelidir. Yanli bhiçbir zaman kelimenin okunuşunu bulmamıza gerek yok, sadece yazılışı yeterli olacaktır. 
