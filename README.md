@@ -51,3 +51,38 @@ Projenin sonluk hedefi verilen herhangi iki dil arasında akrabalık ilişkisi g
 "ÖNEMLİ"
 
 Bu proje yapılırken dillerdeki sözcüklerin okunuşu değil, yazılışı esas alınmalıdır. Yazılış esası üzerinden ilerlenmelidir. Yanli bhiçbir zaman kelimenin okunuşunu bulmamıza gerek yok, sadece yazılışı yeterli olacaktır. 
+---
+
+GERÇEKLEŞTİRİM
+
+Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış:
+
+1. "sesbiçim/" : Her harf (ünlü/ünsüz) tek tek değil, özellik vektörü olarak tanımlıdır
+   (ünlüler: yükseklik-arkalık-yuvarlaklık; ünsüzler: yer-biçim-ötümlülük). Tek özelliği
+   bir basamak değişen harfler "komşu"dur; böylece k -> f gibi sıçramalar yerine her kural
+   harf grafiğindeki en kısa doğal yola (k > g > ğ > v > f gibi) bölünür. Silinme yalnız
+   zayıf seslerden (h, ğ, y, w, genizsiller, akıcılar, ünlüler) tek adımda olur; güçlü
+   ünsüzler önce zayıflar (lenisyon), sonra düşer.
+2. "ondil/hizalama.py" : Anlamca eşleşen sözcük çiftleri, yerine koyma maliyeti = harf
+   grafiği uzaklığı olacak biçimde hizalanır (Needleman-Wunsch). Bitişik ab ~ ba
+   çaprazlamaları göçüşüm (metathesis) olarak ayrıca yakalanır.
+3. "ondil/insa.py" : Hizalamadan çıkan her harf karşılıklığı bütün söz varlığında TEK
+   Ön Dil harfine bağlanır; kurallar bu yüzden tanım gereği düzenlidir. Aynı Ön Dil harfi
+   bir dalda iki ayrı sese gidiyorsa önce bağlam koşulu (söz başında, ünlü önünde...)
+   aranır, ayrışmazsa yeni harf türetilir (b₂ gibi). Asgari harf hedefi: önce paylaş,
+   sonra bağlamla ayır, en son çare harf türet. En uzun kural zinciri katman (ara Ön Dil)
+   sayısını belirler; iki dalın ataya uzaklığı eşit olmak zorunda değildir.
+4. Kurallar katman katman "körce" (köken bilgisi olmadan) uygulanıp doğrulanır; raporda
+   istisna sayısı, kural sayısı, türetilmiş harf sayısı ve katman başına dağarcık boyutu
+   verilir. Türetilmiş harf ve kural sayısının yüksekliği, iki listeyi ortak ataya
+   bağlamanın "maliyeti"dir ve akrabalık derecesinin sayısal ölçüsü olarak okunabilir
+   (43. satırdaki "nafile çözüm" kaygısının ölçülebilir hale getirilmiş biçimi).
+
+KULLANIM
+
+    python3 ana.py                            # Türkçe ~ İngilizce Swadesh-100 (varsayılan)
+    python3 ana.py diller/a.txt diller/b.txt  # herhangi iki liste
+    python3 ana.py --rapor sonuç.txt          # rapor dosyası adı
+
+Çıktı: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
+*ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor.txt).
