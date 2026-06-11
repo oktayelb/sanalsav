@@ -58,11 +58,17 @@ GERÇEKLEŞTİRİM
 Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış:
 
 1. "sesbiçim/" : Her harf (ünlü/ünsüz) tek tek değil, özellik vektörü olarak tanımlıdır
-   (ünlüler: yükseklik-arkalık-yuvarlaklık; ünsüzler: yer-biçim-ötümlülük). Tek özelliği
-   bir basamak değişen harfler "komşu"dur; böylece k -> f gibi sıçramalar yerine her kural
-   harf grafiğindeki en kısa doğal yola (k > g > ğ > v > f gibi) bölünür. Silinme yalnız
-   zayıf seslerden (h, ğ, y, w, genizsiller, akıcılar, ünlüler) tek adımda olur; güçlü
-   ünsüzler önce zayıflar (lenisyon), sonra düşer.
+   (ünlüler: yükseklik-arkalık-yuvarlaklık; ünsüzler: yer-biçim-ötümlülük). Yer ölçeği
+   IPA'ya uygun 7 bölgedir (dudaksıl, dişdudaksıl, dişsil, öndamaksıl, artdamaksıl,
+   küçükdilsil, gırtlaksıl); l yansıl, r çarpmalı ayrı biçim sınıflarıdır; ğ tarihsel
+   değeriyle artdamaksıl sızıcıdır (/ɣ/), q küçükdilsildir. Böylece hiçbir iki yazılı
+   harf aynı koordinata düşmez (l~r, k~q, y~ğ, ş~x hepsi tam 1 adımdır). Tek özelliği
+   bir basamak değişen harfler "komşu"dur; çok özellikli sıçramalar (k -> f) en kısa
+   doğal yola (k > ɟ̥ > ç ya da p > ɸ > f gibi) bölünür. Boğumsuzlaşma (t/k/p -> ʔ,
+   s -> h) ve b ~ w, ğ ~ y gibi iyi bilinen geçişler özel komşudur. Silinme yalnız
+   zayıf seslerden (gırtlaksıllar, genizsiller, yan/çarpmalı akıcılar, kayıcılar,
+   ünlüler) tek adımda olur; güçlü ünsüzler önce zayıflar (k > ʔ > ∅), sonra düşer.
+   Hizalama ise türetim yolundan bağımsız, doğrudan özellik uzaklığıyla çalışır.
 2. "ondil/hizalama.py" : Anlamca eşleşen sözcük çiftleri, yerine koyma maliyeti = harf
    grafiği uzaklığı olacak biçimde hizalanır (Needleman-Wunsch). Bitişik ab ~ ba
    çaprazlamaları göçüşüm (metathesis) olarak ayrıca yakalanır.
@@ -141,9 +147,9 @@ Alfabe sıkıştıkça kural sayısının bir miktar artması beklenen bilgi-kur
 bedeldir (az harf = çok kural). Türkçe ~ İngilizce Swadesh-100 için:
 
     eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
-       1           102          72    357        0     %100.0
-       3            69          43    248       60     % 70.0
-       8            30          12     75      161     % 19.5
+       1           104          73    345        0     %100.0
+       3            68          41    237       65     % 67.5
+       8            29          11     66      169     % 15.5
 
 Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
 akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
@@ -158,14 +164,14 @@ olmayan maddeler de listede bırakıldı):
 
     eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
            harf / kural / düzenlilik   harf / kural / düzenlilik
-       1   102  / 357   / %100         65  / 158   / %100
-       3    69  / 248   / %70.0        43  / 109   / %85.5
-       5    44  / 134   / %36.5        30  /  60   / %74.0
-       8    30  /  75   / %19.5        23  /  26   / %54.5
+       1   104  / 345   / %100         66  / 168   / %100
+       3    68  / 237   / %67.5        45  / 115   / %87.0
+       5    44  / 133   / %35.0        30  /  44   / %71.5
+       8    29  /  66   / %15.5        22  /  23   / %52.0
 
 Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 5'te yalnız 30
-soyut harf ve 60 kuralla düzenlilik %74'te tutunuyor (kalan istisnaların çoğu
-zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %36.5'a,
-eşik 8'de %19.5'a çöküyor. Düzenli
+soyut harf ve 44 kuralla düzenlilik %71.5'te tutunuyor (kalan istisnaların çoğu
+zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %35'e,
+eşik 8'de %15.5'a çöküyor. Düzenli
 kurallar da gerçek ses denkliklerini kendiliğinden buluyor: k -> q (kadın ~ qadın),
 t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) gibi.

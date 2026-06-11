@@ -7,11 +7,7 @@ Sonuç, her sütunu (a_harfi, b_harfi) olan bir karşılıklık listesidir;
 boşluklar BOŞ ("0") ile gösterilir.
 """
 
-from sesbiçim.harf import BOŞ, yazılı_uzaklık as uzaklık
-
-
-def _silme(h):
-    return uzaklık(h, BOŞ)
+from sesbiçim.harf import BOŞ, silme_maliyeti as _silme, özellik_uzaklığı as uzaklık
 
 
 def hizala(a, b):

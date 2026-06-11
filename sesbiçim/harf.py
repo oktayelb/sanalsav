@@ -14,7 +14,9 @@ ama iki gerçek harf arasındaki yol boş sesin "içinden" geçemez.
 from collections import deque
 
 from .ünlü import ÜNLÜLER, TÜM_ÜNLÜLER, ünlü_komşu_mu
-from .ünsüz import ÜNSÜZLER, TÜM_ÜNSÜZLER, ünsüz_komşu_mu
+from .ünsüz import (
+    BİÇİM_KOMŞULUĞU, YERLER, ÜNSÜZLER, TÜM_ÜNSÜZLER, ünsüz_komşu_mu,
+)
 
 BOŞ = "0"
 
@@ -37,15 +39,21 @@ def ünlü_mü(token):
 
 
 # Özellik adımlarıyla yakalanamayan ama doğal dillerde iyi bilinen geçişler.
+# (g ~ ğ artık doğal kenardır: aynı yer, patlamalı ~ sızıcı, ikisi de ötümlü.)
 ÖZEL_KOMŞULAR = {
     frozenset(("y", "i")),  # yarı ünlü ~ ünlü
     frozenset(("w", "u")),
     frozenset(("ğ", "ı")),
-    frozenset(("g", "ğ")),  # yumuşama
+    frozenset(("ğ", "y")),  # Türkçe yazım gerçeği: değil ~ deyil
     frozenset(("ğ", "v")),  # ağız/dialekt geçişi (öğün ~ övün)
     frozenset(("b", "w")),  # b ~ w (README'deki *winer > bier örneği)
     frozenset(("a", "e")),  # açık ünlü incelmesi
     frozenset(("a", "o")),  # açık ünlü yuvarlaklaşması
+    # boğumsuzlaşma (debuccalization): ağız kapanması gırtlağa iner
+    frozenset(("p", "ʔ")),
+    frozenset(("t", "ʔ")),
+    frozenset(("k", "ʔ")),
+    frozenset(("s", "h")),
 }
 
 # Tek adımda düşebilen / türeyebilen "zayıf" sesler. Güçlü ünsüzler ancak
@@ -57,8 +65,13 @@ def ünlü_mü(token):
 def _zayıf_mı(h):
     if h in TÜM_ÜNLÜLER:
         return True
+    if h == "ğ":
+        return True  # yumuşak g yazıda da sıkça düşer (dağ ~ da)
     yer, biçim, _ = TÜM_ÜNSÜZLER[h]
-    return biçim in ("genizsil", "akıcı", "kayıcı") or yer == "gırtlaksıl"
+    return (
+        biçim in ("genizsil", "yansıl", "çarpmalı", "kayıcı")
+        or yer == "gırtlaksıl"
+    )
 
 
 ZAYIFLAR = {
@@ -90,12 +103,16 @@ def _komşu_mu(a, b):
 
 _SANAL_KÜME = set(SANAL_HARFLER)
 
-# Komşular yazılı harfler önce gelecek biçimde sıralanır: eş uzunluktaki
-# yollar arasında sanal duraklı olanı ancak gerekiyorsa seçilsin.
+# Komşular yazılı harfler, sonra bilinen özel geçişler önce gelecek biçimde
+# sıralanır: eş uzunluktaki yollar arasında doğal/yazılı duraklı olan seçilsin.
 _KOMŞULUK = {
     d: sorted(
         (e for e in _DÜĞÜMLER if e != d and _komşu_mu(d, e)),
-        key=lambda e: (e in _SANAL_KÜME, e),
+        key=lambda e, d=d: (
+            e in _SANAL_KÜME,
+            frozenset((d, e)) not in ÖZEL_KOMŞULAR,
+            e,
+        ),
     )
     for d in _DÜĞÜMLER
 }
@@ -126,24 +143,36 @@ def _yolları_kur(düğümler, komşuluk):
 
 _YOLLAR = _yolları_kur(_DÜĞÜMLER, _KOMŞULUK)
 
-# Hizalama, yazılı sözcükleri karşılaştırdığı için yalnız yazılı harflerin
-# grafiğini görür; sanal harfler sadece yeniden kurma (çapa, zincir)
-# tarafında iş görür. Böylece sanal harf eklemek hizalamayı bozmaz.
-_YAZILI_DÜĞÜMLER = YAZILI_HARFLER + [BOŞ]
-_YAZILI_KOMŞULUK = {
-    d: [e for e in _KOMŞULUK[d] if e in set(_YAZILI_DÜĞÜMLER)]
-    for d in _YAZILI_DÜĞÜMLER
-}
-_YAZILI_YOLLAR = _yolları_kur(_YAZILI_DÜĞÜMLER, _YAZILI_KOMŞULUK)
 
+def özellik_uzaklığı(a, b):
+    """Hizalama için doğrudan özellik uzaklığı (türetim yolundan bağımsız).
 
-def yazılı_uzaklık(a, b):
-    """Yalnız yazılı harflerden geçen en kısa yolun adım sayısı."""
+    Hizalama yazılı sözcükleri karşılaştırır; iki harfin BENZERLİĞİNİ ölçer,
+    aralarındaki tarihsel yolu değil. Bu yüzden grafik adımı yerine özellik
+    farklarının toplamı kullanılır; ince yer ölçeği hizalamayı bozamaz.
+    """
     a, b = taban(a), taban(b)
     if a == b:
         return 0
-    p = _YAZILI_YOLLAR.get((a, b))
-    return len(p) - 1 if p else 99
+    if frozenset((a, b)) in ÖZEL_KOMŞULAR:
+        return 1
+    if a in TÜM_ÜNSÜZLER and b in TÜM_ÜNSÜZLER:
+        ya, ba, sa = TÜM_ÜNSÜZLER[a]
+        yb, bb, sb = TÜM_ÜNSÜZLER[b]
+        yf = abs(YERLER.index(ya) - YERLER.index(yb))
+        bf = 0 if ba == bb else (
+            1 if frozenset((ba, bb)) in BİÇİM_KOMŞULUĞU else 2
+        )
+        return max(1, yf + bf + (sa != sb))
+    if a in TÜM_ÜNLÜLER and b in TÜM_ÜNLÜLER:
+        (ha, aa, ya), (hb, ab, yb) = TÜM_ÜNLÜLER[a], TÜM_ÜNLÜLER[b]
+        return max(1, abs(ha - hb) + (aa != ab) + (ya != yb))
+    return 5  # ünlü ~ ünsüz (köprü çiftleri dışında uzak)
+
+
+def silme_maliyeti(h):
+    """Hizalamada bir harfi boşlukla eşlemenin maliyeti."""
+    return 1 if taban(h) in ZAYIFLAR else 3
 
 
 def uzaklık(a, b):
