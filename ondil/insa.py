@@ -180,19 +180,68 @@ def _doğum_ayıkla(sütunlar):
     return yeni, olaylar
 
 
+def _hizala_çok(kelimeler):
+    """İkiden çok sözcüğü yıldız (star) yöntemiyle hizalar.
+
+    Bir omurga (referans) sözcük seçilir — en uzun olan, çünkü en çok malzeme
+    taşır ve referansta silinme olasılığı düşüktür. Her öbür sözcük omurgaya
+    ikili hizalanır (mevcut Needleman-Wunsch `hizala`); kolonlar omurga
+    konumlarına göre birleştirilir, referansta olmayan ekler (insertion) ayrı
+    kolon olarak araya sokulur. Sonuç, her biri N'li demet olan kolon listesi.
+
+    Not: İki dil için (N=2) bu yol KULLANILMAZ; orada göçüşüm/doğum ayıklamalı
+    eski ikili yol korunur, böylece eski sonuçlar birebir aynı kalır.
+    """
+    N = len(kelimeler)
+    ref = max(range(N), key=lambda i: len(kelimeler[i]))
+    profil = []      # sıralı kolonlar; her kolon N öğeli liste (harf ya da BOŞ)
+    ref_kolon = []   # yalnız referans harflerine karşılık gelen kolonlar
+    for c in kelimeler[ref]:
+        kol = [BOŞ] * N
+        kol[ref] = c
+        profil.append(kol)
+        ref_kolon.append(kol)
+    for i in range(N):
+        if i == ref:
+            continue
+        rk = 0
+        bekleyen = []  # bir sonraki referans kolonundan önce sokulacak ekler
+        for r, x in hizala(kelimeler[ref], kelimeler[i]):
+            if r != BOŞ:
+                if bekleyen:
+                    idx = profil.index(ref_kolon[rk])
+                    for ek in bekleyen:
+                        profil.insert(idx, ek)
+                        idx += 1
+                    bekleyen = []
+                ref_kolon[rk][i] = x  # x, harf ya da BOŞ
+                rk += 1
+            else:
+                kol = [BOŞ] * N
+                kol[i] = x
+                bekleyen.append(kol)
+        for ek in bekleyen:
+            profil.append(ek)
+    return [tuple(kol) for kol in profil]
+
+
 # ---------------------------------------------------------------------------
 # 2. aşama: karşılıklık başına Ön Dil harfi adayı
 # ---------------------------------------------------------------------------
 
 def _aday_seç(çift):
-    """Her iki çocuk harfe de toplamda en kısa doğal yolla bağlanan harf."""
-    x, y = çift
+    """BÜTÜN çocuk harflere toplamda en kısa doğal yolla bağlanan harf.
+
+    çift, dal sayısı kadar (N) refleksten oluşan bir demettir; iki dil için
+    eski (x, y) davranışıyla aynıdır, ikiden çoğunda toplam genelleşir.
+    """
     en_iyi, en_puan = None, None
     for p in HARFLER:
-        c = uzaklık(p, x) + uzaklık(p, y)
-        if c >= 99:
+        ds = [uzaklık(p, y) for y in çift]
+        if max(ds) >= 99:
             continue
-        if p == x or p == y:
+        c = sum(ds)
+        if p in çift:
             c -= 0.25  # değişmeyen dal = daha az kural
         if p in ÜNSÜZLER and ÜNSÜZLER[p][2]:
             c += 0.1  # eşitlikte ötümsüz (arkaik) biçim yeğlenir
@@ -228,11 +277,11 @@ def _çapa_bul(korrlar, korr_yerleri):
         puan = 0.0
         uygun = True
         for ç in korrlar:
-            d0, d1 = uzaklık(p, ç[0]), uzaklık(p, ç[1])
-            if max(d0, d1) > EN_UZUN_YOL:
+            ds = [uzaklık(p, y) for y in ç]
+            if max(ds) > EN_UZUN_YOL:
                 uygun = False
                 break
-            puan += len(korr_yerleri[ç]) * (d0 + d1)
+            puan += len(korr_yerleri[ç]) * sum(ds)
         if p in _SANAL_KÜME:
             puan += _SANAL_CEZA
         if uygun and (en_puan is None or (puan, p) < (en_puan, en_iyi)):
@@ -389,7 +438,7 @@ def _konak_adayları(çler, korr_yerleri, kullanılan_tokenlar):
     def puan(p):
         ceza = _SANAL_CEZA if taban(p) in _SANAL_KÜME else 0.0
         return ceza + sum(
-            len(korr_yerleri[ç]) * (uzaklık(p, ç[0]) + uzaklık(p, ç[1]))
+            len(korr_yerleri[ç]) * sum(uzaklık(p, y) for y in ç)
             for ç in çler
         ) / toplam
 
@@ -421,7 +470,7 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1,
     """
     türetilmiş = []
     # dal başına kural dışı bırakılan karşılıklıklar (kümelemeden devralınır)
-    düzensiz = [set(d) for d in ön_düzensiz] if ön_düzensiz else [set(), set()]
+    düzensiz = [set(d) for d in ön_düzensiz] if ön_düzensiz else [set() for _ in DALLAR]
     denenmiş = {}  # korr -> bu korrun başarısız olduğu konak harfler
     deneme_hakkı = 4000  # güvenlik sınırı; aşılırsa doğrudan türetime dönülür
 
@@ -918,9 +967,11 @@ def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
 
     türevler = []
     istisnalar = []
-    for kno, (anlam, a, b) in enumerate(çiftler):
+    for kno, row in enumerate(çiftler):
+        kelimeler = row[1:]  # her dilin sözcüğü (N tane)
         kelime_türevi = []
-        for dal, hedef_sözcük in ((0, a), (1, b)):
+        for dal in DALLAR:
+            hedef_sözcük = kelimeler[dal]
             biçimler = kör_türet(
                 protolar[kno], dal, tablolar[dal], katman[dal],
                 met_kuralları if dal == 1 else [],
@@ -993,24 +1044,41 @@ def _proto_inceleme(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
 
 def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
                  türetim_eşiği=1, ön_dil_incelt=False):
+    """Ön Dil serisi kurar. Her satır (anlam, sözcük0, sözcük1, ...) biçiminde
+    DEĞİŞKEN sayıda dil içerebilir; iki dil eski davranışla birebir aynıdır,
+    ikiden çok dilde ortak ön dil yıldız hizalamayla kurulur.
+    """
+    global DALLAR
     # Özelleşmiş (harfe özgü / iki-yanlı) bağlam kuralları, tek bir kelimeyi
     # ezberlememek için en az bu kadar örnekle desteklenmeli. Tutumluluk
     # eşiğiyle ölçeklenir ama en az 2: bir ortama koşullanan ses yasasının
     # birden çok tanığı olmalıdır.
     kurallar.MIN_BAĞLAM_DESTEĞİ = max(2, türetim_eşiği)
-    sözcükler = [(list(a), list(b)) for _, a, b in çiftler]
+    # Her satırın 1. öğesi anlam, gerisi N dilin sözcüğüdür.
+    sözcükler = [[list(w) for w in row[1:]] for row in çiftler]
+    N = len(sözcükler[0])
+    DALLAR = tuple(range(N))
+    if len(dal_adları) != N:
+        dal_adları = tuple(f"Dil{i + 1}" for i in range(N))
 
     hizalamalar = []
     metatezler = []
     doğumlar = []
-    for kno, (a, b) in enumerate(sözcükler):
-        sütunlar, d_olayları = _doğum_ayıkla(hizala(a, b))
-        sütunlar, olaylar = _metatez_ayıkla(sütunlar)
+    for kno, kelimeler in enumerate(sözcükler):
+        if N == 2:
+            # İki dil: göçüşüm + doğum ayıklamalı eski ikili yol (sonuçlar
+            # birebir korunur).
+            a, b = kelimeler
+            sütunlar, d_olayları = _doğum_ayıkla(hizala(a, b))
+            sütunlar, olaylar = _metatez_ayıkla(sütunlar)
+            for sütun, çift in d_olayları:
+                doğumlar.append((kno, sütun, çift))
+            for sütun, çift in olaylar:
+                metatezler.append((kno, sütun, çift))
+        else:
+            # İkiden çok dil: yıldız hizalama (göçüşüm/doğum şimdilik yok).
+            sütunlar = _hizala_çok(kelimeler)
         hizalamalar.append(sütunlar)
-        for sütun, çift in d_olayları:
-            doğumlar.append((kno, sütun, çift))
-        for sütun, çift in olaylar:
-            metatezler.append((kno, sütun, çift))
 
     korr_yerleri = {}
     for kno, sütunlar in enumerate(hizalamalar):

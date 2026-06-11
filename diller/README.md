@@ -31,8 +31,10 @@ MEVCUT DİLLER (27)
 
 Çiftler arası ön dil harf maliyeti (akrabalık ölçüsü) için bkz. ../tüm_diller.md.
 
-Herhangi iki dosya çift olarak verilebilir:
+Herhangi iki ya da DAHA ÇOK dosya verilebilir (ikiden çok dilde ortak ön dil
+yıldız hizalamayla kurulur):
   python3 ana.py diller/türkçe.txt diller/türkmence.txt
+  python3 ana.py diller/türkçe.txt diller/azerbaycanca.txt diller/türkmence.txt
 
 YAZILIŞ NORMALİZASYONU
 

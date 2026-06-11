@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""SANAL SAV — verilen iki sözcük listesinden varsayımsal Ön Dil serisi kurar.
+"""SANAL SAV — verilen sözcük listelerinden varsayımsal Ön Dil serisi kurar.
 
 Kullanım:
-    python3 ana.py [dil1_dosyası] [dil2_dosyası] [--rapor rapor.txt]
+    python3 ana.py [dil1] [dil2] [dil3 ...] [--rapor rapor.txt]
 
-Dosya biçimi: her satırda "anlam<boşluk>sözcük"; iki dosya aynı anlam
-sırasını izlemelidir (bkz. diller/README.md). Varsayılan olarak Türkçe ve
-İngilizce Swadesh-100 listeleri kullanılır.
+İKİ ya da DAHA ÇOK dil dosyası verilebilir; ikiden çok dilde ortak ön dil
+yıldız hizalamayla kurulur. Dosya biçimi: her satırda "anlam<boşluk>sözcük";
+bütün dosyalar aynı anlam sırasını izlemelidir (bkz. diller/README.md).
+Varsayılan: Türkçe ve İngilizce Swadesh-100.
 """
 
 import argparse
@@ -45,10 +46,12 @@ def harfleri_doğrula(ad, sözcükler):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("dil1", nargs="?", default="diller/türkçe.txt")
-    p.add_argument("dil2", nargs="?", default="diller/ingilizce.txt")
-    p.add_argument("--ad1", default=None, help="1. dilin görünen adı")
-    p.add_argument("--ad2", default=None, help="2. dilin görünen adı")
+    p.add_argument("diller", nargs="*",
+                   default=["diller/türkçe.txt", "diller/ingilizce.txt"],
+                   help="iki ya da DAHA ÇOK dil dosyası (aynı anlam sırasında)")
+    p.add_argument("--adlar", default=None,
+                   help="dillerin görünen adları, virgülle ayrılmış "
+                        "(boşsa dosya adından türetilir)")
     p.add_argument("--rapor", default="rapor.txt", help="rapor dosyası")
     p.add_argument("--en-az-katman", type=int, default=0,
                    help="dallar için en az katman sayısı")
@@ -65,46 +68,60 @@ def main(argv=None):
                         "(düzenlilik korunur; yavaştır, kazanç genelde küçük)")
     args = p.parse_args(argv)
 
-    ad1 = args.ad1 or pathlib.Path(args.dil1).stem.capitalize()
-    ad2 = args.ad2 or pathlib.Path(args.dil2).stem.capitalize()
+    if len(args.diller) < 2:
+        raise SystemExit("En az iki dil dosyası gerekir.")
 
-    l1 = liste_yükle(args.dil1)
-    l2 = liste_yükle(args.dil2)
-    if len(l1) != len(l2):
-        raise SystemExit(
-            f"Listeler aynı uzunlukta olmalı: {len(l1)} != {len(l2)}"
-        )
-    for (a1, _), (a2, _) in zip(l1, l2):
-        if a1 != a2:
-            print(f"uyarı: anlam etiketi uyuşmuyor: {a1!r} ~ {a2!r}",
-                  file=sys.stderr)
+    if args.adlar:
+        adlar = [a.strip() for a in args.adlar.split(",")]
+        if len(adlar) != len(args.diller):
+            raise SystemExit("--adlar sayısı dil dosyası sayısıyla eşleşmeli.")
+    else:
+        adlar = [pathlib.Path(d).stem.capitalize() for d in args.diller]
 
-    harfleri_doğrula(ad1, [s for _, s in l1])
-    harfleri_doğrula(ad2, [s for _, s in l2])
+    listeler = [liste_yükle(d) for d in args.diller]
+    boy = len(listeler[0])
+    for d, l in zip(args.diller, listeler):
+        if len(l) != boy:
+            raise SystemExit(
+                f"Listeler aynı uzunlukta olmalı: {d} {len(l)} != {boy}"
+            )
+    for i in range(boy):
+        anlamlar = {l[i][0] for l in listeler}
+        if len(anlamlar) > 1:
+            print(f"uyarı: anlam etiketi uyuşmuyor: {anlamlar}", file=sys.stderr)
 
-    çiftler = [(a1, s1, s2) for (a1, s1), (_, s2) in zip(l1, l2)]
+    for ad, l in zip(adlar, listeler):
+        harfleri_doğrula(ad, [s for _, s in l])
+
+    # her satır: (anlam, sözcük0, sözcük1, ...)  — değişken sayıda dil
+    çiftler = [
+        (listeler[0][i][0],) + tuple(l[i][1] for l in listeler)
+        for i in range(boy)
+    ]
+    B = len(args.diller)
 
     if args.tarama:
         print("Eşik taraması (harf sayısı ~ düzenlilik ödünleşimi):")
         print(f"  {'eşik':>4}  {'Ön Dil harfi':>12}  {'türetilmiş':>10}  "
               f"{'kural':>6}  {'istisna':>7}  {'düzenlilik':>10}")
         for eşik in (1, 2, 3, 4, 5, 8):
-            s = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman, eşik)
+            s = seri_oluştur(çiftler, adlar, args.en_az_katman, eşik)
             dağarcık = {t for w in s.proto_kelimeler for t in w}
             türetilmiş = sum(1 for t in dağarcık if any(c in "₀₁₂₃₄₅₆₇₈₉" for c in t))
             kural = sum(
                 1
-                for dal in (0, 1)
+                for dal in range(B)
                 for ks in s.tablolar[dal].values()
                 for k in ks
                 if k.hedef != k.kaynak
             )
-            düzenlilik = 100.0 * (2 * len(çiftler) - len(s.istisnalar)) / (2 * len(çiftler))
+            türetim = B * boy
+            düzenlilik = 100.0 * (türetim - len(s.istisnalar)) / türetim
             print(f"  {eşik:>4}  {len(dağarcık):>12}  {türetilmiş:>10}  "
                   f"{kural:>6}  {len(s.istisnalar):>7}  %{düzenlilik:>9.1f}")
         print()
 
-    seri = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman,
+    seri = seri_oluştur(çiftler, adlar, args.en_az_katman,
                         args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
     metin = rapor_üret(seri)
 

@@ -3,9 +3,6 @@
 
 from sesbiçim.harf import BOŞ, SANAL_HARFLER, dizi_harfleri, dizi_mi, taban
 
-from .insa import DALLAR
-
-
 def _biçim_yaz(tokenler):
     return "".join(tokenler) if tokenler else "∅"
 
@@ -33,8 +30,11 @@ def _katman_adı(dal_adı, j, son_katman):
 
 def rapor_üret(seri):
     S = []
-    ad0, ad1 = seri.dal_adları
+    adlar = list(seri.dal_adları)
+    B = len(adlar)  # dal (dil) sayısı
+    dallar = range(B)
     n = len(seri.çiftler)
+    türetim = B * n  # toplam türetim sayısı (her dil için her anlam)
 
     # --- istatistikler ---
     proto_dağarcık = sorted({t for w in seri.proto_kelimeler for t in w})
@@ -43,21 +43,21 @@ def rapor_üret(seri):
     kural_sayısı = []
     bağlamlı = []
     korunma = []
-    for dal in DALLAR:
+    for dal in dallar:
         kurallar = [k for j in seri.tablolar[dal] for k in seri.tablolar[dal][j]]
         değişim = [k for k in kurallar if k.hedef != k.kaynak]
         kural_sayısı.append(len(değişim))
         korunma.append(len(kurallar) - len(değişim))
         bağlamlı.append(sum(1 for k in değişim if k.bağlam != "her yerde"))
     istisna = len(seri.istisnalar)
-    düzenlilik = 100.0 * (2 * n - istisna) / (2 * n)
+    düzenlilik = 100.0 * (türetim - istisna) / türetim
 
     S.append("=" * 72)
     S.append(" SANAL SAV — Varsayımsal Ön Dil Serisi Raporu")
-    S.append(f" Diller: {ad0} ~ {ad1} (yazılış esaslı, anlam sıralı liste)")
+    S.append(f" Diller: {' ~ '.join(adlar)} (yazılış esaslı, anlam sıralı liste)")
     S.append("=" * 72)
     S.append("")
-    S.append("Bu rapor gerçek bir etimoloji savı DEĞİLDİR. Amaç, verilen iki")
+    S.append(f"Bu rapor gerçek bir etimoloji savı DEĞİLDİR. Amaç, verilen {B}")
     S.append("sözcük listesini düzenli ses değişim kurallarıyla ortak bir Ön Dil")
     S.append("serisine bağlamanın hesaplamayla her zaman mümkün olduğunu ve bu")
     S.append("bağlamanın MALİYETİNİN (türetilen harf ve kural sayısının) gerçek")
@@ -69,9 +69,10 @@ def rapor_üret(seri):
     S.append("-" * 72)
     kural_dışı_tür = sum(len(d) for d in seri.düzensiz)
     kural_dışı_konum = sum(
-        len(seri.korr_yerleri[ç]) for dal in (0, 1) for ç in seri.düzensiz[dal]
+        len(seri.korr_yerleri[ç]) for dal in dallar for ç in seri.düzensiz[dal]
     )
-    S.append(f"  sözcük çifti                    : {n}")
+    S.append(f"  dil sayısı                      : {B}")
+    S.append(f"  anlam (sözcük) sayısı           : {n}")
     S.append(f"  harf karşılıklığı türü          : {len(seri.atama)}")
     S.append(f"  türetim eşiği (tutumluluk)      : {seri.türetim_eşiği} "
              f"(yeni harf en az bu kadar konumu kurtarmalı)")
@@ -79,25 +80,28 @@ def rapor_üret(seri):
              f"{kural_dışı_konum} konum")
     S.append(f"  Ön Dil harf dağarcığı           : {len(proto_dağarcık)} "
              f"(temel {len(temel)} + türetilmiş {len(türetilmiş)})")
-    S.append(f"  katman sayısı                   : {ad0} dalı {seri.katman[0]}, "
-             f"{ad1} dalı {seri.katman[1]}")
-    S.append(f"  ses değişim kuralı              : {ad0} dalı {kural_sayısı[0]} "
-             f"({bağlamlı[0]} bağlamlı, +{korunma[0]} korunma), "
-             f"{ad1} dalı {kural_sayısı[1]} "
-             f"({bağlamlı[1]} bağlamlı, +{korunma[1]} korunma)")
-    S.append(f"  göçüşüm (metathesis) kuralı     : {len(set(ç for _, _, ç in seri.metatez_olayları))}")
+    S.append("  katman sayısı                   : "
+             + ", ".join(f"{adlar[dal]} {seri.katman[dal]}" for dal in dallar))
+    S.append("  ses değişim kuralı              :")
+    for dal in dallar:
+        S.append(f"      {adlar[dal]:<14} {kural_sayısı[dal]} kural "
+                 f"({bağlamlı[dal]} bağlamlı, +{korunma[dal]} korunma)")
+    if seri.metatez_olayları or B == 2:
+        S.append(f"  göçüşüm (metathesis) kuralı     : "
+                 f"{len(set(ç for _, _, ç in seri.metatez_olayları))}")
     doğum_kuralı = sum(
         1
-        for dal in DALLAR
+        for dal in dallar
         for j in seri.tablolar[dal]
         for k in seri.tablolar[dal][j]
         if dizi_mi(k.hedef)
     )
-    S.append(f"  doğum (tek harf > çok harf)     : {doğum_kuralı} kural, "
-             f"{len(seri.doğum_olayları)} konum (yalnız uzun ünlüler)")
+    if doğum_kuralı or seri.doğum_olayları:
+        S.append(f"  doğum (tek harf > çok harf)     : {doğum_kuralı} kural, "
+                 f"{len(seri.doğum_olayları)} konum (yalnız uzun ünlüler)")
     S.append(f"  ara katmanda doğan ayrım harfi  : {seri.etiketli_sayısı} "
              f"(katmanlara dağılmış; ortak ön ek paylaşılır)")
-    S.append(f"  istisna                         : {istisna} / {2 * n} türetim")
+    S.append(f"  istisna                         : {istisna} / {türetim} türetim")
     S.append(f"  düzenlilik                      : %{düzenlilik:.1f}")
     S.append("")
 
@@ -132,7 +136,7 @@ def rapor_üret(seri):
     # harf sayısı verilir.
     S.append("  Katman başına harf dağarcığı (her katman bir alt ön dil):")
     seri_harfleri = set()
-    for dal, ad in ((0, ad0), (1, ad1)):
+    for dal, ad in enumerate(adlar):
         katman_kümeleri = []
         for j in range(seri.katman[dal] + 1):
             harfler = {t for kt in seri.türevler for t in kt[dal][j]}
@@ -153,11 +157,11 @@ def rapor_üret(seri):
     S.append("3. SES DEĞİŞİM KURALLARI")
     S.append("-" * 72)
     if seri.metatez_olayları:
-        S.append(f"  Göçüşüm ({ad1} dalı, katman 1 öncesi):")
+        S.append(f"  Göçüşüm ({adlar[1]} dalı, katman 1 öncesi):")
         for ç in sorted({ç for _, _, ç in seri.metatez_olayları}):
             S.append(f"    *{ç[0]}{ç[1]} -> {ç[1]}{ç[0]}")
         S.append("")
-    for dal, ad in ((0, ad0), (1, ad1)):
+    for dal, ad in enumerate(adlar):
         S.append(f"  {ad} dalı:")
         for j in range(1, seri.katman[dal] + 1):
             kurallar = seri.tablolar[dal].get(j, [])
@@ -187,12 +191,16 @@ def rapor_üret(seri):
     S.append("  (✗ imli türetimler kural dışı karşılıklık içerir; 5. bölüm.)")
     S.append("")
     bozuklar = {(kno, dal) for kno, dal, _, _ in seri.istisnalar}
-    for kno, (anlam, a, b) in enumerate(seri.çiftler):
+    ad_g = max(len(a) for a in adlar)
+    for kno, row in enumerate(seri.çiftler):
+        anlam = row[0]
+        kelimeler = row[1:]
         proto = "*" + _biçim_yaz(seri.proto_kelimeler[kno])
-        S.append(f"  {kno + 1:>3}. {anlam}  ({a} ~ {b})   Ön Dil: {proto}")
-        for dal, ad in ((0, ad0), (1, ad1)):
+        S.append(f"  {kno + 1:>3}. {anlam}  ({' ~ '.join(kelimeler)})"
+                 f"   Ön Dil: {proto}")
+        for dal, ad in enumerate(adlar):
             im = "  ✗" if (kno, dal) in bozuklar else ""
-            S.append(f"       {ad:<9}: "
+            S.append(f"       {ad:<{ad_g}}: "
                      f"{_türetim_satırı(seri.türevler[kno][dal])}{im}")
     S.append("")
 
@@ -213,10 +221,10 @@ def rapor_üret(seri):
     S.append("-" * 72)
     oran = 100.0 * len(türetilmiş) / max(1, len(proto_dağarcık))
     S.append(f"  Ön Dil dağarcığının %{oran:.0f} kadarı türetilmiş (zorlama) harftir")
-    S.append(f"  ve {ad0} ile {ad1} listelerini ortak ataya bağlamak için toplam")
-    S.append(f"  {kural_sayısı[0] + kural_sayısı[1]} kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf")
+    S.append(f"  ve {' + '.join(adlar)} listelerini ortak ataya bağlamak için")
+    S.append(f"  toplam {sum(kural_sayısı)} kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf")
     S.append("  sayısı düşer ama düzenlilik de düşer: harf sayısı ile istisna")
-    S.append("  sayısı arasındaki bu ödünleşim eğrisi (bkz. --tarama) iki listenin")
+    S.append("  sayısı arasındaki bu ödünleşim eğrisi (bkz. --tarama) listelerin")
     S.append("  akrabalık derecesinin sayısal ölçüsüdür; akraba dillerde az harfle")
     S.append("  yüksek düzenlilik aynı anda elde edilir, akraba olmayanlarda")
     S.append("  edilemez. README'de istenen dört işlem türü")
