@@ -24,8 +24,15 @@ Uygulanan yöntem, README'deki 1. ve 4. varsayımsal yöntemlerin bileşimidir:
 
 from dataclasses import dataclass, field
 
-from sesbiçim.harf import BOŞ, HARFLER, alt_yazı, taban, uzaklık, yol, yollar
+from sesbiçim.harf import (
+    BOŞ, HARFLER, SANAL_HARFLER, alt_yazı, taban, uzaklık, yol, yollar,
+)
 from sesbiçim.ünsüz import ÜNSÜZLER
+
+# Sanal (hiçbir yazıda olmayan) harf, ancak yolu gerçekten kısaltıyorsa
+# seçilsin: eşitlik bozucu küçük ceza.
+_SANAL_CEZA = 0.05
+_SANAL_KÜME = set(SANAL_HARFLER)
 
 from .hizalama import hizala
 from .kurallar import BAĞLAM_SIRASI, ayır, bağlam_işlevi
@@ -122,6 +129,8 @@ def _aday_seç(çift):
             c -= 0.25  # değişmeyen dal = daha az kural
         if p in ÜNSÜZLER and ÜNSÜZLER[p][2]:
             c += 0.1  # eşitlikte ötümsüz (arkaik) biçim yeğlenir
+        if p in _SANAL_KÜME:
+            c += _SANAL_CEZA
         if en_puan is None or (c, p) < (en_puan, en_iyi):
             en_iyi, en_puan = p, c
     return en_iyi
@@ -157,6 +166,8 @@ def _çapa_bul(korrlar, korr_yerleri):
                 uygun = False
                 break
             puan += len(korr_yerleri[ç]) * (d0 + d1)
+        if p in _SANAL_KÜME:
+            puan += _SANAL_CEZA
         if uygun and (en_puan is None or (puan, p) < (en_puan, en_iyi)):
             en_iyi, en_puan = p, puan
     return en_iyi
@@ -309,7 +320,8 @@ def _konak_adayları(çler, korr_yerleri, kullanılan_tokenlar):
     toplam = sum(len(korr_yerleri[ç]) for ç in çler)
 
     def puan(p):
-        return sum(
+        ceza = _SANAL_CEZA if taban(p) in _SANAL_KÜME else 0.0
+        return ceza + sum(
             len(korr_yerleri[ç]) * (uzaklık(p, ç[0]) + uzaklık(p, ç[1]))
             for ç in çler
         ) / toplam

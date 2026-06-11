@@ -14,21 +14,22 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
 ------------------------------------------------------------------------
   sözcük çifti                    : 100
   harf karşılıklığı türü          : 99
-  türetim eşiği (tutumluluk)      : 3 (yeni harf en az bu kadar konumu kurtarmalı)
-  kural dışı bırakılan            : 30 karşılıklık türü, 34 konum
-  Ön Dil harf dağarcığı           : 42 (temel 27 + türetilmiş 15)
+  türetim eşiği (tutumluluk)      : 1 (yeni harf en az bu kadar konumu kurtarmalı)
+  kural dışı bırakılan            : 0 karşılıklık türü, 0 konum
+  Ön Dil harf dağarcığı           : 65 (temel 32 + türetilmiş 33)
   katman sayısı                   : Türkçe dalı 4, Azerbaycanca dalı 4
-  ses değişim kuralı              : Türkçe dalı 55 (15 bağlamlı, +5 korunma), Azerbaycanca dalı 58 (17 bağlamlı, +6 korunma)
+  ses değişim kuralı              : Türkçe dalı 73 (14 bağlamlı, +3 korunma), Azerbaycanca dalı 85 (18 bağlamlı, +6 korunma)
   göçüşüm (metathesis) kuralı     : 0
-  ara katman ayrım harfi          : 21 zincirde
-  istisna                         : 29 / 200 türetim
-  düzenlilik                      : %85.5
+  ara katman ayrım harfi          : 19 zincirde
+  istisna                         : 0 / 200 türetim
+  düzenlilik                      : %100.0
 
 ------------------------------------------------------------------------
 2. ÖN DİL HARF DAĞARCIĞI (katman 0)
 ------------------------------------------------------------------------
-  temel harfler      : a b c d e g h i k l m n o p r s t u x y z ç ö ü ğ ı ş
-  türetilmiş harfler : a₂ d₂ e₂ i₂ i₃ k₂ m₂ t₂ u₂ y₂ y₃ ü₂ ğ₂ ğ₃ ı₂
+  temel harfler      : a b c d e g h i j k l m n o p r s t u v x y z ç ö ü ğ ı ş ə
+  sanal harfler      : θ π   (hiçbir yazıda yok; özellik uzayından kurulan sınıflar)
+  türetilmiş harfler : a₂ a₃ d₂ d₃ e₂ e₃ h₂ i₂ i₃ i₄ i₅ k₂ l₂ m₂ o₂ r₂ r₃ s₂ t₂ t₃ u₂ u₃ u₄ u₅ y₂ y₃ y₄ z₂ ö₂ ü₂ ü₃ ı₂ ş₂
 
   (Bütün Ön Dil harfleri soyuttur: her biri, kurallı biçimde bir
    arada yaşayabilen karşılıklıkların kümesidir. Alt simgeli harf,
@@ -37,146 +38,189 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    ses değişimiyle türetmenin 'pahalı' olduğunu gösterir.)
 
   Katman başına harf dağarcığı boyutu:
-    Türkçe    : 42 > 36 > 32 > 29 > 25
-    Azerbaycanca: 42 > 38 > 36 > 31 > 28
+    Türkçe    : 65 > 36 > 33 > 32 > 27
+    Azerbaycanca: 65 > 45 > 37 > 33 > 30
 
 ------------------------------------------------------------------------
 3. SES DEĞİŞİM KURALLARI
 ------------------------------------------------------------------------
   Türkçe dalı:
-    Katman 1 (Ön Dil -> Ön Türkçe 1): 38 kural
+    Katman 1 (Ön Dil -> Ön Türkçe 1): 56 kural
       *a₂ -> ∅
       *a₂ -> e  / ünsüz önünde
+      *a₃ -> a
       *c -> c  (korunur)
       *c -> ç  / söz sonunda
       *d₂ -> d
       *d₂ -> n  / ünsüz ardında
+      *d₃ -> g
       *e₂ -> e
-      *g -> g  (korunur)
-      *g -> ğ₅  / söz sonunda
+      *e₃ -> e
       *h -> ∅
+      *h₂ -> h
       *i₂ -> ∅
       *i₃ -> ∅
+      *i₄ -> i
+      *i₅ -> i
+      *j -> y
       *k₂ -> k
-      *k₂ -> t₃  / ünsüz ardında
+      *k₂ -> t₄  / ünsüz ardında
+      *l₂ -> r
       *m -> b  / söz başında
-      *m -> b₂  / ünsüz önünde
       *m -> m  (korunur)
+      *m -> θ₂  / ünsüz önünde
       *m₂ -> b  / söz başında
       *m₂ -> m
+      *o₂ -> o
+      *r₂ -> r
+      *r₂ -> ʎ₂  / ünsüz önünde
+      *r₃ -> ∅
       *s -> s  (korunur)
-      *s -> z₂  / ünsüz önünde
+      *s -> t₅  / ünsüz önünde
+      *s₂ -> s
       *t₂ -> t
+      *t₃ -> t
       *u₂ -> u
       *u₂ -> ı₅  / ünlü ardında
-      *x -> j₃  / ünsüz önünde
+      *u₃ -> u
+      *u₄ -> ı
+      *u₅ -> u
       *x -> k
-      *y₂ -> i₆  / ünsüz önünde
+      *x -> π₃  / ünsüz önünde
+      *y₂ -> i₁₀  / ünsüz önünde
       *y₂ -> y
-      *y₃ -> i₅  / ünsüz önünde
-      *y₃ -> j₅
+      *y₃ -> ğ
+      *y₄ -> ∅
+      *z₂ -> z
+      *ö₂ -> ü
       *ü₂ -> ü
-      *ğ -> g₃
-      *ğ -> ğ  / ünlü ardında  (korunur)
-      *ğ -> ı₆  / ünsüz önünde
-      *ğ₂ -> ğ
-      *ğ₃ -> ∅
+      *ü₃ -> ü
       *ı₂ -> ğ  / ünlü ardında
       *ı₂ -> ı
-    Katman 2 (Ön Türkçe 1 -> Ön Türkçe 2): 11 kural
-      *b₂ -> p
-      *g₃ -> d₃
-      *i₅ -> ü₃
-      *i₆ -> ə₂
-      *j₃ -> y₅
-      *j₅ -> ş
-      *t₃ -> d
-      *z₂ -> d₅
-      *ğ₅ -> y
-      *ı₅ -> ğ₆
-      *ı₆ -> i₇
-    Katman 3 (Ön Türkçe 2 -> Ön Türkçe 3): 7 kural
-      *d₃ -> n₃
-      *d₅ -> n₅
-      *i₇ -> e
-      *y₅ -> i₄
-      *ü₃ -> ö
-      *ğ₆ -> j₆
+      *ş₂ -> π₅
+      *ə -> a
+      *θ -> p
+      *π -> y₁₀  / ünsüz önünde
+      *π -> ş
+    Katman 2 (Ön Türkçe 1 -> Ön Türkçe 2): 9 kural
+      *i₁₀ -> ə₂
+      *t₄ -> d
+      *t₅ -> γ₂
+      *y₁₀ -> i₉
+      *ı₅ -> ğ₄
+      *ʎ₂ -> y₆
+      *θ₂ -> p
+      *π₃ -> y₈
+      *π₅ -> y
+    Katman 3 (Ön Türkçe 2 -> Ön Türkçe 3): 6 kural
+      *i₉ -> ü₄
+      *y₆ -> i₆
+      *y₈ -> i₈
+      *ğ₄ -> j₂
       *ə₂ -> a
-    Katman 4 (Ön Türkçe 3 -> Türkçe): 4 kural
-      *i₄ -> e
-      *j₆ -> c
-      *n₃ -> r
-      *n₅ -> m
+      *γ₂ -> θ₃
+    Katman 4 (Ön Türkçe 3 -> Türkçe): 5 kural
+      *i₆ -> e
+      *i₈ -> e
+      *j₂ -> c
+      *ü₄ -> ö
+      *θ₃ -> m
 
   Azerbaycanca dalı:
-    Katman 1 (Ön Dil -> Ön Azerbaycanca 1): 43 kural
+    Katman 1 (Ön Dil -> Ön Azerbaycanca 1): 66 kural
       *a₂ -> a
-      *a₂ -> o₂  / söz sonunda
       *a₂ -> ı₃  / söz başında
+      *a₂ -> ɒ  / söz sonunda
+      *a₃ -> o
+      *a₃ -> ə  / ünsüz ardında
       *d₂ -> t
+      *d₃ -> d
       *e -> ə
       *e₂ -> e
-      *g -> g  (korunur)
-      *g -> k  / söz sonunda
+      *e₃ -> ö₃
       *h -> ş
+      *h₂ -> h
+      *h₂ -> x  / ünlü ardında
       *i -> i  (korunur)
       *i -> y  / ünlü önünde
       *i₂ -> i
-      *i₃ -> y₄  / ünlü ardında
+      *i₃ -> y₅  / ünlü ardında
       *i₃ -> ı₄
       *i₃ -> ə  / söz sonunda
-      *k -> g₅  / ünsüz önünde
+      *i₄ -> ı
+      *i₅ -> ü
+      *j -> z  / ünlü önünde
+      *j -> ş₃
       *k -> q
       *k -> t  / ünsüz ardında
+      *k -> ʔ  / ünsüz önünde
       *k₂ -> k
       *l -> l  (korunur)
-      *l -> n₂  / ünsüz ardında
+      *l -> ʙ  / ünsüz ardında
+      *l₂ -> l
       *m₂ -> ∅
+      *o₂ -> u
+      *r₂ -> ∅
+      *r₃ -> r
+      *r₃ -> ʎ₃  / söz başında
+      *r₃ -> ʎ₄  / söz sonunda
+      *s₂ -> ş
       *t₂ -> d
+      *t₃ -> γ
       *u -> u  (korunur)
       *u -> w₂  / ünlü ardında
       *u₂ -> ∅
       *u₂ -> o  / söz sonunda
-      *x -> j₄
+      *u₃ -> ı
+      *u₄ -> u
+      *u₅ -> ü
+      *v -> v  / söz başında  (korunur)
+      *v -> z₃
       *x -> s  / söz başında
       *x -> x  / ünlü ardında  (korunur)
+      *x -> π₄
       *y₂ -> ∅
-      *y₃ -> ∅
+      *y₃ -> y
+      *y₄ -> y
+      *z₂ -> ɹ
+      *ö₂ -> e
       *ü₂ -> ∅  / ünlü ardında
       *ü₂ -> i
-      *ğ -> ∅
-      *ğ -> y  / ünlü ardında
-      *ğ₂ -> ğ
-      *ğ₃ -> g₄
-      *ğ₃ -> ı  / söz sonunda
-      *ğ₃ -> ı₇  / söz başında
+      *ü₃ -> ö
       *ı -> i  / ünlü ardında
       *ı -> ı  (korunur)
       *ı₂ -> ∅
-    Katman 2 (Ön Azerbaycanca 1 -> Ön Azerbaycanca 2): 10 kural
-      *g₄ -> d₄
-      *g₅ -> ğ₇
-      *j₄ -> y₆
-      *n₂ -> m
-      *o₂ -> ö₂
-      *w₂ -> b₃
-      *y₄ -> j₂
-      *ı₃ -> ğ₄
+      *ş₂ -> ş
+      *ə -> i
+      *θ -> ∅
+      *π -> ∅
+    Katman 2 (Ön Azerbaycanca 1 -> Ön Azerbaycanca 2): 15 kural
+      *w₂ -> b₂
+      *y₅ -> π₂
+      *z₃ -> d
+      *ö₃ -> ü
+      *ı₃ -> ğ₂
       *ı₄ -> u
-      *ı₇ -> i₈
-    Katman 3 (Ön Azerbaycanca 2 -> Ön Azerbaycanca 3): 8 kural
-      *b₃ -> p₂
-      *d₄ -> n₄
-      *i₈ -> e
-      *j₂ -> x
-      *y₆ -> i
-      *ö₂ -> ü
-      *ğ₄ -> g₂
-      *ğ₇ -> ∅
+      *ş₃ -> k
+      *ɒ -> œ
+      *ɹ -> ğ
+      *ʎ₃ -> y₇
+      *ʎ₄ -> ğ₃
+      *ʔ -> ∅
+      *ʙ -> m
+      *γ -> n
+      *π₄ -> y₉
+    Katman 3 (Ön Azerbaycanca 2 -> Ön Azerbaycanca 3): 7 kural
+      *b₂ -> p₂
+      *y₇ -> i₇
+      *y₉ -> i
+      *ğ₂ -> g₂
+      *ğ₃ -> ı
+      *œ -> ü
+      *π₂ -> x
     Katman 4 (Ön Azerbaycanca 3 -> Azerbaycanca): 3 kural
       *g₂ -> d
-      *n₄ -> r
+      *i₇ -> e
       *p₂ -> t
 
 ------------------------------------------------------------------------
@@ -197,21 +241,21 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
     4. bu  (bu ~ bu)   Ön Dil: *bu
        Türkçe   : bu
        Azerbaycanca: bu
-    5. şu  (şu ~ o)   Ön Dil: *y₃u₂
-       Türkçe   : *y₃u₂ > *j₅u > şu
-       Azerbaycanca: *y₃u₂ > o
+    5. şu  (şu ~ o)   Ön Dil: *πu₂
+       Türkçe   : *πu₂ > şu
+       Azerbaycanca: *πu₂ > o
     6. kim  (kim ~ kim)   Ön Dil: *k₂im
        Türkçe   : *k₂im > kim
        Azerbaycanca: *k₂im > kim
     7. ne  (ne ~ nə)   Ön Dil: *ne
        Türkçe   : ne
        Azerbaycanca: *ne > nə
-    8. değil  (değil ~ deyil)   Ön Dil: *de₂ğil
-       Türkçe   : *de₂ğil > değil
-       Azerbaycanca: *de₂ğil > deyil
-    9. hep  (hep ~ hamı)   Ön Dil: *xa₂mğ₃
-       Türkçe   : *xa₂mğ₃ > *keb₂ > kep  ✗
-       Azerbaycanca: *xa₂mğ₃ > samı  ✗
+    8. değil  (değil ~ deyil)   Ön Dil: *de₂y₃il
+       Türkçe   : *de₂y₃il > değil
+       Azerbaycanca: *de₂y₃il > deyil
+    9. hep  (hep ~ hamı)   Ön Dil: *h₂a₂mr₃
+       Türkçe   : *h₂a₂mr₃ > *heθ₂ > hep
+       Azerbaycanca: *h₂a₂mr₃ > *hamʎ₄ > *hamğ₃ > hamı
    10. çok  (çok ~ çox)   Ön Dil: *çox
        Türkçe   : *çox > çok
        Azerbaycanca: çox
@@ -221,9 +265,9 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    12. iki  (iki ~ iki)   Ön Dil: *ik₂i
        Türkçe   : *ik₂i > iki
        Azerbaycanca: *ik₂i > iki
-   13. büyük  (büyük ~ böyük)   Ön Dil: *böyük₂
-       Türkçe   : *böyük₂ > böyük  ✗
-       Azerbaycanca: *böyük₂ > böyük
+   13. büyük  (büyük ~ böyük)   Ön Dil: *bü₃yük₂
+       Türkçe   : *bü₃yük₂ > büyük
+       Azerbaycanca: *bü₃yük₂ > böyük
    14. uzun  (uzun ~ uzun)   Ön Dil: *uzun
        Türkçe   : uzun
        Azerbaycanca: uzun
@@ -233,9 +277,9 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    16. kadın  (kadın ~ qadın)   Ön Dil: *kadın
        Türkçe   : kadın
        Azerbaycanca: *kadın > qadın
-   17. adam  (adam ~ kişi)   Ön Dil: *y₂k₂i₂ham₂
-       Türkçe   : *y₂k₂i₂ham₂ > *i₆t₃am > *ə₂dam > adam
-       Azerbaycanca: *y₂k₂i₂ham₂ > kişa  ✗
+   17. adam  (adam ~ kişi)   Ön Dil: *y₂k₂i₂həm₂
+       Türkçe   : *y₂k₂i₂həm₂ > *i₁₀t₄am > *ə₂dam > adam
+       Azerbaycanca: *y₂k₂i₂həm₂ > kişi
    18. insan  (insan ~ insan)   Ön Dil: *insan
        Türkçe   : insan
        Azerbaycanca: insan
@@ -245,27 +289,27 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    20. kuş  (kuş ~ quş)   Ön Dil: *kuş
        Türkçe   : kuş
        Azerbaycanca: *kuş > quş
-   21. köpek  (köpek ~ it)   Ön Dil: *ky₃pxk
-       Türkçe   : *ky₃pxk > *ki₅pj₃k > *kü₃py₅k > *köpi₄k > köpek
-       Azerbaycanca: *ky₃pxk > *g₅pj₄t > *ğ₇py₆t > pit  ✗
+   21. köpek  (köpek ~ it)   Ön Dil: *kπθxk
+       Türkçe   : *kπθxk > *ky₁₀pπ₃k > *ki₉py₈k > *kü₄pi₈k > köpek
+       Azerbaycanca: *kπθxk > *ʔπ₄t > *y₉t > it
    22. bit  (bit ~ bit)   Ön Dil: *bit
        Türkçe   : bit
        Azerbaycanca: bit
-   23. ağaç  (ağaç ~ ağac)   Ön Dil: *ağ₂ac
-       Türkçe   : *ağ₂ac > ağaç
-       Azerbaycanca: *ağ₂ac > ağac
-   24. tohum  (tohum ~ toxum)   Ön Dil: *toxum
-       Türkçe   : *toxum > tokum  ✗
-       Azerbaycanca: toxum
-   25. yaprak  (yaprak ~ yarpaq)   Ön Dil: *yağ₃pğak
-       Türkçe   : *yağ₃pğak > *yapg₃ak > *yapd₃ak > *yapn₃ak > yaprak
-       Azerbaycanca: *yağ₃pğak > *yag₄paq > *yad₄paq > *yan₄paq > yarpaq
+   23. ağaç  (ağaç ~ ağac)   Ön Dil: *ağac
+       Türkçe   : *ağac > ağaç
+       Azerbaycanca: ağac
+   24. tohum  (tohum ~ toxum)   Ön Dil: *toh₂um
+       Türkçe   : *toh₂um > tohum
+       Azerbaycanca: *toh₂um > toxum
+   25. yaprak  (yaprak ~ yarpaq)   Ön Dil: *yar₃pr₂ak
+       Türkçe   : *yar₃pr₂ak > yaprak
+       Azerbaycanca: *yar₃pr₂ak > yarpaq
    26. kök  (kök ~ kök)   Ön Dil: *k₂ök₂
        Türkçe   : *k₂ök₂ > kök
        Azerbaycanca: *k₂ök₂ > kök
-   27. kabuk  (kabuk ~ qabıq)   Ön Dil: *kabuk
-       Türkçe   : kabuk
-       Azerbaycanca: *kabuk > qabuq  ✗
+   27. kabuk  (kabuk ~ qabıq)   Ön Dil: *kabu₃k
+       Türkçe   : *kabu₃k > kabuk
+       Azerbaycanca: *kabu₃k > qabıq
    28. deri  (deri ~ dəri)   Ön Dil: *deri
        Türkçe   : deri
        Azerbaycanca: *deri > dəri
@@ -275,24 +319,24 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    30. kan  (kan ~ qan)   Ön Dil: *kan
        Türkçe   : kan
        Azerbaycanca: *kan > qan
-   31. kemik  (kemik ~ sümük)   Ön Dil: *xümik₂
-       Türkçe   : *xümik₂ > kümik  ✗
-       Azerbaycanca: *xümik₂ > sümik  ✗
-   32. yağ  (yağ ~ yağ)   Ön Dil: *yağ₂
-       Türkçe   : *yağ₂ > yağ
-       Azerbaycanca: *yağ₂ > yağ
+   31. kemik  (kemik ~ sümük)   Ön Dil: *xe₃mi₅k₂
+       Türkçe   : *xe₃mi₅k₂ > kemik
+       Azerbaycanca: *xe₃mi₅k₂ > *sö₃mük > sümük
+   32. yağ  (yağ ~ yağ)   Ön Dil: *yağ
+       Türkçe   : yağ
+       Azerbaycanca: yağ
    33. yumurta  (yumurta ~ yumurta)   Ön Dil: *yumurta
        Türkçe   : yumurta
        Azerbaycanca: yumurta
-   34. boynuz  (boynuz ~ buynuz)   Ön Dil: *boynuz
-       Türkçe   : boynuz
-       Azerbaycanca: boynuz  ✗
+   34. boynuz  (boynuz ~ buynuz)   Ön Dil: *bo₂ynuz
+       Türkçe   : *bo₂ynuz > boynuz
+       Azerbaycanca: *bo₂ynuz > buynuz
    35. kuyruk  (kuyruk ~ quyruq)   Ön Dil: *kuyruk
        Türkçe   : kuyruk
        Azerbaycanca: *kuyruk > quyruq
-   36. tüy  (tüy ~ tük)   Ön Dil: *tüg
-       Türkçe   : *tüg > *tüğ₅ > tüy
-       Azerbaycanca: *tüg > tük
+   36. tüy  (tüy ~ tük)   Ön Dil: *tüj
+       Türkçe   : *tüj > tüy
+       Azerbaycanca: *tüj > *tüş₃ > tük
    37. saç  (saç ~ saç)   Ön Dil: *saç
        Türkçe   : saç
        Azerbaycanca: saç
@@ -308,9 +352,9 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    41. burun  (burun ~ burun)   Ön Dil: *burun
        Türkçe   : burun
        Azerbaycanca: burun
-   42. ağız  (ağız ~ ağız)   Ön Dil: *ağ₂ız
-       Türkçe   : *ağ₂ız > ağız
-       Azerbaycanca: *ağ₂ız > ağız
+   42. ağız  (ağız ~ ağız)   Ön Dil: *ağız
+       Türkçe   : ağız
+       Azerbaycanca: ağız
    43. diş  (diş ~ diş)   Ön Dil: *diş
        Türkçe   : diş
        Azerbaycanca: diş
@@ -335,36 +379,36 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    50. boyun  (boyun ~ boyun)   Ön Dil: *boyun
        Türkçe   : boyun
        Azerbaycanca: boyun
-   51. göğüs  (göğüs ~ döş)   Ön Dil: *döı₂ü₂s
-       Türkçe   : *döı₂ü₂s > döğüs  ✗
-       Azerbaycanca: *döı₂ü₂s > dös  ✗
+   51. göğüs  (göğüs ~ döş)   Ön Dil: *d₃öı₂ü₂s₂
+       Türkçe   : *d₃öı₂ü₂s₂ > göğüs
+       Azerbaycanca: *d₃öı₂ü₂s₂ > döş
    52. yürek  (yürek ~ ürək)   Ön Dil: *y₂ürek₂
        Türkçe   : *y₂ürek₂ > yürek
        Azerbaycanca: *y₂ürek₂ > ürək
-   53. karaciğer  (karaciğer ~ qaraciyər)   Ön Dil: *karaciğer
-       Türkçe   : karaciğer
-       Azerbaycanca: *karaciğer > qaraciyər
+   53. karaciğer  (karaciğer ~ qaraciyər)   Ön Dil: *karaciy₃er
+       Türkçe   : *karaciy₃er > karaciğer
+       Azerbaycanca: *karaciy₃er > qaraciyər
    54. içmek  (iç ~ iç)   Ön Dil: *iç
        Türkçe   : iç
        Azerbaycanca: iç
    55. yemek  (ye ~ ye)   Ön Dil: *ye₂
        Türkçe   : *ye₂ > ye
        Azerbaycanca: *ye₂ > ye
-   56. ısırmak  (ısır ~ dişlə)   Ön Dil: *a₂ısı₂li₃
-       Türkçe   : *a₂ısı₂li₃ > ısıl  ✗
-       Azerbaycanca: *a₂ısı₂li₃ > *ı₃islə > *ğ₄islə > *g₂islə > dislə  ✗
+   56. ısırmak  (ısır ~ dişlə)   Ön Dil: *a₂ıs₂ı₂l₂i₃
+       Türkçe   : *a₂ıs₂ı₂l₂i₃ > ısır
+       Azerbaycanca: *a₂ıs₂ı₂l₂i₃ > *ı₃işlə > *ğ₂işlə > *g₂işlə > dişlə
    57. görmek  (gör ~ gör)   Ön Dil: *gör
        Türkçe   : gör
        Azerbaycanca: gör
-   58. duymak  (duy ~ eşit)   Ön Dil: *ğ₃hi₂d₂u₂y₂
-       Türkçe   : *ğ₃hi₂d₂u₂y₂ > duy
-       Azerbaycanca: *ğ₃hi₂d₂u₂y₂ > *ı₇şit > *i₈şit > eşit
+   58. duymak  (duy ~ eşit)   Ön Dil: *r₃hi₂d₂u₂y₂
+       Türkçe   : *r₃hi₂d₂u₂y₂ > duy
+       Azerbaycanca: *r₃hi₂d₂u₂y₂ > *ʎ₃şit > *y₇şit > *i₇şit > eşit
    59. bilmek  (bil ~ bil)   Ön Dil: *bil
        Türkçe   : bil
        Azerbaycanca: bil
    60. uyumak  (uyu ~ yat)   Ön Dil: *u₂ya₂u
        Türkçe   : *u₂ya₂u > uyu
-       Azerbaycanca: *u₂ya₂u > *yaw₂ > *yab₃ > *yap₂ > yat
+       Azerbaycanca: *u₂ya₂u > *yaw₂ > *yab₂ > *yap₂ > yat
    61. ölmek  (öl ~ öl)   Ön Dil: *öl
        Türkçe   : öl
        Azerbaycanca: öl
@@ -377,24 +421,24 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    64. uçmak  (uç ~ uç)   Ön Dil: *uç
        Türkçe   : uç
        Azerbaycanca: uç
-   65. yürümek  (yürü ~ yeri)   Ön Dil: *yerü₂
-       Türkçe   : *yerü₂ > yerü  ✗
-       Azerbaycanca: *yerü₂ > yəri  ✗
+   65. yürümek  (yürü ~ yeri)   Ön Dil: *yö₂rü₂
+       Türkçe   : *yö₂rü₂ > yürü
+       Azerbaycanca: *yö₂rü₂ > yeri
    66. gelmek  (gel ~ gəl)   Ön Dil: *gel
        Türkçe   : gel
        Azerbaycanca: *gel > gəl
-   67. yatmak  (yat ~ uzan)   Ön Dil: *i₃yad
-       Türkçe   : *i₃yad > yad  ✗
-       Azerbaycanca: *i₃yad > *ı₄yad > uyad  ✗
+   67. yatmak  (yat ~ uzan)   Ön Dil: *i₃jat₃
+       Türkçe   : *i₃jat₃ > yat
+       Azerbaycanca: *i₃jat₃ > *ı₄zaγ > uzan
    68. oturmak  (otur ~ otur)   Ön Dil: *otur
        Türkçe   : otur
        Azerbaycanca: otur
    69. durmak  (dur ~ dur)   Ön Dil: *dur
        Türkçe   : dur
        Azerbaycanca: dur
-   70. vermek  (ver ~ ver)   Ön Dil: *be₂r
-       Türkçe   : *be₂r > ber  ✗
-       Azerbaycanca: *be₂r > ber  ✗
+   70. vermek  (ver ~ ver)   Ön Dil: *ve₂r
+       Türkçe   : *ve₂r > ver
+       Azerbaycanca: *ve₂r > ver
    71. demek  (de ~ de)   Ön Dil: *de₂
        Türkçe   : *de₂ > de
        Azerbaycanca: *de₂ > de
@@ -404,33 +448,33 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    73. ay  (ay ~ ay)   Ön Dil: *ay
        Türkçe   : ay
        Azerbaycanca: ay
-   74. yıldız  (yıldız ~ ulduz)   Ön Dil: *y₂ulduz
-       Türkçe   : *y₂ulduz > yulduz  ✗
-       Azerbaycanca: *y₂ulduz > ulduz
+   74. yıldız  (yıldız ~ ulduz)   Ön Dil: *y₂u₄ldu₄z
+       Türkçe   : *y₂u₄ldu₄z > yıldız
+       Azerbaycanca: *y₂u₄ldu₄z > ulduz
    75. su  (su ~ su)   Ön Dil: *su
        Türkçe   : su
        Azerbaycanca: su
-   76. yağmur  (yağmur ~ yağış)   Ön Dil: *yağ₂m₂uhğ
-       Türkçe   : *yağ₂m₂uhğ > *yağmug₃ > *yağmud₃ > *yağmun₃ > yağmur
-       Azerbaycanca: *yağ₂m₂uhğ > yağuş  ✗
+   76. yağmur  (yağmur ~ yağış)   Ön Dil: *yağm₂u₃hr₂
+       Türkçe   : *yağm₂u₃hr₂ > yağmur
+       Azerbaycanca: *yağm₂u₃hr₂ > yağış
    77. taş  (taş ~ daş)   Ön Dil: *t₂aş
        Türkçe   : *t₂aş > taş
        Azerbaycanca: *t₂aş > daş
    78. kum  (kum ~ qum)   Ön Dil: *kum
        Türkçe   : kum
        Azerbaycanca: *kum > qum
-   79. toprak  (toprak ~ torpaq)   Ön Dil: *toğ₃pğak
-       Türkçe   : *toğ₃pğak > *topg₃ak > *topd₃ak > *topn₃ak > toprak
-       Azerbaycanca: *toğ₃pğak > *tog₄paq > *tod₄paq > *ton₄paq > torpaq
+   79. toprak  (toprak ~ torpaq)   Ön Dil: *tor₃pr₂ak
+       Türkçe   : *tor₃pr₂ak > toprak
+       Azerbaycanca: *tor₃pr₂ak > torpaq
    80. bulut  (bulut ~ bulud)   Ön Dil: *bulut₂
        Türkçe   : *bulut₂ > bulut
        Azerbaycanca: *bulut₂ > bulud
-   81. duman  (duman ~ tüstü)   Ön Dil: *d₂usy₂d₂a₂
-       Türkçe   : *d₂usy₂d₂a₂ > *duz₂i₆n > *dud₅ə₂n > *dun₅an > duman
-       Azerbaycanca: *d₂usy₂d₂a₂ > *tusto₂ > *tustö₂ > tustü  ✗
-   82. ateş  (ateş ~ od)   Ön Dil: *at₂ğy₃
-       Türkçe   : *at₂ğy₃ > *atı₆j₅ > *ati₇ş > ateş
-       Azerbaycanca: *at₂ğy₃ > ad  ✗
+   81. duman  (duman ~ tüstü)   Ön Dil: *d₂u₅sy₂d₂a₂
+       Türkçe   : *d₂u₅sy₂d₂a₂ > *dut₅i₁₀n > *duγ₂ə₂n > *duθ₃an > duman
+       Azerbaycanca: *d₂u₅sy₂d₂a₂ > *tüstɒ > *tüstœ > tüstü
+   82. ateş  (ateş ~ od)   Ön Dil: *a₃t₂r₂π
+       Türkçe   : *a₃t₂r₂π > *atʎ₂ş > *aty₆ş > *ati₆ş > ateş
+       Azerbaycanca: *a₃t₂r₂π > od
    83. kül  (kül ~ kül)   Ön Dil: *k₂ül
        Türkçe   : *k₂ül > kül
        Azerbaycanca: *k₂ül > kül
@@ -440,21 +484,21 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
    85. yol  (yol ~ yol)   Ön Dil: *yol
        Türkçe   : yol
        Azerbaycanca: yol
-   86. dağ  (dağ ~ dağ)   Ön Dil: *dağ₂
-       Türkçe   : *dağ₂ > dağ
-       Azerbaycanca: *dağ₂ > dağ
+   86. dağ  (dağ ~ dağ)   Ön Dil: *dağ
+       Türkçe   : dağ
+       Azerbaycanca: dağ
    87. kırmızı  (kırmızı ~ qırmızı)   Ön Dil: *kırmızı
        Türkçe   : kırmızı
        Azerbaycanca: *kırmızı > qırmızı
-   88. yeşil  (yeşil ~ yaşıl)   Ön Dil: *ya₂şil
-       Türkçe   : *ya₂şil > yeşil
-       Azerbaycanca: *ya₂şil > yaşil  ✗
+   88. yeşil  (yeşil ~ yaşıl)   Ön Dil: *ya₂şi₄l
+       Türkçe   : *ya₂şi₄l > yeşil
+       Azerbaycanca: *ya₂şi₄l > yaşıl
    89. sarı  (sarı ~ sarı)   Ön Dil: *sarı
        Türkçe   : sarı
        Azerbaycanca: sarı
-   90. beyaz  (beyaz ~ ağ)   Ön Dil: *m₂ğy₂az
-       Türkçe   : *m₂ğy₂az > *bı₆yaz > *bi₇yaz > beyaz
-       Azerbaycanca: *m₂ğy₂az > az  ✗
+   90. beyaz  (beyaz ~ ağ)   Ön Dil: *m₂r₂y₂az₂
+       Türkçe   : *m₂r₂y₂az₂ > *bʎ₂yaz > *by₆yaz > *bi₆yaz > beyaz
+       Azerbaycanca: *m₂r₂y₂az₂ > *aɹ > ağ
    91. kara  (kara ~ qara)   Ön Dil: *kara
        Türkçe   : kara
        Azerbaycanca: *kara > qara
@@ -462,23 +506,23 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
        Türkçe   : *ge₂ce > gece
        Azerbaycanca: *ge₂ce > gecə
    93. sıcak  (sıcak ~ isti)   Ön Dil: *i₂sı₂u₂y₂ki₂
-       Türkçe   : *i₂sı₂u₂y₂ki₂ > *sıı₅i₆k > *sığ₆ə₂k > *sıj₆ak > sıcak
+       Türkçe   : *i₂sı₂u₂y₂ki₂ > *sıı₅i₁₀k > *sığ₄ə₂k > *sıj₂ak > sıcak
        Azerbaycanca: *i₂sı₂u₂y₂ki₂ > isti
-   94. soğuk  (soğuk ~ soyuq)   Ön Dil: *soğuk
-       Türkçe   : soğuk
-       Azerbaycanca: *soğuk > soyuq
+   94. soğuk  (soğuk ~ soyuq)   Ön Dil: *soy₃uk
+       Türkçe   : *soy₃uk > soğuk
+       Azerbaycanca: *soy₃uk > soyuq
    95. dolu  (dolu ~ dolu)   Ön Dil: *dolu
        Türkçe   : dolu
        Azerbaycanca: dolu
    96. yeni  (yeni ~ yeni)   Ön Dil: *ye₂ni
        Türkçe   : *ye₂ni > yeni
        Azerbaycanca: *ye₂ni > yeni
-   97. iyi  (iyi ~ yaxşı)   Ön Dil: *ia₂i₃yi
-       Türkçe   : *ia₂i₃yi > iyi
-       Azerbaycanca: *ia₂i₃yi > *yay₄yi > *yaj₂yi > yaxyi  ✗
-   98. yuvarlak  (yuvarlak ~ dəyirmi)   Ön Dil: *y₂u₂bayi₂rly₂x
-       Türkçe   : *y₂u₂bayi₂rly₂x > *yubayrli₆k > *yubayrlə₂k > yubayrlak  ✗
-       Azerbaycanca: *y₂u₂bayi₂rly₂x > *bayirn₂j₄ > *bayirmy₆ > bayirmi  ✗
+   97. iyi  (iyi ~ yaxşı)   Ön Dil: *ia₂i₃ş₂i₄
+       Türkçe   : *ia₂i₃ş₂i₄ > *iπ₅i > iyi
+       Azerbaycanca: *ia₂i₃ş₂i₄ > *yay₅şı > *yaπ₂şı > yaxşı
+   98. yuvarlak  (yuvarlak ~ dəyirmi)   Ön Dil: *y₂u₂va₃y₄i₂rly₂x
+       Türkçe   : *y₂u₂va₃y₄i₂rly₂x > *yuvarli₁₀k > *yuvarlə₂k > yuvarlak
+       Azerbaycanca: *y₂u₂va₃y₄i₂rly₂x > *z₃əyirʙπ₄ > *dəyirmy₉ > dəyirmi
    99. kuru  (kuru ~ quru)   Ön Dil: *kuru
        Türkçe   : kuru
        Azerbaycanca: *kuru > quru
@@ -489,42 +533,14 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
 ------------------------------------------------------------------------
 5. İSTİSNALAR
 ------------------------------------------------------------------------
-    9. hep (Türkçe): beklenen 'hep', kurallar 'kep' üretti
-    9. hep (Azerbaycanca): beklenen 'hamı', kurallar 'samı' üretti
-   13. büyük (Türkçe): beklenen 'büyük', kurallar 'böyük' üretti
-   17. adam (Azerbaycanca): beklenen 'kişi', kurallar 'kişa' üretti
-   21. köpek (Azerbaycanca): beklenen 'it', kurallar 'pit' üretti
-   24. tohum (Türkçe): beklenen 'tohum', kurallar 'tokum' üretti
-   27. kabuk (Azerbaycanca): beklenen 'qabıq', kurallar 'qabuq' üretti
-   31. kemik (Türkçe): beklenen 'kemik', kurallar 'kümik' üretti
-   31. kemik (Azerbaycanca): beklenen 'sümük', kurallar 'sümik' üretti
-   34. boynuz (Azerbaycanca): beklenen 'buynuz', kurallar 'boynuz' üretti
-   51. göğüs (Türkçe): beklenen 'göğüs', kurallar 'döğüs' üretti
-   51. göğüs (Azerbaycanca): beklenen 'döş', kurallar 'dös' üretti
-   56. ısırmak (Türkçe): beklenen 'ısır', kurallar 'ısıl' üretti
-   56. ısırmak (Azerbaycanca): beklenen 'dişlə', kurallar 'dislə' üretti
-   65. yürümek (Türkçe): beklenen 'yürü', kurallar 'yerü' üretti
-   65. yürümek (Azerbaycanca): beklenen 'yeri', kurallar 'yəri' üretti
-   67. yatmak (Türkçe): beklenen 'yat', kurallar 'yad' üretti
-   67. yatmak (Azerbaycanca): beklenen 'uzan', kurallar 'uyad' üretti
-   70. vermek (Türkçe): beklenen 'ver', kurallar 'ber' üretti
-   70. vermek (Azerbaycanca): beklenen 'ver', kurallar 'ber' üretti
-   74. yıldız (Türkçe): beklenen 'yıldız', kurallar 'yulduz' üretti
-   76. yağmur (Azerbaycanca): beklenen 'yağış', kurallar 'yağuş' üretti
-   81. duman (Azerbaycanca): beklenen 'tüstü', kurallar 'tustü' üretti
-   82. ateş (Azerbaycanca): beklenen 'od', kurallar 'ad' üretti
-   88. yeşil (Azerbaycanca): beklenen 'yaşıl', kurallar 'yaşil' üretti
-   90. beyaz (Azerbaycanca): beklenen 'ağ', kurallar 'az' üretti
-   97. iyi (Azerbaycanca): beklenen 'yaxşı', kurallar 'yaxyi' üretti
-   98. yuvarlak (Türkçe): beklenen 'yuvarlak', kurallar 'yubayrlak' üretti
-   98. yuvarlak (Azerbaycanca): beklenen 'dəyirmi', kurallar 'bayirmi' üretti
+  İstisna yok: bütün sözcükler yalnız kurallarla türetildi.
 
 ------------------------------------------------------------------------
 6. DEĞERLENDİRME
 ------------------------------------------------------------------------
-  Ön Dil dağarcığının %36 kadarı türetilmiş (zorlama) harftir
+  Ön Dil dağarcığının %51 kadarı türetilmiş (zorlama) harftir
   ve Türkçe ile Azerbaycanca listelerini ortak ataya bağlamak için toplam
-  113 kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf
+  158 kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf
   sayısı düşer ama düzenlilik de düşer: harf sayısı ile istisna
   sayısı arasındaki bu ödünleşim eğrisi (bkz. --tarama) iki listenin
   akrabalık derecesinin sayısal ölçüsüdür; akraba dillerde az harfle

@@ -86,6 +86,8 @@ KULLANIM
 
 Çıktı: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
 *ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor.txt).
+Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü
+verir (eşik 1'de istisna tanım gereği sıfırdır); eğri --tarama ile incelenir.
 
 TUTUMLULUK KISITI (ASGARİ HARF)
 
@@ -108,6 +110,25 @@ bütün refleksler o noktadan en çok 4 doğal ses adımı uzakta olsun (k -> f 
 burada da geçerlidir). Aynı çapaya oturmak zorunda kalan ikinci küme alt simge
 alır (t₂ gibi) ve raporda "türetilmiş" sayılır.
 
+SANAL HARF SINIFLARI
+
+Çapa ve ara duraklar yazılı harflerle sınırlı değildir. Sanal harfler dosyada
+tek tek tanımlanmaz: özellik uzayının TAMAMI hesaplamayla taranır ve yazıda
+karşılığı olmayan her söylenebilir bileşim sanal harf olur (insan ses aygıtının
+üretemeyeceği bileşimler — ötümlü hamza, gırtlak genizsili — dışarıda bırakılır;
+gerçekçilik kuralı). Bilinen bileşimler IPA imini alır (ʔ, ŋ, ʦ, ʎ, ɦ, ʌ, œ...),
+kalanlar ad havuzundan im alır (θ, π...). Bu, sesbiçim/ dosyalarının başındaki
+vizyonun gerçekleşmesidir: harfleri değil özellikleri tanımla, model yeni
+harfleri kendisi kursun.
+
+Sanal harfler yalnız ara durak değildir; Ön Dilin KENDİSİNDE de harf (çapa)
+olabilirler: Türkçe ~ Azerbaycanca'da *πu > şu / o (π: ötümsüz damak kayıcısı)
+ve *θ -> p (θ: ötümsüz m) gibi kuruluşlar kendiliğinden çıkar. Zincirleri de
+kısaltıp doğallaştırırlar: k > ʔ > ∅ silinmesi, k > g > ŋ > n genizsilleşmesi.
+Eşitlikte yazılı harf yeğlenir (sanal harf ancak yolu gerçekten kısaltıyorsa
+seçilir) ve hizalama yalnız yazılı harf grafiğini görür: sanal harfler sözcük
+karşılaştırmasını değil, yalnız yeniden kurmayı etkiler.
+
 Harf türetimi ve etiketleme ayrıca iki "son çare" mekanizmasıyla geciktirilir:
 
 1. KONAK HARF: Bağlamla ayrışmayan bir grup için yeni harf türetmeden önce, biraz
@@ -120,9 +141,9 @@ Alfabe sıkıştıkça kural sayısının bir miktar artması beklenen bilgi-kur
 bedeldir (az harf = çok kural). Türkçe ~ İngilizce Swadesh-100 için:
 
     eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
-       1           101          72    358        0     %100.0
-       3            69          43    250       63     % 68.5
-       8            31          10     71      162     % 19.0
+       1           102          72    357        0     %100.0
+       3            69          43    248       60     % 70.0
+       8            30          12     75      161     % 19.5
 
 Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
 akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
@@ -137,14 +158,14 @@ olmayan maddeler de listede bırakıldı):
 
     eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
            harf / kural / düzenlilik   harf / kural / düzenlilik
-       1   101  / 358   / %100         63  / 163   / %100
-       3    69  / 250   / %68.5        42  / 113   / %85.5
-       5    44  / 136   / %36.5        30  /  62   / %73.5
-       8    31  /  71   / %19.0        22  /  24   / %50.0
+       1   102  / 357   / %100         65  / 158   / %100
+       3    69  / 248   / %70.0        43  / 109   / %85.5
+       5    44  / 134   / %36.5        30  /  60   / %74.0
+       8    30  /  75   / %19.5        23  /  26   / %54.5
 
 Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 5'te yalnız 30
-soyut harf ve 62 kuralla düzenlilik %73.5'te tutunuyor (kalan istisnaların çoğu
+soyut harf ve 60 kuralla düzenlilik %74'te tutunuyor (kalan istisnaların çoğu
 zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %36.5'a,
-eşik 8'de %19'a çöküyor. Düzenli
+eşik 8'de %19.5'a çöküyor. Düzenli
 kurallar da gerçek ses denkliklerini kendiliğinden buluyor: k -> q (kadın ~ qadın),
 t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) gibi.

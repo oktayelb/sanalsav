@@ -14,7 +14,7 @@ import argparse
 import pathlib
 import sys
 
-from sesbiçim.harf import HARFLER
+from sesbiçim.harf import YAZILI_HARFLER
 from ondil.insa import seri_oluştur
 from ondil.rapor import rapor_üret
 
@@ -33,7 +33,9 @@ def liste_yükle(yol):
 
 
 def harfleri_doğrula(ad, sözcükler):
-    bilinmeyen = sorted({h for s in sözcükler for h in s if h not in HARFLER})
+    bilinmeyen = sorted(
+        {h for s in sözcükler for h in s if h not in YAZILI_HARFLER}
+    )
     if bilinmeyen:
         raise SystemExit(
             f"{ad}: sesbiçim tablolarında tanımsız harf(ler): "
@@ -50,10 +52,10 @@ def main(argv=None):
     p.add_argument("--rapor", default="rapor.txt", help="rapor dosyası")
     p.add_argument("--en-az-katman", type=int, default=0,
                    help="dallar için en az katman sayısı")
-    p.add_argument("--türetim-eşiği", type=int, default=3,
+    p.add_argument("--türetim-eşiği", type=int, default=1,
                    help="yeni bir Ön Dil harfi en az bu kadar konumu "
                         "kurtarmalı; altında kalan karşılıklıklar istisna "
-                        "sayılır (1 = sınırsız harf, eski davranış)")
+                        "sayılır (varsayılan 1 = tam düzenlilik garantisi)")
     p.add_argument("--tarama", action="store_true",
                    help="farklı eşik değerleri için harf/düzenlilik "
                         "ödünleşim tablosunu yazdır")

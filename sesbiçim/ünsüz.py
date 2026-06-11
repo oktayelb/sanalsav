@@ -52,6 +52,53 @@ BİÇİM_KOMŞULUĞU = {
     "h": ("gırtlaksıl", "sızıcı", False),
 }
 
+# Yazıda karşılığı olmayan ünsüz bileşimleri tek tek tanımlanmaz: özellik
+# uzayının tamamı hesaplamayla taranır (insan ses aygıtının üretemeyeceği
+# bileşimler dışarıda bırakılır). Bilinen bileşimlere IPA imi verilir,
+# kalanlar ad havuzundan im alır. Bu harfler hem ara durak hem de Ön Dil
+# harfi (çapa) olarak kullanılabilir (ör. k > ʔ > ∅, k > g > ŋ > n).
+
+
+def _olanaksız_mı(yer, biçim, ötümlü):
+    """Gerçekçilik kuralı: söylenemeyen bileşim, harf olamaz."""
+    if yer == "gırtlaksıl" and biçim not in ("patlamalı", "sızıcı"):
+        return True  # gırtlakta genizsil/akıcı/kayıcı/yarıkapantılı olmaz
+    if yer == "gırtlaksıl" and biçim == "patlamalı" and ötümlü:
+        return True  # kapalı gırtlak titreşemez (ötümlü hamza yok)
+    return False
+
+
+_IPA_İMLERİ = {
+    ("dişsil", "yarıkapantılı", False): "ʦ",   # ts
+    ("dişsil", "yarıkapantılı", True): "ʣ",    # dz
+    ("dişsil", "kayıcı", True): "ɹ",           # İngilizce r sesi
+    ("dişsil", "akıcı", False): "ɬ",           # ötümsüz yan akıcı (Galce ll)
+    ("damaksıl", "genizsil", True): "ŋ",       # ng
+    ("damaksıl", "akıcı", True): "ʎ",          # ly
+    ("dudaksıl", "kayıcı", False): "ʍ",        # hw
+    ("dudaksıl", "akıcı", True): "ʙ",          # dudak titremesi
+    ("gırtlaksıl", "patlamalı", False): "ʔ",   # gırtlak vuruşu (hamza)
+    ("gırtlaksıl", "sızıcı", True): "ɦ",       # ötümlü h
+}
+_AD_HAVUZU = ["φ", "ψ", "θ", "δ", "γ", "λ", "μ", "ν", "π", "σ", "ζ", "ω"]
+
+VARSAYIMSAL_ÜNSÜZLER = {}
+_yazılı_bileşimler = set(ÜNSÜZLER.values())
+_havuz_no = 0
+for _yer in YERLER:
+    for _biçim in BİÇİMLER:
+        for _ötümlü in (False, True):
+            _b = (_yer, _biçim, _ötümlü)
+            if _b in _yazılı_bileşimler or _olanaksız_mı(*_b):
+                continue
+            _ad = _IPA_İMLERİ.get(_b)
+            if _ad is None:
+                _ad = _AD_HAVUZU[_havuz_no]
+                _havuz_no += 1
+            VARSAYIMSAL_ÜNSÜZLER[_ad] = _b
+
+TÜM_ÜNSÜZLER = {**ÜNSÜZLER, **VARSAYIMSAL_ÜNSÜZLER}
+
 
 def ünsüz_komşu_mu(a, b):
     """İki ünsüz arasında tek adımlık doğal bir ses değişimi var mı?
@@ -59,8 +106,8 @@ def ünsüz_komşu_mu(a, b):
     Özellikleri özdeş harf çiftleri (k~q, l~r gibi) ile yalnız bir özelliği
     bir basamak değişen çiftler (k~g, p~f, t~k gibi) komşu sayılır.
     """
-    ya, ba, sa = ÜNSÜZLER[a]
-    yb, bb, sb = ÜNSÜZLER[b]
+    ya, ba, sa = TÜM_ÜNSÜZLER[a]
+    yb, bb, sb = TÜM_ÜNSÜZLER[b]
     yf = abs(YERLER.index(ya) - YERLER.index(yb))
     bf = 0 if ba == bb else (1 if frozenset((ba, bb)) in BİÇİM_KOMŞULUĞU else 2)
     sf = 0 if sa == sb else 1

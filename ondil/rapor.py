@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ön Dil serisi sonuç raporu üretimi."""
 
-from sesbiçim.harf import BOŞ, taban
+from sesbiçim.harf import BOŞ, SANAL_HARFLER, taban
 
 from .insa import DALLAR
 
@@ -98,7 +98,13 @@ def rapor_üret(seri):
     for w in seri.proto_kelimeler:
         for t in w:
             sıklık[t] = sıklık.get(t, 0) + 1
-    S.append("  temel harfler      : " + " ".join(temel))
+    sanal_küme = set(SANAL_HARFLER)
+    yazılı_temel = [t for t in temel if t not in sanal_küme]
+    sanal_temel = [t for t in temel if t in sanal_küme]
+    S.append("  temel harfler      : " + " ".join(yazılı_temel))
+    if sanal_temel:
+        S.append("  sanal harfler      : " + " ".join(sanal_temel)
+                 + "   (hiçbir yazıda yok; özellik uzayından kurulan sınıflar)")
     if türetilmiş:
         S.append("  türetilmiş harfler : " + " ".join(türetilmiş))
         S.append("")
