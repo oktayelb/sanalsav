@@ -59,6 +59,7 @@ BİÇİM_KOMŞULUĞU = {
     "t": ("dişsil", "patlamalı", False),
     "d": ("dişsil", "patlamalı", True),
     "n": ("dişsil", "genizsil", True),
+    "ţ": ("dişsil", "yarıkapantılı", False),  # [ts] (Romence ț, Gagavuzca/Sloven c)
     "s": ("dişsil", "sızıcı", False),
     "z": ("dişsil", "sızıcı", True),
     "l": ("dişsil", "yansıl", True),
@@ -72,6 +73,7 @@ BİÇİM_KOMŞULUĞU = {
     "g": ("artdamaksıl", "patlamalı", True),
     "x": ("artdamaksıl", "sızıcı", False),
     "ğ": ("artdamaksıl", "sızıcı", True),  # tarihsel /ɣ/: kayıcı değil sızıcı
+    "ñ": ("artdamaksıl", "genizsil", True),  # [ŋ] (Kazakça ñ; artdamak geniz)
     "q": ("küçükdilsil", "patlamalı", False),
     "h": ("gırtlaksıl", "sızıcı", False),
 }
