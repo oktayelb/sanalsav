@@ -17,3 +17,23 @@ sırasını izler (sıralı Swadesh çözümü). "#" ile başlayan satırlar yor
 için türkçe.txt ve ingilizce.txt Swadesh-100 listeleri eklenmiştir; eylemler Türkçede
 kök biçimiyle (iç, ye, gör...) verilmiştir ki -mek/-mak eki yapay kural üretmesin.
 Yazılış esaslıdır; okunuş kullanılmaz.
+
+MEVCUT DİLLER
+
+  türkçe, ingilizce, azerbaycanca, almanca, romence, kürtçe (Kurmancî),
+  arnavutça, türkmence, tacikçe.
+
+Herhangi iki dosya çift olarak verilebilir:
+  python3 ana.py diller/türkçe.txt diller/türkmence.txt
+
+YAZILIŞ NORMALİZASYONU
+
+Sesbiçim tabloları Latin tabanlıdır ve kısa ünlü uzayı doludur; bu yüzden tabloda
+karşılığı olmayan grafemler en yakın yazılı harfe çevrilir (her dosyanın başında
+belgelidir). Başlıca çeviriler: Almanca ß->ss; Romence ă->ə, â/î->ı, ș->ş, ț->ç;
+Kürtçe ê->e, î->i, û->u; Arnavutça ë->ə, ünlü y->ü (ikili harfler dh/gj/sh/...
+korunur); Türkmence ä->ə, ž->j, ň->n, y->ı, ý->y; Tacikçe Kiril'den Latin'e
+(ғ->ğ, қ->q, ҳ->h, х->x, ҷ->c, ч->ç, ш->ş). Bu listeler ilk taslaktır; sözcük
+seçimleri (özellikle eş anlamlılar ve eylem citation biçimleri) gözden geçirilebilir.
+
+NOT: harf sayısı bir akrabalık ölçüsü olabilir belki.
