@@ -20,6 +20,14 @@ from sesbiçim.harf import taban, ünlü_mü
 
 BİRLEŞTİRİCİ = " ve "  # iki-yanlı bağlam adlarını birleştiren sözcük
 
+# Bir ses yasası bir ORTAMA koşullanıyorsa o ortamın en az bu kadar tanığı
+# (örnek konumu) olmalı. Tek örneğe ortam uydurmak ezberdir; dilbilimsel
+# olarak düzenli ses değişimi birden çok örnekte görülmelidir. Desteği bu
+# eşiğin altında kalan bölünmeler bağlamla AYRILMAZ (None döner) — çağıran
+# o zaman koşulsuz temiz bir harf türetir (harf sayısı artabilir ama kural
+# tek bir kelimeyi ezberlemez).
+MIN_BAĞLAM_DESTEĞİ = 2
+
 
 def _başta(w, i):
     return i == 0
@@ -127,11 +135,18 @@ def _bağlam_ara(kendi, diğer, kaba=False):
     if not kendi or not diğer:
         return None
 
-    # A) kaba tekil atomlar (en genel)
+    # A) kaba tekil atomlar (en genel; ünlü/ünsüz/konum doğal sınıflardır,
+    # tek örnekte bile makul bir ses değişimi ortamıdır)
     for ad in (a for a, _ in _SOL_KABA + _SAĞ_KABA + _TEKİL_KABA):
         if _ayrı(_KABALAR[ad], kendi, diğer):
             return ad
     if kaba:
+        return None
+
+    # Özelleşmiş (harfe özgü / iki-yanlı) bağlamlar ancak yeterli tanık varsa:
+    # belirli bir komşu harfe ya da iki yana birden bağlı bir kuralı tek
+    # örneğe uydurmak ezberdir (kullanıcının işaret ettiği saçma kurallar).
+    if len(kendi) < MIN_BAĞLAM_DESTEĞİ:
         return None
 
     # B) harfe özgü tekil atomlar (kendi konumlarının komşu harflerinden)

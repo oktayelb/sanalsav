@@ -37,6 +37,7 @@ _SANAL_CEZA = 0.05
 _SANAL_KÜME = set(SANAL_HARFLER)
 
 from .hizalama import hizala
+from . import kurallar
 from .kurallar import ayır, ayır_biçimlerle, bağlam_işlevi, bağlam_özgüllük
 
 DALLAR = (0, 1)
@@ -992,6 +993,11 @@ def _proto_inceleme(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
 
 def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
                  türetim_eşiği=1, ön_dil_incelt=False):
+    # Özelleşmiş (harfe özgü / iki-yanlı) bağlam kuralları, tek bir kelimeyi
+    # ezberlememek için en az bu kadar örnekle desteklenmeli. Tutumluluk
+    # eşiğiyle ölçeklenir ama en az 2: bir ortama koşullanan ses yasasının
+    # birden çok tanığı olmalıdır.
+    kurallar.MIN_BAĞLAM_DESTEĞİ = max(2, türetim_eşiği)
     sözcükler = [(list(a), list(b)) for _, a, b in çiftler]
 
     hizalamalar = []
