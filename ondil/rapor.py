@@ -95,7 +95,8 @@ def rapor_üret(seri):
     )
     S.append(f"  doğum (tek harf > çok harf)     : {doğum_kuralı} kural, "
              f"{len(seri.doğum_olayları)} konum (yalnız uzun ünlüler)")
-    S.append(f"  ara katman ayrım harfi          : {seri.etiketli_sayısı} zincirde")
+    S.append(f"  ara katmanda doğan ayrım harfi  : {seri.etiketli_sayısı} "
+             f"(katmanlara dağılmış; ortak ön ek paylaşılır)")
     S.append(f"  istisna                         : {istisna} / {2 * n} türetim")
     S.append(f"  düzenlilik                      : %{düzenlilik:.1f}")
     S.append("")
@@ -124,14 +125,28 @@ def rapor_üret(seri):
         S.append("   ses değişimiyle türetmenin 'pahalı' olduğunu gösterir.)")
     S.append("")
 
-    # --- katman dağarcık boyutları ---
-    S.append("  Katman başına harf dağarcığı boyutu:")
+    # --- katman dağarcık boyutları (her katman bir "alt ön dil") ---
+    # Her katmanın kendi harf dağarcığı vardır; bir harfin ön dilde bulunması
+    # gerekmez, gerçekte ilk kullanıldığı (doğduğu) katmanda sayılır. Aşağıda
+    # her katmanın harf sayısı ve o katmanda DOĞAN (önceki katmanda olmayan)
+    # harf sayısı verilir.
+    S.append("  Katman başına harf dağarcığı (her katman bir alt ön dil):")
+    seri_harfleri = set()
     for dal, ad in ((0, ad0), (1, ad1)):
-        boyutlar = []
+        katman_kümeleri = []
         for j in range(seri.katman[dal] + 1):
             harfler = {t for kt in seri.türevler for t in kt[dal][j]}
-            boyutlar.append(str(len(harfler)))
-        S.append(f"    {ad:<10}: " + " > ".join(boyutlar))
+            katman_kümeleri.append(harfler)
+            seri_harfleri |= harfler
+        parçalar = []
+        for j, küme in enumerate(katman_kümeleri):
+            if j == 0:
+                parçalar.append(str(len(küme)))
+            else:
+                doğan = len(küme - katman_kümeleri[j - 1])
+                parçalar.append(f"{len(küme)} (+{doğan} doğan)")
+        S.append(f"    {ad:<10}: " + " > ".join(parçalar))
+    S.append(f"    seri boyunca toplam ayrı harf: {len(seri_harfleri)}")
     S.append("")
 
     S.append("-" * 72)

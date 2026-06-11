@@ -62,6 +62,24 @@ def bağlam_işlevi(ad):
     return _İŞLEVLER[ad]
 
 
+def ayır_biçimlerle(kendi, diğer):
+    """ayır'ın hazır (biçim, indeks) çiftleriyle çalışan kardeşi.
+
+    `kendi` ve `diğer`, doğrudan (kelime_biçimi, konum) çiftleridir; proto
+    konumları yerine HERHANGİ bir katmanın biçimleri verilebilir. Böylece
+    aynı bağlam koşulları ara Ön Dil katmanlarında da denenir (bir ayrım
+    proto'da değil, sesler kaydıktan sonraki bir alt dilde belirebilir).
+    """
+    if not kendi or not diğer:
+        return None
+    for ad, f in BAĞLAMLAR[:-1]:
+        if all(f(w, i) for w, i in kendi) and not any(
+            f(w, i) for w, i in diğer
+        ):
+            return ad
+    return None
+
+
 def ayır(kendi_yerleri, diğer_yerleri, protolar):
     """Bir kural grubunu diğerlerinden ayıran tek bağlam koşulu arar.
 

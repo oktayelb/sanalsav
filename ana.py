@@ -59,6 +59,10 @@ def main(argv=None):
     p.add_argument("--tarama", action="store_true",
                    help="farklı eşik değerleri için harf/düzenlilik "
                         "ödünleşim tablosunu yazdır")
+    p.add_argument("--ön-dil-incelt", action="store_true",
+                   help="alt katmanda ayrışabilen türetilmiş Ön Dil "
+                        "harflerini tabanına geri katarak ön dili incelt "
+                        "(düzenlilik korunur; yavaştır, kazanç genelde küçük)")
     args = p.parse_args(argv)
 
     ad1 = args.ad1 or pathlib.Path(args.dil1).stem.capitalize()
@@ -101,7 +105,7 @@ def main(argv=None):
         print()
 
     seri = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman,
-                        args.türetim_eşiği)
+                        args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
     metin = rapor_üret(seri)
 
     pathlib.Path(args.rapor).write_text(metin + "\n", encoding="utf-8")

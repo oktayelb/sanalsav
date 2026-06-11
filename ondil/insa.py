@@ -37,7 +37,7 @@ _SANAL_CEZA = 0.05
 _SANAL_KÜME = set(SANAL_HARFLER)
 
 from .hizalama import hizala
-from .kurallar import BAĞLAM_SIRASI, ayır, bağlam_işlevi
+from .kurallar import BAĞLAM_SIRASI, ayır, ayır_biçimlerle, bağlam_işlevi
 
 DALLAR = (0, 1)
 
@@ -54,6 +54,8 @@ class Grup:
     zincir: list = None  # [token, ara..., refleks]; kimliğe eşitse None
     etiketli: bool = False
     yedek_yolları: list = None  # çakışmada denenecek eşdeğer doğal yollar
+    etiketli_konum: set = None  # zincirde alt simge takılmış ara düğüm konumları
+    katman_bağlamı: dict = None  # {katman_no: bağlam}: ara katmanda koşullu kural
 
 
 @dataclass
@@ -558,7 +560,12 @@ def _katman_tablosu(gruplar, katman):
             for j in range(1, len(g.zincir)):
                 if g.zincir[j - 1] == g.zincir[j]:
                     continue  # doğum zinciri dolgusu: bu katmanda durulur
-                bağlam = g.bağlam if ilk else "her yerde"
+                if g.katman_bağlamı and j in g.katman_bağlamı:
+                    # ara katmanda bulunmuş koşul (proto bağlamı değil, o
+                    # katmanın biçimlerinden çıkan ayrım)
+                    bağlam = g.katman_bağlamı[j]
+                else:
+                    bağlam = g.bağlam if ilk else "her yerde"
                 ilk = False
                 anahtar = (g.zincir[j - 1], g.zincir[j], bağlam)
                 kural = tablo[j].get(anahtar)
@@ -592,7 +599,15 @@ def _gezinge(g, token, L):
 
 def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezler,
                      katman, tablolar, düzensiz):
-    çakışan = set()
+    """Kör türetimde yanlış sonuç veren grupları, EN SIĞ hata katmanlarıyla
+    döndürür: {grup_kimliği: en_küçük_hata_katmanı}.
+
+    Hata katmanı j ise, o gruba özgü ayrım j-1 konumundaki ara düğümü
+    damgalamakla yapılır; böylece etiket zincirin tamamına değil yalnız
+    ayrımın gerektiği derinliğe basılır (ön ek paylaşılır).
+    """
+    çakışan = {}
+    kelime_gez = {}  # (kno, dal) -> (gezingeler, grup_sırası, atla)
     met_kelime = {}
     for kno, sütun, _ in metatezler:
         met_kelime.setdefault(kno, []).append(sütun)
@@ -618,6 +633,7 @@ def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezle
                     gezingeler[s], gezingeler[s + 1] = gezingeler[s + 1], gezingeler[s]
                     grup_sırası[s], grup_sırası[s + 1] = grup_sırası[s + 1], grup_sırası[s]
                     atla[s], atla[s + 1] = atla[s + 1], atla[s]
+            kelime_gez[(kno, dal)] = (gezingeler, grup_sırası, atla)
             for j in range(1, katman[dal] + 1):
                 konumlar = [p for p in range(len(gezingeler))
                             if gezingeler[p][j - 1] != BOŞ]
@@ -629,10 +645,71 @@ def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezle
                     kural = _kural_seç(tablolar[dal].get(j, []), w, idx)
                     bulunan = kural.hedef if kural else w[idx]
                     if bulunan != beklenen:
+                        # Hem bu konumun grubu hem de yanlış seçilen kuralı
+                        # üreten gruplar j. katmanda çakışır; ikisi de o
+                        # katmanda damgalanabilir (kısa/kimlik zincirli grup
+                        # damgalanamadığında, o düğümden GEÇEN uzun zincir
+                        # damgalanarak ayrım sağlanır).
+                        adaylar = [grup_sırası[p]]
                         if kural:
-                            çakışan.update(id(g2) for g2 in kural.gruplar)
-                        çakışan.add(id(grup_sırası[p]))
-    return çakışan
+                            adaylar.extend(kural.gruplar)
+                        for g2 in adaylar:
+                            if g2 is None:
+                                continue
+                            önceki = çakışan.get(id(g2))
+                            çakışan[id(g2)] = j if önceki is None else min(önceki, j)
+    return çakışan, kelime_gez
+
+
+def _ara_katman_dene(g, j, kelime_gez):
+    """Hata katmanı j'deki çakışmayı, ETİKETLEMEDEN, o katmanın biçimleri
+    üzerinde bir bağlam koşuluyla ayırmayı dener.
+
+    g'nin j. katmandaki geçişi (kaynak s -> hedef t); aynı kaynaktan FARKLI
+    hedefe giden konumlardan ayıran bir bağlam, layer-(j-1) biçimleri üzerinde
+    aranır. Bulunursa s->t geçişine sahip bütün gruplara o katman için bağlam
+    yazılır (kural koşullu olur, yeni harf doğmaz). Böylece ayrım proto'da
+    değil, gerçekte ayrıştığı alt dilde belirir.
+    """
+    z = g.zincir or [g.token]
+    s = z[min(j - 1, len(z) - 1)]
+    t = z[min(j, len(z) - 1)]
+    if s == t:
+        return False  # bu katmanda g zaten durağan
+    if g.katman_bağlamı and j in g.katman_bağlamı:
+        return False  # bu katmanda bağlam zaten denendi: ilerleme yok
+    kendi, diğer = [], []
+    for (kno, dal), (gez, gs, atla) in kelime_gez.items():
+        if dal != g.dal:
+            continue
+        konumlar = [p for p in range(len(gez)) if gez[p][j - 1] != BOŞ]
+        w = [gez[p][j - 1] for p in konumlar]
+        for idx, p in enumerate(konumlar):
+            if atla[p] or gez[p][j - 1] != s:
+                continue
+            (kendi if gez[p][j] == t else diğer).append((w, idx))
+    bağlam = ayır_biçimlerle(kendi, diğer)
+    if bağlam is None:
+        return False
+    for g2 in kelime_gez_grupları(kelime_gez, g.dal, j, s, t):
+        if g2.katman_bağlamı is None:
+            g2.katman_bağlamı = {}
+        g2.katman_bağlamı[j] = bağlam
+    return True
+
+
+def kelime_gez_grupları(kelime_gez, dal, j, s, t):
+    """j. katmanda s->t geçişine sahip (çakışan değil) bütün grupları toplar."""
+    bulunan = {}
+    for (kno, d), (gez, gs, atla) in kelime_gez.items():
+        if d != dal:
+            continue
+        for p in range(len(gez)):
+            if atla[p] or gs[p] is None:
+                continue
+            if gez[p][j - 1] == s and gez[p][j] == t:
+                bulunan[id(gs[p])] = gs[p]
+    return list(bulunan.values())
 
 
 def _yol_değiştir(g):
@@ -653,17 +730,32 @@ def _yol_değiştir(g):
 
 
 def _etiketle(gruplar, sayaç):
-    """Çakışan zincirlerin ara harflerine ayırt edici alt simge takılır."""
-    def uygula(g):
-        if g.etiketli or not g.zincir or len(g.zincir) <= 2:
+    """Çakışan bir zincirin YALNIZ hata katmanındaki ara düğümüne alt simge
+    takar (zincirin tamamına değil): ayrım, gerektiği derinlikte doğar, daha
+    sığ katmanlar paylaşılmaya devam eder. Damga bir katmanda yetmezse
+    (öncül kural artık damgalı düğümü üretemiyorsa) çakışma döngüsü bir
+    sonraki turda bir sol komşuyu da damgalar; böylece etiket olabildiğince
+    derinde tutulur ve ancak zorlanınca ön dile doğru genişler.
+    """
+    def uygula(g, hata_katmanı):
+        if not g.zincir or len(g.zincir) <= 2:
             return False
-        yeni = [g.zincir[0]]
-        for h in g.zincir[1:-1]:
-            b = taban(h)
-            sayaç[b] = sayaç.get(b, 1) + 1
-            yeni.append(b + alt_yazı(sayaç[b]))
-        yeni.append(g.zincir[-1])
-        g.zincir = yeni
+        if g.etiketli_konum is None:
+            g.etiketli_konum = set()
+        # Hata veren kuralın kaynak düğümü; zincirin gerçek orta-düğüm
+        # aralığına kıstırılır (kısa zincirler son düğüme sabitlendiği için
+        # hata katmanı boyu aşabilir). Düğüm zaten damgalıysa bir sol komşuya
+        # kayılır: ayrım olabildiğince derinde tutulur, gerekirse ön dile
+        # doğru genişler; en kötü durumda eski tam-damgalamaya iner.
+        konum = min(hata_katmanı - 1, len(g.zincir) - 2)
+        while konum >= 1 and konum in g.etiketli_konum:
+            konum -= 1
+        if konum < 1:
+            return False  # bütün ara düğümler damgalı: ilerleme yok
+        b = taban(g.zincir[konum])
+        sayaç[b] = sayaç.get(b, 1) + 1
+        g.zincir[konum] = b + alt_yazı(sayaç[b])
+        g.etiketli_konum.add(konum)
         g.etiketli = True
         return True
 
@@ -708,11 +800,196 @@ def kör_türet(proto, dal, tablolar, katman, metatez_kuralları):
 
 
 # ---------------------------------------------------------------------------
+# 7. aşama: ön dil inceltme (alt katmana erteleme)
+# ---------------------------------------------------------------------------
+
+_RAKAM_TERS = {a: str(i) for i, a in enumerate("₀₁₂₃₄₅₆₇₈₉")}
+
+
+def _altsayı(tok):
+    s = "".join(_RAKAM_TERS[c] for c in tok if c in _RAKAM_TERS)
+    return int(s) if s else 1
+
+
+def _sayaç_tohumu(atama):
+    """Etiket sayaçlarını mevcut belirteçlerle çakışmayacak biçimde tohumlar."""
+    sayaç = {}
+    for tok in set(atama.values()):
+        b = taban(tok)
+        sayaç[b] = max(sayaç.get(b, 1), _altsayı(tok) if tok != b else 1)
+    return sayaç
+
+
+def _gruplar_kur(atama, korr_yerleri, hizalamalar, düzensiz):
+    """Sabit bir atamadan grupları kurar; ayrışmayan çakışmayı TÜRETMEDEN
+    erteler (azınlık refleks "her yerde" kalır, alt katmanda çözülür).
+
+    _çakışma_çöz'ün son aşamasının türetimsiz kardeşidir: yeni Ön Dil harfi
+    üretmez, yalnız proto'da ayrışabilen refleksleri bağlamlar. Ayrışmayanlar
+    aşağı bırakılır; _tamamla'daki çözüm döngüsü (ara katman bağlamı / etiket)
+    halleder, halledemezse istisna doğar ve birleşme reddedilir.
+    """
+    protolar = _proto_kelimeler(hizalamalar, atama)
+    kova = {}
+    for ç, tok in atama.items():
+        for dal in DALLAR:
+            if ç in düzensiz[dal]:
+                continue
+            kova.setdefault((tok, dal), {}).setdefault(ç[dal], set()).add(ç)
+
+    def sıklık(çler):
+        return sum(len(korr_yerleri[ç]) for ç in çler)
+
+    gruplar = []
+    for (tok, dal) in sorted(kova):
+        refgrup = kova[(tok, dal)]
+        sıralı = sorted(refgrup.items(), key=lambda kv: (-sıklık(kv[1]), kv[0]))
+        for sıra_no, (refleks, çler) in enumerate(sıralı):
+            if sıra_no == 0:
+                bağlam = "her yerde"
+            else:
+                kendi = [y for ç in çler for y in korr_yerleri[ç]]
+                diğer = [
+                    y for r2, ç2ler in refgrup.items() if r2 != refleks
+                    for ç2 in ç2ler for y in korr_yerleri[ç2]
+                ]
+                bağlam = ayır(kendi, diğer, protolar) or "her yerde"
+            gruplar.append(
+                Grup(token=tok, dal=dal, refleks=refleks, bağlam=bağlam,
+                     korrlar=tuple(sorted(çler)))
+            )
+    return gruplar
+
+
+def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
+             çiftler, en_az_katman):
+    """Bir atamadan tam seriyi kurup kör türetimle doğrular.
+
+    Döner: {gruplar, katman, tablolar, türevler, istisnalar, protolar,
+    etiketli_sayısı, met_kuralları}. Ön dil inceltme bunu aday atamalar
+    üzerinde çağırıp istisna sıfır kalan birleşmeleri kabul eder.
+    """
+    sayaç = _sayaç_tohumu(atama)
+    protolar = _proto_kelimeler(hizalamalar, atama)
+    gruplar = _gruplar_kur(atama, korr_yerleri, hizalamalar, düzensiz)
+    for g in gruplar:
+        g.zincir = _zincir_kur(g)
+    katman = [
+        max(max((len(g.zincir) - 1 for g in gruplar
+                 if g.dal == dal and g.zincir), default=0), en_az_katman)
+        for dal in DALLAR
+    ]
+    for g in gruplar:
+        if g.zincir and dizi_mi(g.zincir[-1]):
+            eksik = katman[g.dal] - (len(g.zincir) - 1)
+            if eksik > 0:
+                g.zincir = (g.zincir[:-1]
+                            + [g.zincir[-2]] * eksik + [g.zincir[-1]])
+    grup_bul = {(g.token, g.dal, g.refleks): g for g in gruplar}
+    etiket_uygula = _etiketle(gruplar, sayaç)
+    etiketli_sayısı = 0
+    while True:
+        tablolar = _katman_tablosu(gruplar, katman)
+        çakışan, kelime_gez = _çakışmaları_bul(
+            len(çiftler), hizalamalar, atama, grup_bul, metatezler,
+            katman, tablolar, düzensiz,
+        )
+        if not çakışan:
+            break
+        değişiklik = False
+        for g in gruplar:
+            if id(g) not in çakışan:
+                continue
+            j = çakışan[id(g)]
+            if _ara_katman_dene(g, j, kelime_gez):
+                değişiklik = True
+            elif _yol_değiştir(g):
+                değişiklik = True
+            elif etiket_uygula(g, j):
+                değişiklik = True
+                etiketli_sayısı += 1
+        if not değişiklik:
+            break
+    tablolar = _katman_tablosu(gruplar, katman)
+    met_kuralları = sorted({çift for _, _, çift in metatezler})
+
+    türevler = []
+    istisnalar = []
+    for kno, (anlam, a, b) in enumerate(çiftler):
+        kelime_türevi = []
+        for dal, hedef_sözcük in ((0, a), (1, b)):
+            biçimler = kör_türet(
+                protolar[kno], dal, tablolar[dal], katman[dal],
+                met_kuralları if dal == 1 else [],
+            )
+            if "".join(biçimler[-1]) != hedef_sözcük:
+                istisnalar.append((kno, dal, hedef_sözcük, "".join(biçimler[-1])))
+            kelime_türevi.append(biçimler)
+        türevler.append(kelime_türevi)
+
+    return {
+        "gruplar": gruplar, "katman": katman, "tablolar": tablolar,
+        "türevler": türevler, "istisnalar": istisnalar, "protolar": protolar,
+        "etiketli_sayısı": etiketli_sayısı, "met_kuralları": met_kuralları,
+    }
+
+
+def _proto_say(atama):
+    return len(set(atama.values()))
+
+
+def _proto_inceleme(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
+                    çiftler, en_az_katman, taban_sonuç):
+    """Türetilmiş Ön Dil harflerini açgözlülükle TABANINA (ya da kardeş
+    belirtece) geri katmayı dener; yalnız istisna sıfır kalan ve ön dil
+    harfini gerçekten azaltan birleşmeleri tutar.
+
+    Böylece "sırf alt katmanda ayrışacağı için" ön dilde duran harfler
+    silinir; ayrım, gerçekte gerektiği katmanda (ara katman bağlamı/etiket
+    ile) doğar. Kör doğrulayıcı güvencesi: kabul edilen her atama %100
+    düzenlidir, dolayısıyla seri hiçbir zaman bozulmaz.
+    """
+    en_iyi_atama = dict(atama)
+    en_iyi_sonuç = taban_sonuç
+    while True:
+        türetilmişler = sorted(
+            {t for t in en_iyi_atama.values() if t != taban(t)},
+            key=lambda t: (sum(1 for x in en_iyi_atama.values() if x == t), t),
+        )
+        kabul = False
+        for Y in türetilmişler:
+            if Y not in set(en_iyi_atama.values()):
+                continue  # önceki birleşmeyle gitmiş olabilir
+            b = taban(Y)
+            kardeşler = sorted(
+                {t for t in en_iyi_atama.values()
+                 if taban(t) == b and t != Y},
+                key=lambda t: (t != b, t),  # önce taban harfin kendisi
+            )
+            for konak in kardeşler:
+                aday = {ç: (konak if x == Y else x)
+                        for ç, x in en_iyi_atama.items()}
+                if _proto_say(aday) >= _proto_say(en_iyi_atama):
+                    continue
+                sonuç = _tamamla(aday, düzensiz, korr_yerleri, hizalamalar,
+                                 metatezler, çiftler, en_az_katman)
+                if not sonuç["istisnalar"]:
+                    en_iyi_atama, en_iyi_sonuç = aday, sonuç
+                    kabul = True
+                    break
+            if kabul:
+                break  # taban değişti: baştan tara
+        if not kabul:
+            break
+    return en_iyi_atama, en_iyi_sonuç
+
+
+# ---------------------------------------------------------------------------
 # ana akış
 # ---------------------------------------------------------------------------
 
 def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
-                 türetim_eşiği=1):
+                 türetim_eşiği=1, ön_dil_incelt=False):
     sözcükler = [(list(a), list(b)) for _, a, b in çiftler]
 
     hizalamalar = []
@@ -735,74 +1012,39 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
     sayaç = {}
     # 1. aşama: sıfırdan soyut harf kurma (kümeleme)
     atama = _kümele(korr_yerleri, hizalamalar, sayaç, türetim_eşiği)
-    # 2. aşama: kalan çakışmaların çözümü (bağlam / konak / türetim)
-    gruplar, türetilmiş, protolar, düzensiz = _çakışma_çöz(
+    # 2. aşama: kalan çakışmaların çözümü (bağlam / konak / türetim).
+    # Burada tam çözülmüş (istisnasız) bir taban atama elde edilir.
+    _g, türetilmiş, _p, düzensiz = _çakışma_çöz(
         atama, korr_yerleri, hizalamalar, sayaç, türetim_eşiği
     )
 
-    for g in gruplar:
-        g.zincir = _zincir_kur(g)
+    # 3. aşama: taban seriyi kur (atama artık türetilmiş harfleri içeriyor)
+    taban_sonuç = _tamamla(atama, düzensiz, korr_yerleri, hizalamalar,
+                           metatezler, çiftler, en_az_katman)
 
-    katman = [
-        max(
-            max((len(g.zincir) - 1 for g in gruplar
-                 if g.dal == dal and g.zincir), default=0),
-            en_az_katman,
+    # 4. aşama (opsiyonel): ön dili incelt — alt katmanda ayrışabilen
+    # türetilmiş harfleri tabanına geri katıp ayrımı gerçekte gerektiği
+    # katmana ertele (yalnız istisna sıfır kalan birleşmeler kabul edilir;
+    # düzenlilik bozulmaz). Pahalı (her aday için tam yeniden kurma) olduğundan
+    # varsayılan kapalıdır; ön dil karşıtlıklarının çoğu katman 1'de hemen
+    # ayrıştığından (indirgenemez proto karşıtlığı) kazanç genelde küçüktür.
+    if ön_dil_incelt:
+        atama, sonuç = _proto_inceleme(
+            atama, düzensiz, korr_yerleri, hizalamalar, metatezler, çiftler,
+            en_az_katman, taban_sonuç,
         )
-        for dal in DALLAR
-    ]
+    else:
+        sonuç = taban_sonuç
 
-    # Doğum (tek harften çok harf) adımı her zaman dalın SON katmanına
-    # yerleştirilir: harf sayısı katman ortasında değişirse kör doğrulamanın
-    # konum eşlemesi bozulur. Aradaki katmanlar kimlik adımıyla doldurulur
-    # (_katman_tablosu kimlik adımlarına kural üretmez).
-    for g in gruplar:
-        if g.zincir and dizi_mi(g.zincir[-1]):
-            eksik = katman[g.dal] - (len(g.zincir) - 1)
-            if eksik > 0:
-                g.zincir = (g.zincir[:-1]
-                            + [g.zincir[-2]] * eksik + [g.zincir[-1]])
-
-    grup_bul = {(g.token, g.dal, g.refleks): g for g in gruplar}
-    etiket_uygula = _etiketle(gruplar, sayaç)
-    etiketli_sayısı = 0
-    while True:
-        tablolar = _katman_tablosu(gruplar, katman)
-        çakışan = _çakışmaları_bul(
-            len(çiftler), hizalamalar, atama, grup_bul, metatezler,
-            katman, tablolar, düzensiz,
-        )
-        if not çakışan:
-            break
-        değişiklik = False
-        for g in gruplar:
-            if id(g) not in çakışan:
-                continue
-            if _yol_değiştir(g):  # önce eşdeğer doğal yol dene
-                değişiklik = True
-            elif etiket_uygula(g):  # son çare: ara harf etiketi
-                değişiklik = True
-                etiketli_sayısı += 1
-        if not değişiklik:
-            break  # ayrıştırılamayan kalıntı; istisna olarak raporlanır
-
-    tablolar = _katman_tablosu(gruplar, katman)
-    met_kuralları = sorted({çift for _, _, çift in metatezler})
-
-    türevler = []
-    istisnalar = []
-    for kno, (anlam, a, b) in enumerate(çiftler):
-        kelime_türevi = []
-        for dal, hedef_sözcük in ((0, a), (1, b)):
-            biçimler = kör_türet(
-                protolar[kno], dal, tablolar[dal], katman[dal],
-                met_kuralları if dal == 1 else [],
-            )
-            sonuç = "".join(biçimler[-1])
-            if sonuç != hedef_sözcük:
-                istisnalar.append((kno, dal, hedef_sözcük, sonuç))
-            kelime_türevi.append(biçimler)
-        türevler.append(kelime_türevi)
+    gruplar = sonuç["gruplar"]
+    katman = sonuç["katman"]
+    tablolar = sonuç["tablolar"]
+    türevler = sonuç["türevler"]
+    istisnalar = sonuç["istisnalar"]
+    protolar = sonuç["protolar"]
+    etiketli_sayısı = sonuç["etiketli_sayısı"]
+    # ön dilde fiilen kalan türetilmiş harfler (inceltmeden sonra)
+    türetilmiş = sorted({t for t in atama.values() if t != taban(t)})
 
     return Seri(
         dal_adları=dal_adları,
