@@ -136,6 +136,168 @@ def _proto_kelimeler(hizalamalar, atama):
 # sayısını) uzatır; 0.5 ikisini dengeler.
 GEVŞEKLİK = 0.5
 
+# Gerçekçilik sınırı: bir Ön Dil harfinin herhangi bir refleksi, harfin
+# çapasından en çok bu kadar doğal adım uzakta olabilir.
+EN_UZUN_YOL = 4
+
+
+def _çapa_bul(korrlar, korr_yerleri):
+    """Kümedeki BÜTÜN reflekslere EN_UZUN_YOL içinde bağlanan en ucuz çapa.
+
+    Çapa, soyut Ön Dil harfinin özellik uzayındaki yeridir; ses
+    değişimlerinin gerçekçi kalmasını sağlar. Bulunamazsa küme olamaz.
+    """
+    en_iyi, en_puan = None, None
+    for p in HARFLER:
+        puan = 0.0
+        uygun = True
+        for ç in korrlar:
+            d0, d1 = uzaklık(p, ç[0]), uzaklık(p, ç[1])
+            if max(d0, d1) > EN_UZUN_YOL:
+                uygun = False
+                break
+            puan += len(korr_yerleri[ç]) * (d0 + d1)
+        if uygun and (en_puan is None or (puan, p) < (en_puan, en_iyi)):
+            en_iyi, en_puan = p, puan
+    return en_iyi
+
+
+def _birleşebilir(k1, k2, korr_yerleri, protolar):
+    """İki küme tek soyut harfte kurallı yaşayabilir mi? Çapasını döndürür."""
+    korrlar = sorted(k1["korrlar"] | k2["korrlar"])
+    çapa = _çapa_bul(korrlar, korr_yerleri)
+    if çapa is None:
+        return None
+
+    def sıklık(çler):
+        return sum(len(korr_yerleri[ç]) for ç in çler)
+
+    for dal in DALLAR:
+        gruplar = {}
+        for ç in korrlar:
+            gruplar.setdefault(ç[dal], []).append(ç)
+        if len(gruplar) < 2:
+            continue
+        sıralı = sorted(gruplar.items(), key=lambda kv: (-sıklık(kv[1]), kv[0]))
+        for refleks, çler in sıralı[1:]:
+            kendi = [y for ç in çler for y in korr_yerleri[ç]]
+            diğer = [
+                y
+                for r2, ç2ler in gruplar.items()
+                if r2 != refleks
+                for ç2 in ç2ler
+                for y in korr_yerleri[ç2]
+            ]
+            if ayır(kendi, diğer, protolar) is None:
+                return None
+    return çapa
+
+
+def _kümele(korr_yerleri, hizalamalar, sayaç, eşik):
+    """Karşılıklıkları en az sayıda SOYUT Ön Dil harfinde toplar.
+
+    Ön Dil harfleri çocuk alfabelerinden kopyalanmaz: sistem sıfır harfle
+    başlar (her karşılıklık türü kendi kümesidir) ve kurallı biçimde bir
+    arada yaşayabilen kümeler açgözlü olarak birleştirilir. Bir harf,
+    böyle bir kümenin kendisidir; çapası yalnız gerçekçilik içindir.
+    Toplam sıklığı eşik altında kalan kümeler kendi harfini alamaz:
+    konumları en yakın sağ kalan harfe ev sahipliği verilir, kaderlerini
+    (kurallı üyelik / bağlam / istisna) dal bazında 2. aşama belirler.
+    """
+    sıra = sorted(korr_yerleri, key=lambda ç: (-len(korr_yerleri[ç]), ç))
+    kümeler = [{"korrlar": {ç}, "çapa": _aday_seç(ç)} for ç in sıra]
+
+    def geçici_ad(ki):
+        return kümeler[ki]["çapa"] + alt_yazı(9000 + ki)
+
+    atama = {}
+    for ki, k in enumerate(kümeler):
+        for ç in k["korrlar"]:
+            atama[ç] = geçici_ad(ki)
+    protolar = _proto_kelimeler(hizalamalar, atama)
+
+    def yeniden_adlandır(ki):
+        tok = geçici_ad(ki)
+        for ç in kümeler[ki]["korrlar"]:
+            atama[ç] = tok
+            for kno, s in korr_yerleri[ç]:
+                protolar[kno][s] = tok
+
+    canlı = set(range(len(kümeler)))
+    hak = 20000  # güvenlik sınırı
+    değişti = True
+    while değişti and hak > 0:
+        değişti = False
+        # yalnız en az bir refleksi paylaşan kümeler birleşmeyi dener
+        kova = {}
+        for ki in sorted(canlı):
+            for ç in kümeler[ki]["korrlar"]:
+                for dal in DALLAR:
+                    kova.setdefault((dal, ç[dal]), set()).add(ki)
+        for anahtar in sorted(kova):
+            ortaklar = sorted(kova[anahtar])
+            for x, i in enumerate(ortaklar):
+                if i not in canlı:
+                    continue
+                for j in ortaklar[x + 1:]:
+                    if j not in canlı or i not in canlı or hak <= 0:
+                        continue
+                    hak -= 1
+                    çapa = _birleşebilir(
+                        kümeler[i], kümeler[j], korr_yerleri, protolar
+                    )
+                    if çapa is None:
+                        continue
+                    kümeler[i]["korrlar"] |= kümeler[j]["korrlar"]
+                    kümeler[i]["çapa"] = çapa
+                    canlı.discard(j)
+                    yeniden_adlandır(i)
+                    değişti = True
+
+    def küme_sıklığı(ki):
+        return sum(len(korr_yerleri[ç]) for ç in kümeler[ki]["korrlar"])
+
+    # tutumluluk: eşik altı kümeler kendi harfini alamaz; korrları en yakın
+    # sağ kalan harfe ev sahipliği verilir. Orada uyum/bağlam bulurlarsa
+    # kurallı yaşarlar; çatışırlarsa kararı dal bazında 2. aşama verir.
+    kalanlar = [ki for ki in sorted(canlı) if küme_sıklığı(ki) >= eşik]
+    if not kalanlar:  # küçük girdilerde emniyet
+        kalanlar = sorted(canlı)
+
+    # kalıcı adlar: çapa harfi; aynı çapayı paylaşan ek kümeler alt simge alır
+    adet = {}
+    son_ad = {}
+    sıralı = sorted(
+        kalanlar,
+        key=lambda ki: (kümeler[ki]["çapa"], -küme_sıklığı(ki),
+                        min(kümeler[ki]["korrlar"])),
+    )
+    for ki in sıralı:
+        ç_ = kümeler[ki]["çapa"]
+        adet[ç_] = adet.get(ç_, 0) + 1
+        tok = ç_ if adet[ç_] == 1 else ç_ + alt_yazı(adet[ç_])
+        if adet[ç_] > 1:
+            sayaç[ç_] = max(sayaç.get(ç_, 1), adet[ç_])
+        son_ad[ki] = tok
+        for ç in kümeler[ki]["korrlar"]:
+            atama[ç] = tok
+
+    # düşen kümelerin konumları en yakın sağ kalan harfe ev sahipliği verilir
+    for ki in sorted(canlı):
+        if ki in kalanlar:
+            continue
+        for ç in kümeler[ki]["korrlar"]:
+            ev = min(
+                kalanlar,
+                key=lambda k2: (
+                    uzaklık(kümeler[k2]["çapa"], ç[0])
+                    + uzaklık(kümeler[k2]["çapa"], ç[1]),
+                    son_ad[k2],
+                ),
+            )
+            atama[ç] = son_ad[ev]
+    return atama
+
 
 def _konak_adayları(çler, korr_yerleri, kullanılan_tokenlar):
     """Bir kural grubunun taşınabileceği konak harfler, puan sırasıyla.
@@ -164,7 +326,8 @@ def _konak_adayları(çler, korr_yerleri, kullanılan_tokenlar):
 # 3. aşama: çakışma çözümü (önce bağlam, sonra harf türetimi)
 # ---------------------------------------------------------------------------
 
-def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1):
+def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1,
+                 ön_düzensiz=None):
     """Aynı Ön Dil harfi bir dalda iki ayrı sese gidiyorsa ayrıştırır.
 
     Sıklığı en yüksek refleks "her yerde" kuralı olur; diğerleri için
@@ -178,7 +341,8 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1):
        seyrek gruplar kural dışı (istisna) bırakılır.
     """
     türetilmiş = []
-    düzensiz = [set(), set()]  # dal başına kural dışı bırakılan karşılıklıklar
+    # dal başına kural dışı bırakılan karşılıklıklar (kümelemeden devralınır)
+    düzensiz = [set(d) for d in ön_düzensiz] if ön_düzensiz else [set(), set()]
     denenmiş = {}  # korr -> bu korrun başarısız olduğu konak harfler
     deneme_hakkı = 4000  # güvenlik sınırı; aşılırsa doğrudan türetime dönülür
 
@@ -473,9 +637,10 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
         for s, ç in enumerate(sütunlar):
             korr_yerleri.setdefault(ç, []).append((kno, s))
 
-    atama = {ç: _aday_seç(ç) for ç in korr_yerleri}
-
     sayaç = {}
+    # 1. aşama: sıfırdan soyut harf kurma (kümeleme)
+    atama = _kümele(korr_yerleri, hizalamalar, sayaç, türetim_eşiği)
+    # 2. aşama: kalan çakışmaların çözümü (bağlam / konak / türetim)
     gruplar, türetilmiş, protolar, düzensiz = _çakışma_çöz(
         atama, korr_yerleri, hizalamalar, sayaç, türetim_eşiği
     )

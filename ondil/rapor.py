@@ -42,10 +42,13 @@ def rapor_üret(seri):
     türetilmiş = [t for t in proto_dağarcık if t != taban(t)]
     kural_sayısı = []
     bağlamlı = []
+    korunma = []
     for dal in DALLAR:
         kurallar = [k for j in seri.tablolar[dal] for k in seri.tablolar[dal][j]]
-        kural_sayısı.append(len(kurallar))
-        bağlamlı.append(sum(1 for k in kurallar if k.bağlam != "her yerde"))
+        değişim = [k for k in kurallar if k.hedef != k.kaynak]
+        kural_sayısı.append(len(değişim))
+        korunma.append(len(kurallar) - len(değişim))
+        bağlamlı.append(sum(1 for k in değişim if k.bağlam != "her yerde"))
     istisna = len(seri.istisnalar)
     düzenlilik = 100.0 * (2 * n - istisna) / (2 * n)
 
@@ -79,8 +82,9 @@ def rapor_üret(seri):
     S.append(f"  katman sayısı                   : {ad0} dalı {seri.katman[0]}, "
              f"{ad1} dalı {seri.katman[1]}")
     S.append(f"  ses değişim kuralı              : {ad0} dalı {kural_sayısı[0]} "
-             f"({bağlamlı[0]} bağlamlı), {ad1} dalı {kural_sayısı[1]} "
-             f"({bağlamlı[1]} bağlamlı)")
+             f"({bağlamlı[0]} bağlamlı, +{korunma[0]} korunma), "
+             f"{ad1} dalı {kural_sayısı[1]} "
+             f"({bağlamlı[1]} bağlamlı, +{korunma[1]} korunma)")
     S.append(f"  göçüşüm (metathesis) kuralı     : {len(set(ç for _, _, ç in seri.metatez_olayları))}")
     S.append(f"  ara katman ayrım harfi          : {seri.etiketli_sayısı} zincirde")
     S.append(f"  istisna                         : {istisna} / {2 * n} türetim")
@@ -98,10 +102,11 @@ def rapor_üret(seri):
     if türetilmiş:
         S.append("  türetilmiş harfler : " + " ".join(türetilmiş))
         S.append("")
-        S.append("  (Türetilmiş harf, iki dalın refleksleri bağlam koşuluyla")
-        S.append("   ayrıştırılamadığında zorunlu olarak varsayılan ayrı sestir.")
-        S.append("   Sayısının yüksekliği, listelerin ortak atadan düzenli ses")
-        S.append("   değişimiyle türetilmesinin 'pahalı' olduğunu gösterir.)")
+        S.append("  (Bütün Ön Dil harfleri soyuttur: her biri, kurallı biçimde bir")
+        S.append("   arada yaşayabilen karşılıklıkların kümesidir. Alt simgeli harf,")
+        S.append("   özellik uzayında aynı çapaya oturmak zorunda kalmış İKİNCİ bir")
+        S.append("   kümedir; sayısının yüksekliği, listeleri ortak atadan düzenli")
+        S.append("   ses değişimiyle türetmenin 'pahalı' olduğunu gösterir.)")
     S.append("")
 
     # --- katman dağarcık boyutları ---

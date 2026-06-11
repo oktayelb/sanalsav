@@ -15,184 +15,301 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
   sözcük çifti                    : 100
   harf karşılıklığı türü          : 163
   türetim eşiği (tutumluluk)      : 3 (yeni harf en az bu kadar konumu kurtarmalı)
-  kural dışı bırakılan            : 93 karşılıklık türü, 129 konum
-  Ön Dil harf dağarcığı           : 62 (temel 32 + türetilmiş 30)
+  kural dışı bırakılan            : 58 karşılıklık türü, 79 konum
+  Ön Dil harf dağarcığı           : 69 (temel 26 + türetilmiş 43)
   katman sayısı                   : Türkçe dalı 4, Ingilizce dalı 4
-  ses değişim kuralı              : Türkçe dalı 67 (8 bağlamlı), Ingilizce dalı 73 (8 bağlamlı)
+  ses değişim kuralı              : Türkçe dalı 93 (13 bağlamlı, +4 korunma), Ingilizce dalı 157 (37 bağlamlı, +2 korunma)
   göçüşüm (metathesis) kuralı     : 0
-  ara katman ayrım harfi          : 17 zincirde
-  istisna                         : 92 / 200 türetim
-  düzenlilik                      : %54.0
+  ara katman ayrım harfi          : 44 zincirde
+  istisna                         : 63 / 200 türetim
+  düzenlilik                      : %68.5
 
 ------------------------------------------------------------------------
 2. ÖN DİL HARF DAĞARCIĞI (katman 0)
 ------------------------------------------------------------------------
-  temel harfler      : a b c d e f g h i j k l m n o p q r s t u v w x y z ç ö ü ğ ı ş
-  türetilmiş harfler : a₂ a₃ a₄ e₂ e₃ e₄ e₅ e₆ g₂ i₂ k₂ k₃ l₂ m₂ n₂ n₃ n₄ n₅ o₂ r₂ r₃ r₄ r₅ t₂ t₃ t₄ u₂ u₃ y₂ y₃
+  temel harfler      : a b d e g h i j k l m n o p r s t u w x y z ö ü ğ ı
+  türetilmiş harfler : a₂ a₃ a₄ a₅ a₆ b₂ b₃ d₂ d₃ d₄ d₅ e₂ e₃ e₄ g₂ g₃ i₂ j₂ k₂ k₃ k₄ k₅ k₆ l₂ l₃ l₄ m₂ m₃ n₂ n₃ n₄ n₅ r₂ r₃ t₂ t₃ u₂ u₃ u₄ u₅ y₂ y₃ y₄
 
-  (Türetilmiş harf, iki dalın refleksleri bağlam koşuluyla
-   ayrıştırılamadığında zorunlu olarak varsayılan ayrı sestir.
-   Sayısının yüksekliği, listelerin ortak atadan düzenli ses
-   değişimiyle türetilmesinin 'pahalı' olduğunu gösterir.)
+  (Bütün Ön Dil harfleri soyuttur: her biri, kurallı biçimde bir
+   arada yaşayabilen karşılıklıkların kümesidir. Alt simgeli harf,
+   özellik uzayında aynı çapaya oturmak zorunda kalmış İKİNCİ bir
+   kümedir; sayısının yüksekliği, listeleri ortak atadan düzenli
+   ses değişimiyle türetmenin 'pahalı' olduğunu gösterir.)
 
   Katman başına harf dağarcığı boyutu:
-    Türkçe    : 62 > 34 > 30 > 27 > 26
-    Ingilizce : 62 > 32 > 26 > 23 > 22
+    Türkçe    : 69 > 36 > 33 > 29 > 26
+    Ingilizce : 69 > 58 > 33 > 26 > 20
 
 ------------------------------------------------------------------------
 3. SES DEĞİŞİM KURALLARI
 ------------------------------------------------------------------------
   Türkçe dalı:
-    Katman 1 (Ön Dil -> Ön Türkçe 1): 54 kural
+    Katman 1 (Ön Dil -> Ön Türkçe 1): 71 kural
       *a₂ -> ∅
       *a₃ -> a
       *a₄ -> a
-      *c -> c  (korunur)
-      *c -> g  / söz başında
-      *c -> j₂  / ünsüz önünde
-      *d -> d  / söz içinde  (korunur)
-      *d -> n₆  / ünsüz ardında
-      *d -> t₅
+      *a₅ -> a
+      *a₆ -> e
+      *b₂ -> d
+      *b₂ -> v₅  / ünsüz önünde
+      *b₃ -> b
+      *d -> d  (korunur)
+      *d -> t  / ünsüz önünde
+      *d₂ -> g  / söz başında
+      *d₂ -> n
+      *d₃ -> n₆
+      *d₃ -> n₇  / söz sonunda
+      *d₄ -> d
+      *d₅ -> z
       *e -> ∅
       *e₂ -> e
       *e₃ -> e
       *e₄ -> i
-      *e₅ -> a
-      *e₆ -> e
-      *f -> s₂  / ünlü ardında
-      *f -> v₂
       *g -> k
-      *g₂ -> d₃
+      *g₂ -> k
+      *g₃ -> g
       *h -> ∅
+      *i -> i  (korunur)
+      *i -> y₆  / ünlü önünde
       *i₂ -> ∅
-      *j -> y
-      *k₂ -> t₆
-      *k₃ -> k
+      *j -> x
+      *j -> z  / ünlü ardında
+      *j₂ -> y
+      *k₂ -> k
+      *k₃ -> ş
+      *k₄ -> k
+      *k₅ -> k
+      *k₅ -> t₁₀  / söz başında
+      *k₆ -> t₈  / ünlü önünde
+      *k₆ -> ç
       *l -> ∅
       *l₂ -> l
+      *l₃ -> r
+      *l₄ -> l
       *m -> ∅
-      *m₂ -> ∅  / söz başında
+      *m₂ -> b₄  / ünsüz önünde
       *m₂ -> m
+      *m₃ -> m
       *n -> ∅
       *n₂ -> n
-      *n₃ -> ∅
-      *n₄ -> d
-      *n₅ -> l
-      *o -> ∅
-      *o₂ -> o
-      *p -> f₂  / söz başında
-      *p -> p  (korunur)
-      *q -> ş
-      *r₂ -> ∅
+      *n₃ -> n
+      *n₄ -> n
+      *n₅ -> r
+      *r -> ∅
+      *r -> n₁₇  / söz sonunda
+      *r₂ -> r
       *r₃ -> r
-      *r₄ -> r
-      *r₅ -> r
-      *s -> s  (korunur)
-      *s -> z  / ünsüz önünde
-      *t₂ -> d
+      *t -> d
+      *t -> d₈  / söz sonunda
+      *t -> t  / ünsüz önünde  (korunur)
+      *t₂ -> t
       *t₃ -> t
-      *t₄ -> s
       *u₂ -> ∅
-      *u₃ -> u
+      *u₃ -> ∅
+      *u₄ -> u
+      *u₄ -> ı₂  / ünlü önünde
+      *u₅ -> u
       *w -> ∅
-      *x -> k
+      *x -> ç
       *y₂ -> ∅
       *y₃ -> y
-    Katman 2 (Ön Türkçe 1 -> Ön Türkçe 2): 8 kural
-      *d₃ -> n
-      *f₂ -> v₃
-      *j₂ -> ğ₄
-      *n₆ -> l
-      *s₂ -> ş₂
-      *t₅ -> k
-      *t₆ -> d
-      *v₂ -> ğ₂
-    Katman 3 (Ön Türkçe 2 -> Ön Türkçe 3): 4 kural
-      *v₃ -> ğ₃
-      *ğ₂ -> ∅
-      *ğ₄ -> ∅
-      *ş₂ -> ç
-    Katman 4 (Ön Türkçe 3 -> Türkçe): 1 kural
-      *ğ₃ -> y
+      *y₄ -> y
+      *ü -> i₄  / ünlü ardında
+      *ü -> ü  (korunur)
+    Katman 2 (Ön Türkçe 1 -> Ön Türkçe 2): 12 kural
+      *b₄ -> w₂
+      *d₈ -> n₁₂
+      *i₄ -> y₅
+      *n₁₇ -> d₁₃
+      *n₆ -> ∅
+      *n₇ -> r
+      *t₁₀ -> p₄
+      *t₈ -> d₁₂
+      *v₅ -> ğ₈
+      *x -> s
+      *y₆ -> j₄
+      *ı₂ -> ğ₆
+    Katman 3 (Ön Türkçe 2 -> Ön Türkçe 3): 9 kural
+      *d₁₂ -> n
+      *d₁₃ -> t₉
+      *j₄ -> ş₂
+      *n₁₂ -> r
+      *p₄ -> b
+      *w₂ -> u₆
+      *y₅ -> j₃
+      *ğ₆ -> j₅
+      *ğ₈ -> ı
+    Katman 4 (Ön Türkçe 3 -> Türkçe): 5 kural
+      *j₃ -> ş
+      *j₅ -> c
+      *t₉ -> k
+      *u₆ -> o
+      *ş₂ -> h
 
   Ingilizce dalı:
-    Katman 1 (Ön Dil -> Ön Ingilizce 1): 58 kural
+    Katman 1 (Ön Dil -> Ön Ingilizce 1): 100 kural
       *a -> ∅
       *a₂ -> a
       *a₃ -> a
       *a₄ -> o
-      *b -> w₂
+      *a₅ -> e
+      *a₆ -> a
+      *b -> p  / ünsüz önünde
+      *b -> w₄
+      *b₂ -> b  / söz başında
+      *b₂ -> m
+      *b₃ -> m₄  / ünlü ardında
+      *b₃ -> w
+      *d -> d  / ünlü ardında  (korunur)
+      *d -> t₄
+      *d₂ -> b  / ünsüz önünde
+      *d₂ -> t  / söz sonunda
+      *d₂ -> z
+      *d₃ -> d
+      *d₄ -> n₈  / ünlü ardında
+      *d₄ -> z
+      *d₅ -> n₉  / söz sonunda
+      *d₅ -> t
       *e₂ -> ∅
       *e₃ -> e
       *e₄ -> e
-      *e₅ -> e
-      *e₆ -> a
-      *g -> d₂
-      *g₂ -> g
+      *g -> ğ₂
+      *g -> ğ₅  / ünsüz ardında
+      *g₂ -> d₆
+      *g₂ -> g  / söz sonunda
+      *g₃ -> g  / ünsüz önünde
+      *g₃ -> ğ₃
       *i -> ∅
       *i₂ -> i
-      *j -> g
-      *k -> g₃
-      *k -> g₄  / ünsüz ardında
-      *k₂ -> k
+      *i₂ -> ı  / söz başında
+      *j -> y
+      *j₂ -> z
+      *j₂ -> ş₃  / ünsüz ardında
+      *k -> t
+      *k₂ -> t₅  / söz sonunda
+      *k₂ -> ş₄
       *k₃ -> t
+      *k₃ -> t₆  / söz sonunda
+      *k₄ -> t₇
+      *k₅ -> k
+      *k₆ -> k  / söz sonunda
+      *k₆ -> t
       *l₂ -> ∅
+      *l₂ -> n₁₀  / ünsüz ardında
+      *l₃ -> l
+      *l₄ -> n
+      *l₄ -> n₁₁  / ünsüz önünde
       *m₂ -> ∅
-      *m₂ -> b  / söz başında
+      *m₃ -> m  / ünlü önünde
+      *m₃ -> n₁₆
       *n₂ -> n
-      *n₃ -> d
-      *n₄ -> m
+      *n₃ -> ∅
+      *n₃ -> l  / söz içinde
+      *n₄ -> d  / söz sonunda
+      *n₄ -> r
       *n₅ -> n
-      *o₂ -> ∅
-      *p -> b₂  / ünsüz ardında
-      *p -> p  (korunur)
-      *p -> t  / ünsüz önünde
-      *q -> t
-      *r -> ∅
-      *r₂ -> r
-      *r₃ -> l
-      *r₄ -> r
-      *r₅ -> n
-      *t -> q  / ünsüz ardında
-      *t -> t  (korunur)
-      *t₂ -> t
-      *t₃ -> s
-      *t₄ -> t
+      *o -> a
+      *p -> b₅
+      *p -> b₈  / söz sonunda
+      *p -> f  / ünsüz önünde
+      *r₂ -> ∅
+      *r₃ -> r
+      *s -> s  / ünsüz ardında  (korunur)
+      *s -> t
+      *s -> ş₅  / söz başında
+      *t₂ -> d₉  / söz sonunda
+      *t₂ -> s
+      *t₃ -> d  / söz sonunda
+      *t₃ -> q
+      *t₃ -> s₃  / söz içinde
       *u -> ∅
-      *u₂ -> u
-      *u₃ -> o
-      *u₃ -> u  / ünlü ardında
-      *x -> s
+      *u₂ -> o
+      *u₂ -> w₆  / söz sonunda
+      *u₃ -> u
+      *u₃ -> w₃  / söz başında
+      *u₄ -> w₇  / ünlü ardında
+      *u₄ -> ü
+      *u₅ -> o
+      *u₅ -> w₈  / söz sonunda
+      *x -> h₂
+      *x -> s₂  / ünsüz önünde
       *y -> ∅
+      *y₂ -> j  / söz başında
       *y₂ -> y
-      *y₃ -> i
-      *z -> d₄
-      *ç -> ş₃
+      *y₃ -> i₃  / ünsüz ardında
+      *y₃ -> ğ₇
+      *y₄ -> i
+      *y₄ -> ğ₄  / söz başında
+      *z -> d₁₀
+      *z -> s  / ünsüz önünde
       *ö -> ∅  / söz başında
       *ö -> e
       *ü -> ∅
       *ğ -> ∅
       *ı -> ∅
-      *ı -> u₄  / ünlü ardında
-      *ş -> h₂
-    Katman 2 (Ön Ingilizce 1 -> Ön Ingilizce 2): 10 kural
-      *b₂ -> m₃
-      *d₂ -> b
-      *d₄ -> n
-      *g₃ -> ğ₅
-      *g₄ -> ğ₆
+      *ı -> u₇  / ünlü ardında
+    Katman 2 (Ön Ingilizce 1 -> Ön Ingilizce 2): 39 kural
+      *b₅ -> w₅
+      *b₈ -> m₅
+      *d₁₀ -> n
+      *d₆ -> b
+      *d₉ -> n₁₃
       *h₂ -> ∅
-      *q -> g
-      *u₄ -> w
-      *w₂ -> ∅
-      *ş₃ -> h₃
-    Katman 3 (Ön Ingilizce 2 -> Ön Ingilizce 3): 4 kural
-      *h₃ -> ∅
-      *m₃ -> n₇
-      *ğ₅ -> ∅
-      *ğ₆ -> y
-    Katman 4 (Ön Ingilizce 3 -> Ingilizce): 1 kural
-      *n₇ -> l
+      *i₃ -> e
+      *j -> z
+      *m₄ -> n₁₄
+      *n₁₀ -> d
+      *n₁₁ -> d₇
+      *n₁₆ -> d
+      *n₈ -> r
+      *n₉ -> ∅
+      *p -> t
+      *q -> ç
+      *s₂ -> f
+      *s₃ -> f
+      *t₄ -> k
+      *t₅ -> d₁₁
+      *t₆ -> d
+      *t₇ -> d
+      *u₇ -> w
+      *w₃ -> v₂
+      *w₄ -> ∅
+      *w₆ -> b₆
+      *w₇ -> b₇
+      *w₈ -> v₄
+      *z -> s
+      *ü -> i
+      *ğ₂ -> ∅
+      *ğ₃ -> ∅
+      *ğ₄ -> v₃
+      *ğ₅ -> y
+      *ğ₇ -> g
+      *ı -> ğ
+      *ş₃ -> k
+      *ş₄ -> s
+      *ş₅ -> h
+    Katman 3 (Ön Ingilizce 2 -> Ön Ingilizce 3): 14 kural
+      *b₆ -> p₂
+      *b₇ -> p₃
+      *d₁₁ -> n₁₅
+      *d₇ -> t
+      *m₅ -> n₁₈
+      *n₁₃ -> ∅
+      *n₁₄ -> r
+      *v₂ -> f
+      *v₃ -> f
+      *v₄ -> z₂
+      *w₅ -> ∅
+      *z -> s
+      *ç -> c
+      *ğ -> v
+    Katman 4 (Ön Ingilizce 3 -> Ingilizce): 6 kural
+      *n₁₅ -> l
+      *n₁₈ -> l
+      *p₂ -> t
+      *p₃ -> t
+      *v -> b
+      *z₂ -> s
 
 ------------------------------------------------------------------------
 4. SÖZLÜK VE TÜRETİMLER
@@ -200,409 +317,380 @@ akrabalık için bir ölçü olarak kullanılabileceğini göstermektir.
   Her satır: Ön Dil biçimi > ara Ön Dil biçimleri > çocuk dil.
   (✗ imli türetimler kural dışı karşılıklık içerir; 5. bölüm.)
 
-    1. ben  (ben ~ i)   Ön Dil: *be₂n₂
-       Türkçe   : *be₂n₂ > ben
-       Ingilizce: *be₂n₂ > *w₂n > n  ✗
-    2. sen  (sen ~ you)   Ön Dil: *sou₂e₂n₂
-       Türkçe   : *sou₂e₂n₂ > sen
-       Ingilizce: *sou₂e₂n₂ > soun  ✗
-    3. biz  (biz ~ we)   Ön Dil: *be₄z
-       Türkçe   : *be₄z > biz
-       Ingilizce: *be₄z > *w₂ed₄ > en  ✗
-    4. bu  (bu ~ this)   Ön Dil: *thi₂s
-       Türkçe   : *thi₂s > ts  ✗
-       Ingilizce: *thi₂s > this
-    5. şu  (şu ~ that)   Ön Dil: *qha₂t
-       Türkçe   : *qha₂t > şt  ✗
-       Ingilizce: *qha₂t > that
-    6. kim  (kim ~ who)   Ön Dil: *whoim₂
-       Türkçe   : *whoim₂ > im  ✗
-       Ingilizce: *whoim₂ > who
-    7. ne  (ne ~ what)   Ön Dil: *wha₂te₂
-       Türkçe   : *wha₂te₂ > te  ✗
-       Ingilizce: *wha₂te₂ > what
-    8. değil  (değil ~ not)   Ön Dil: *not₂e₂ğil₂
-       Türkçe   : *not₂e₂ğil₂ > değil
-       Ingilizce: *not₂e₂ğil₂ > not
-    9. hep  (hep ~ all)   Ön Dil: *he₆lp
-       Türkçe   : *he₆lp > ep  ✗
-       Ingilizce: *he₆lp > *halb₂ > *halm₃ > *haln₇ > hall  ✗
-   10. çok  (çok ~ many)   Ön Dil: *mça₂nk
-       Türkçe   : *mça₂nk > çk  ✗
-       Ingilizce: *mça₂nk > *mş₃ang₄ > *mh₃anğ₆ > many
-   11. bir  (bir ~ one)   Ön Dil: *obe₄r
-       Türkçe   : *obe₄r > bir
-       Ingilizce: *obe₄r > *ow₂e > oe  ✗
-   12. iki  (iki ~ two)   Ön Dil: *ik₃woi
-       Türkçe   : *ik₃woi > iki
-       Ingilizce: *ik₃woi > two
-   13. büyük  (büyük ~ big)   Ön Dil: *büyi₂k
-       Türkçe   : *büyi₂k > büyk  ✗
-       Ingilizce: *büyi₂k > *w₂ig₃ > *iğ₅ > i  ✗
-   14. uzun  (uzun ~ long)   Ön Dil: *lu₃zug₂
-       Türkçe   : *lu₃zug₂ > *uzud₃ > uzun
-       Ingilizce: *lu₃zug₂ > *lod₄g > long
-   15. küçük  (küçük ~ small)   Ön Dil: *xma₂lüçük
-       Türkçe   : *xma₂lüçük > küçük
-       Ingilizce: *xma₂lüçük > *smalş₃g₃ > *smalh₃ğ₅ > smal  ✗
-   16. kadın  (kadın ~ woman)   Ön Dil: *ka₄n₄a₂n₂
-       Türkçe   : *ka₄n₄a₂n₂ > kadn  ✗
-       Ingilizce: *ka₄n₄a₂n₂ > *g₃oman > *ğ₅oman > oman  ✗
-   17. adam  (adam ~ man)   Ön Dil: *an₄a₃m₂
-       Türkçe   : *an₄a₃m₂ > adam
-       Ingilizce: *an₄a₃m₂ > ma  ✗
-   18. insan  (insan ~ person)   Ön Dil: *pe₄n₂sa₄n₂
-       Türkçe   : *pe₄n₂sa₄n₂ > *f₂insan > *v₃insan > *ğ₃insan > yinsan  ✗
-       Ingilizce: *pe₄n₂sa₄n₂ > penson  ✗
-   19. balık  (balık ~ fish)   Ön Dil: *fal₂i₂xh
-       Türkçe   : *fal₂i₂xh > *v₂alk > *ğ₂alk > alk  ✗
-       Ingilizce: *fal₂i₂xh > fish
-   20. kuş  (kuş ~ bird)   Ön Dil: *gi₂r₂uş
-       Türkçe   : *gi₂r₂uş > kuş
-       Ingilizce: *gi₂r₂uş > *d₂irh₂ > bir  ✗
-   21. köpek  (köpek ~ dog)   Ön Dil: *dope₂k
-       Türkçe   : *dope₂k > *t₅pek > kpek  ✗
-       Ingilizce: *dope₂k > *dopg₃ > *dopğ₅ > dop  ✗
-   22. bit  (bit ~ louse)   Ön Dil: *lou₂it₃e
-       Türkçe   : *lou₂it₃e > it  ✗
-       Ingilizce: *lou₂it₃e > louse
-   23. ağaç  (ağaç ~ tree)   Ön Dil: *ağatr₂ee
-       Türkçe   : *ağatr₂ee > ağat  ✗
-       Ingilizce: *ağatr₂ee > tree
-   24. tohum  (tohum ~ seed)   Ön Dil: *t₃eehud
-       Türkçe   : *t₃eehud > *tut₅ > tuk  ✗
-       Ingilizce: *t₃eehud > seehd  ✗
-   25. yaprak  (yaprak ~ leaf)   Ön Dil: *lea₃frak
-       Türkçe   : *lea₃frak > *as₂rak > *aş₂rak > açrak  ✗
-       Ingilizce: *lea₃frak > *leafg₃ > *leafğ₅ > leaf
-   26. kök  (kök ~ root)   Ön Dil: *r₂okok₃
-       Türkçe   : *r₂okok₃ > kk  ✗
-       Ingilizce: *r₂okok₃ > *rog₃ot > *roğ₅ot > root
-   27. kabuk  (kabuk ~ bark)   Ön Dil: *ga₃buk₂
-       Türkçe   : *ga₃buk₂ > *kabut₆ > kabud  ✗
-       Ingilizce: *ga₃buk₂ > *d₂aw₂k > bak  ✗
-   28. deri  (deri ~ skin)   Ön Dil: *sk₂e₂r₅i
-       Türkçe   : *sk₂e₂r₅i > *zt₆eri > zderi  ✗
-       Ingilizce: *sk₂e₂r₅i > skn  ✗
-   29. et  (et ~ flesh)   Ön Dil: *fle₃t₃h
-       Türkçe   : *fle₃t₃h > *v₂et > *ğ₂et > et
-       Ingilizce: *fle₃t₃h > flesh
-   30. kan  (kan ~ blood)   Ön Dil: *gloa₄d
-       Türkçe   : *gloa₄d > *kat₅ > kak  ✗
-       Ingilizce: *gloa₄d > *d₂lood > blood
-   31. kemik  (kemik ~ bone)   Ön Dil: *ge₂m₂e₄k
-       Türkçe   : *ge₂m₂e₄k > kemik
-       Ingilizce: *ge₂m₂e₄k > *d₂eg₃ > *beğ₅ > be  ✗
-   32. yağ  (yağ ~ fat)   Ön Dil: *fa₃t
-       Türkçe   : *fa₃t > *v₂at > *ğ₂at > at  ✗
-       Ingilizce: *fa₃t > fat
-   33. yumurta  (yumurta ~ egg)   Ön Dil: *ejum₂urta
-       Türkçe   : *ejum₂urta > yumurta
-       Ingilizce: *ejum₂urta > *egq > egg
-   34. boynuz  (boynuz ~ horn)   Ön Dil: *hbo₂yn₂uz
-       Türkçe   : *hbo₂yn₂uz > boynuz
-       Ingilizce: *hbo₂yn₂uz > *hw₂nd₄ > hnn  ✗
-   35. kuyruk  (kuyruk ~ tail)   Ön Dil: *k₃a₂y₃r₃uk
-       Türkçe   : *k₃a₂y₃r₃uk > kyruk  ✗
-       Ingilizce: *k₃a₂y₃r₃uk > *tailg₃ > *tailğ₅ > tail
-   36. tüy  (tüy ~ feather)   Ön Dil: *fea₂ther₂üy
-       Türkçe   : *fea₂ther₂üy > *v₂tüy > *ğ₂tüy > tüy
-       Ingilizce: *fea₂ther₂üy > feather
-   37. saç  (saç ~ hair)   Ön Dil: *ha₃i₂r₂ç
-       Türkçe   : *ha₃i₂r₂ç > aç  ✗
-       Ingilizce: *ha₃i₂r₂ç > *hairş₃ > *hairh₃ > hair
-   38. baş  (baş ~ head)   Ön Dil: *heba₃ş
-       Türkçe   : *heba₃ş > baş
-       Ingilizce: *heba₃ş > *hew₂ah₂ > hea  ✗
-   39. kulak  (kulak ~ ear)   Ön Dil: *ekul₂a₃k
-       Türkçe   : *ekul₂a₃k > kulak
-       Ingilizce: *ekul₂a₃k > *eg₃ag₃ > *eğ₅ağ₅ > ea  ✗
-   40. göz  (göz ~ eye)   Ön Dil: *göye
-       Türkçe   : *göye > köy  ✗
-       Ingilizce: *göye > *d₂ee > bee  ✗
-   41. burun  (burun ~ nose)   Ön Dil: *bur₅u₃se
-       Türkçe   : *bur₅u₃se > burus  ✗
-       Ingilizce: *bur₅u₃se > *w₂nose > nose
-   42. ağız  (ağız ~ mouth)   Ön Dil: *ma₄ğu₂th
-       Türkçe   : *ma₄ğu₂th > ağt  ✗
-       Ingilizce: *ma₄ğu₂th > mouth
-   43. diş  (diş ~ tooth)   Ön Dil: *t₂ooiqh
-       Türkçe   : *t₂ooiqh > diş
-       Ingilizce: *t₂ooiqh > tooth
-   44. dil  (dil ~ tongue)   Ön Dil: *t₂ong₂u₂e₄l₂
-       Türkçe   : *t₂ong₂u₂e₄l₂ > *dd₃il > dnil  ✗
-       Ingilizce: *t₂ong₂u₂e₄l₂ > tongue
-   45. tırnak  (tırnak ~ claw)   Ön Dil: *tırla₃k
-       Türkçe   : *tırla₃k > tırak  ✗
-       Ingilizce: *tırla₃k > *tlag₃ > *tlağ₅ > tla  ✗
-   46. ayak  (ayak ~ foot)   Ön Dil: *fa₄ya₄k₃
-       Türkçe   : *fa₄ya₄k₃ > *v₂ayak > *ğ₂ayak > ayak
-       Ingilizce: *fa₄ya₄k₃ > foot
-   47. diz  (diz ~ knee)   Ön Dil: *k₂izee
-       Türkçe   : *k₂izee > *t₆iz > diz
-       Ingilizce: *k₂izee > *kd₄ee > knee
-   48. el  (el ~ hand)   Ön Dil: *he₆nd
-       Türkçe   : *he₆nd > *en₆ > el
-       Ingilizce: *he₆nd > hand
-   49. karın  (karın ~ belly)   Ön Dil: *ge₅r₃ıly₂
-       Türkçe   : *ge₅r₃ıly₂ > karı  ✗
-       Ingilizce: *ge₅r₃ıly₂ > *d₂elly > belly
-   50. boyun  (boyun ~ neck)   Ön Dil: *becuk₂
-       Türkçe   : *becuk₂ > *bcut₆ > bcud  ✗
-       Ingilizce: *becuk₂ > *w₂eck > eck  ✗
-   51. göğüs  (göğüs ~ breast)   Ön Dil: *br₂öa₂süt₄
-       Türkçe   : *br₂öa₂süt₄ > bösüs  ✗
-       Ingilizce: *br₂öa₂süt₄ > *w₂reast > reast  ✗
-   52. yürek  (yürek ~ heart)   Ön Dil: *hea₂yür₄e₂k₃
-       Türkçe   : *hea₂yür₄e₂k₃ > yürek
-       Ingilizce: *hea₂yür₄e₂k₃ > heart
-   53. karaciğer  (karaciğer ~ liver)   Ön Dil: *kar₃aci₂ve₃r₄
-       Türkçe   : *kar₃aci₂ve₃r₄ > karacver  ✗
-       Ingilizce: *kar₃aci₂ve₃r₄ > *g₃lciver > *ğ₅lciver > lciver  ✗
-   54. içmek  (iç ~ drink)   Ön Dil: *n₃r₂i₂nk₂
-       Türkçe   : *n₃r₂i₂nk₂ > *t₆ > d  ✗
-       Ingilizce: *n₃r₂i₂nk₂ > drink
-   55. yemek  (ye ~ eat)   Ön Dil: *ye₃a₂t
-       Türkçe   : *ye₃a₂t > yet  ✗
-       Ingilizce: *ye₃a₂t > eat
-   56. ısırmak  (ısır ~ bite)   Ön Dil: *m₂i₂t₄er
-       Türkçe   : *m₂i₂t₄er > sr  ✗
-       Ingilizce: *m₂i₂t₄er > bite
-   57. görmek  (gör ~ see)   Ön Dil: *seör
-       Türkçe   : *seör > sör  ✗
-       Ingilizce: *seör > see
-   58. duymak  (duy ~ hear)   Ön Dil: *hea₂duy
-       Türkçe   : *hea₂duy > duy
-       Ingilizce: *hea₂duy > head  ✗
-   59. bilmek  (bil ~ know)   Ön Dil: *k₂in₅ow
-       Türkçe   : *k₂in₅ow > *t₆il > dil  ✗
-       Ingilizce: *k₂in₅ow > know
-   60. uyumak  (uyu ~ sleep)   Ön Dil: *usleep
-       Türkçe   : *usleep > uzp  ✗
-       Ingilizce: *usleep > sleep
-   61. ölmek  (öl ~ die)   Ön Dil: *n₃i₂öl₂
-       Türkçe   : *n₃i₂öl₂ > öl
-       Ingilizce: *n₃i₂öl₂ > die
-   62. öldürmek  (öldür ~ kill)   Ön Dil: *öl₂k₂i₂lr₃
-       Türkçe   : *öl₂k₂i₂lr₃ > *ölt₆r > öldr  ✗
-       Ingilizce: *öl₂k₂i₂lr₃ > kill
-   63. yüzmek  (yüz ~ swim)   Ön Dil: *yüswi₂m
-       Türkçe   : *yüswi₂m > yüz
-       Ingilizce: *yüswi₂m > swim
-   64. uçmak  (uç ~ fly)   Ön Dil: *ufly₂
-       Türkçe   : *ufly₂ > *us₂ > *uş₂ > uç
-       Ingilizce: *ufly₂ > fly
-   65. yürümek  (yürü ~ walk)   Ön Dil: *wa₂lk₂ürü
-       Türkçe   : *wa₂lk₂ürü > *t₆ürü > dürü  ✗
-       Ingilizce: *wa₂lk₂ürü > walk
-   66. gelmek  (gel ~ come)   Ön Dil: *come₃l₂
-       Türkçe   : *come₃l₂ > gel
-       Ingilizce: *come₃l₂ > come
-   67. yatmak  (yat ~ lie)   Ön Dil: *ly₃e₅t
-       Türkçe   : *ly₃e₅t > yat
-       Ingilizce: *ly₃e₅t > liet  ✗
-   68. oturmak  (otur ~ sit)   Ön Dil: *o₂t₃i₂t
-       Türkçe   : *o₂t₃i₂t > ott  ✗
-       Ingilizce: *o₂t₃i₂t > sit
-   69. durmak  (dur ~ stand)   Ön Dil: *st₂a₂nud
-       Türkçe   : *st₂a₂nud > *zdut₅ > zduk  ✗
-       Ingilizce: *st₂a₂nud > stand
-   70. vermek  (ver ~ give)   Ön Dil: *g₂i₂ve₃r
-       Türkçe   : *g₂i₂ve₃r > *d₃ver > nver  ✗
-       Ingilizce: *g₂i₂ve₃r > give
-   71. demek  (de ~ say)   Ön Dil: *se₆y₂
-       Türkçe   : *se₆y₂ > se  ✗
-       Ingilizce: *se₆y₂ > say
-   72. güneş  (güneş ~ sun)   Ön Dil: *su₂n₂e₂ş
-       Türkçe   : *su₂n₂e₂ş > sneş  ✗
-       Ingilizce: *su₂n₂e₂ş > *sunh₂ > sun
-   73. ay  (ay ~ moon)   Ön Dil: *moa₄ny
-       Türkçe   : *moa₄ny > ay
-       Ingilizce: *moa₄ny > moon
-   74. yıldız  (yıldız ~ star)   Ön Dil: *sıl₂t₂a₂r₂
-       Türkçe   : *sıl₂t₂a₂r₂ > sıld  ✗
-       Ingilizce: *sıl₂t₂a₂r₂ > star
-   75. su  (su ~ water)   Ön Dil: *wa₂t₄er₂u
-       Türkçe   : *wa₂t₄er₂u > su
-       Ingilizce: *wa₂t₄er₂u > water
-   76. yağmur  (yağmur ~ rain)   Ön Dil: *r₂ya₃ğm₂i₂r₅
-       Türkçe   : *r₂ya₃ğm₂i₂r₅ > yağmr  ✗
-       Ingilizce: *r₂ya₃ğm₂i₂r₅ > rain
-   77. taş  (taş ~ stone)   Ön Dil: *t₃aqone
-       Türkçe   : *t₃aqone > taş
-       Ingilizce: *t₃aqone > stone
-   78. kum  (kum ~ sand)   Ön Dil: *xa₂nud
-       Türkçe   : *xa₂nud > *kut₅ > kuk  ✗
-       Ingilizce: *xa₂nud > sand
-   79. toprak  (toprak ~ earth)   Ön Dil: *ea₂to₂prah
-       Türkçe   : *ea₂to₂prah > topra  ✗
-       Ingilizce: *ea₂to₂prah > eatth  ✗
-   80. bulut  (bulut ~ cloud)   Ön Dil: *bul₂ou₃t
-       Türkçe   : *bul₂ou₃t > bulut
-       Ingilizce: *bul₂ou₃t > *w₂out > out  ✗
-   81. duman  (duman ~ smoke)   Ön Dil: *sum₂a₄k₂e
-       Türkçe   : *sum₂a₄k₂e > *sumat₆ > sumad  ✗
-       Ingilizce: *sum₂a₄k₂e > soke  ✗
-   82. ateş  (ateş ~ fire)   Ön Dil: *afi₂r₂e₃ş
-       Türkçe   : *afi₂r₂e₃ş > *as₂eş > *aş₂eş > açeş  ✗
-       Ingilizce: *afi₂r₂e₃ş > *fireh₂ > fire
-   83. kül  (kül ~ ash)   Ön Dil: *a₂xhül₂
-       Türkçe   : *a₂xhül₂ > kül
-       Ingilizce: *a₂xhül₂ > ash
-   84. yanmak  (yan ~ burn)   Ön Dil: *m₂u₂r₂yan₂
-       Türkçe   : *m₂u₂r₂yan₂ > yan
-       Ingilizce: *m₂u₂r₂yan₂ > burn
-   85. yol  (yol ~ path)   Ön Dil: *pa₂th
-       Türkçe   : *pa₂th > *f₂t > *v₃t > *ğ₃t > yt  ✗
-       Ingilizce: *pa₂th > path
-   86. dağ  (dağ ~ mountain)   Ön Dil: *mou₂nt₂a₃i₂nğ
-       Türkçe   : *mou₂nt₂a₃i₂nğ > dağ
-       Ingilizce: *mou₂nt₂a₃i₂nğ > mountain
-   87. kırmızı  (kırmızı ~ red)   Ön Dil: *kır₄m₂edı
-       Türkçe   : *kır₄m₂edı > kırmdı  ✗
-       Ingilizce: *kır₄m₂edı > *g₃red > *ğ₅red > red
-   88. yeşil  (yeşil ~ green)   Ön Dil: *jr₂e₃şe₄n₅
-       Türkçe   : *jr₂e₃şe₄n₅ > yeşil
-       Ingilizce: *jr₂e₃şe₄n₅ > *greh₂en > green
-   89. sarı  (sarı ~ yellow)   Ön Dil: *se₅lr₃oı
-       Türkçe   : *se₅lr₃oı > sarı
-       Ingilizce: *se₅lr₃oı > *sellou₄ > sellow  ✗
-   90. beyaz  (beyaz ~ white)   Ön Dil: *bhe₂y₃ate
-       Türkçe   : *bhe₂y₃ate > beyat  ✗
-       Ingilizce: *bhe₂y₃ate > *w₂hite > hite  ✗
-   91. kara  (kara ~ black)   Ön Dil: *m₂la₂ck₂ara
-       Türkçe   : *m₂la₂ck₂ara > *j₂t₆ara > *ğ₄dara > dara  ✗
-       Ingilizce: *m₂la₂ck₂ara > black
-   92. gece  (gece ~ night)   Ön Dil: *ni₂g₂he₂te₂
-       Türkçe   : *ni₂g₂he₂te₂ > *d₃ete > nete  ✗
-       Ingilizce: *ni₂g₂he₂te₂ > night
-   93. sıcak  (sıcak ~ hot)   Ön Dil: *hıca₄k₃
-       Türkçe   : *hıca₄k₃ > ıcak  ✗
-       Ingilizce: *hıca₄k₃ > hcot  ✗
-   94. soğuk  (soğuk ~ cold)   Ön Dil: *so₂lğud
-       Türkçe   : *so₂lğud > *soğut₅ > soğuk
-       Ingilizce: *so₂lğud > sld  ✗
-   95. dolu  (dolu ~ full)   Ön Dil: *fo₂ll₂u
-       Türkçe   : *fo₂ll₂u > *v₂olu > *ğ₂olu > olu  ✗
-       Ingilizce: *fo₂ll₂u > fl  ✗
+    1. ben  (ben ~ i)   Ön Dil: *ben₃
+       Türkçe   : *ben₃ > bn  ✗
+       Ingilizce: *ben₃ > *w₄e > e  ✗
+    2. sen  (sen ~ you)   Ön Dil: *ju₂u₃e₂n₃
+       Türkçe   : *ju₂u₃e₂n₃ > *xen > sen
+       Ingilizce: *ju₂u₃e₂n₃ > you
+    3. biz  (biz ~ we)   Ön Dil: *b₃e₄d₅
+       Türkçe   : *b₃e₄d₅ > biz
+       Ingilizce: *b₃e₄d₅ > *wen₉ > we
+    4. bu  (bu ~ this)   Ön Dil: *bhi₂u₅
+       Türkçe   : *bhi₂u₅ > bu
+       Ingilizce: *bhi₂u₅ > *phiw₈ > *thiv₄ > *thiz₂ > this
+    5. şu  (şu ~ that)   Ön Dil: *k₃ha₂u₄
+       Türkçe   : *k₃ha₂u₄ > şu
+       Ingilizce: *k₃ha₂u₄ > *thaw₇ > *thab₇ > *thap₃ > that
+    6. kim  (kim ~ who)   Ön Dil: *whu₂im₂
+       Türkçe   : *whu₂im₂ > im  ✗
+       Ingilizce: *whu₂im₂ > who
+    7. ne  (ne ~ what)   Ön Dil: *wha₂k₆e₂
+       Türkçe   : *wha₂k₆e₂ > *t₈e > *d₁₂e > ne
+       Ingilizce: *wha₂k₆e₂ > what
+    8. değil  (değil ~ not)   Ön Dil: *nu₂te₂ğil₂
+       Türkçe   : *nu₂te₂ğil₂ > değil
+       Ingilizce: *nu₂te₂ğil₂ > not
+    9. hep  (hep ~ all)   Ön Dil: *ia₆lp
+       Türkçe   : *ia₆lp > *y₆ep > *j₄ep > *ş₂ep > hep
+       Ingilizce: *ia₆lp > *alb₈ > *alm₅ > *aln₁₈ > all
+   10. çok  (çok ~ many)   Ön Dil: *mxong
+       Türkçe   : *mxong > çok
+       Ingilizce: *mxong > *mh₂anğ₅ > many
+   11. bir  (bir ~ one)   Ön Dil: *u₂be₄r₂
+       Türkçe   : *u₂be₄r₂ > bir
+       Ingilizce: *u₂be₄r₂ > *ow₄e > oe  ✗
+   12. iki  (iki ~ two)   Ön Dil: *ikwu₂i
+       Türkçe   : *ikwu₂i > iki
+       Ingilizce: *ikwu₂i > two
+   13. büyük  (büyük ~ big)   Ön Dil: *b₂üyi₂g₂
+       Türkçe   : *b₂üyi₂g₂ > düyk  ✗
+       Ingilizce: *b₂üyi₂g₂ > big
+   14. uzun  (uzun ~ long)   Ön Dil: *lu₅zud₂
+       Türkçe   : *lu₅zud₂ > uzun
+       Ingilizce: *lu₅zud₂ > *lod₁₀t > lont  ✗
+   15. küçük  (küçük ~ small)   Ön Dil: *k₂ma₂lüxük₂
+       Türkçe   : *k₂ma₂lüxük₂ > küçük
+       Ingilizce: *k₂ma₂lüxük₂ > *ş₄malh₂t₅ > *smald₁₁ > *smaln₁₅ > small
+   16. kadın  (kadın ~ woman)   Ön Dil: *ba₄b₂ın₂
+       Türkçe   : *ba₄b₂ın₂ > badın  ✗
+       Ingilizce: *ba₄b₂ın₂ > *w₄omn > omn  ✗
+   17. adam  (adam ~ man)   Ön Dil: *ab₂a₃m
+       Türkçe   : *ab₂a₃m > ada  ✗
+       Ingilizce: *ab₂a₃m > mam  ✗
+   18. insan  (insan ~ person)   Ön Dil: *be₄n₄sa₄n₂
+       Türkçe   : *be₄n₄sa₄n₂ > binsan  ✗
+       Ingilizce: *be₄n₄sa₄n₂ > *w₄erson > erson  ✗
+   19. balık  (balık ~ fish)   Ön Dil: *bal₂i₂k₂h
+       Türkçe   : *bal₂i₂k₂h > balk  ✗
+       Ingilizce: *bal₂i₂k₂h > *w₄iş₄h > ish  ✗
+   20. kuş  (kuş ~ bird)   Ön Dil: *g₂i₂ruk₃
+       Türkçe   : *g₂i₂ruk₃ > kuş
+       Ingilizce: *g₂i₂ruk₃ > *d₆irt₆ > bird
+   21. köpek  (köpek ~ dog)   Ön Dil: *k₄öpe₂g₂
+       Türkçe   : *k₄öpe₂g₂ > köpek
+       Ingilizce: *k₄öpe₂g₂ > *t₇eb₅g > *dew₅g > deg  ✗
+   22. bit  (bit ~ louse)   Ön Dil: *lu₂b₂it₂e
+       Türkçe   : *lu₂b₂it₂e > dit  ✗
+       Ingilizce: *lu₂b₂it₂e > lomse  ✗
+   23. ağaç  (ağaç ~ tree)   Ön Dil: *ağak₆ree
+       Türkçe   : *ağak₆ree > ağaç
+       Ingilizce: *ağak₆ree > tree
+   24. tohum  (tohum ~ seed)   Ön Dil: *t₂eoium₃
+       Türkçe   : *t₂eoium₃ > *toy₆um > *toj₄um > *toş₂um > tohum
+       Ingilizce: *t₂eoium₃ > *sean₁₆ > sead  ✗
+   25. yaprak  (yaprak ~ leaf)   Ön Dil: *ly₃a₃pr₂ag
+       Türkçe   : *ly₃a₃pr₂ag > yaprak
+       Ingilizce: *ly₃a₃pr₂ag > *li₃afğ₂ > leaf
+   26. kök  (kök ~ root)   Ön Dil: *ru₂gök
+       Türkçe   : *ru₂gök > kök
+       Ingilizce: *ru₂gök > *roğ₂et > roet  ✗
+   27. kabuk  (kabuk ~ bark)   Ön Dil: *g₂a₃b₃uk₅
+       Türkçe   : *g₂a₃b₃uk₅ > kabuk
+       Ingilizce: *g₂a₃b₃uk₅ > *d₆am₄k > *ban₁₄k > bark
+   28. deri  (deri ~ skin)   Ön Dil: *y₂den₅i
+       Türkçe   : *y₂den₅i > dri  ✗
+       Ingilizce: *y₂den₅i > *jt₄en > *zken > sken  ✗
+   29. et  (et ~ flesh)   Ön Dil: *u₃le₃t₂h
+       Türkçe   : *u₃le₃t₂h > et
+       Ingilizce: *u₃le₃t₂h > *w₃lesh > *v₂lesh > flesh
+   30. kan  (kan ~ blood)   Ön Dil: *g₂lu₂a₄n₄
+       Türkçe   : *g₂lu₂a₄n₄ > kan
+       Ingilizce: *g₂lu₂a₄n₄ > *d₆lood > blood
+   31. kemik  (kemik ~ bone)   Ön Dil: *g₂ame₄g
+       Türkçe   : *g₂ame₄g > kaik  ✗
+       Ingilizce: *g₂ame₄g > *d₆meğ₂ > bme  ✗
+   32. yağ  (yağ ~ fat)   Ön Dil: *y₄a₃d₂
+       Türkçe   : *y₄a₃d₂ > yan  ✗
+       Ingilizce: *y₄a₃d₂ > *ğ₄at > *v₃at > fat
+   33. yumurta  (yumurta ~ egg)   Ön Dil: *ey₃um₂ur₂t₂a
+       Türkçe   : *ey₃um₂ur₂t₂a > yumurta
+       Ingilizce: *ey₃um₂ur₂t₂a > *eğ₇s > egs  ✗
+   34. boynuz  (boynuz ~ horn)   Ön Dil: *hboyn₄uz
+       Türkçe   : *hboyn₄uz > boynuz
+       Ingilizce: *hboyn₄uz > *hw₄ard₁₀ > harn  ✗
+   35. kuyruk  (kuyruk ~ tail)   Ön Dil: *kuy₄l₃ug
+       Türkçe   : *kuy₄l₃ug > kuyruk
+       Ingilizce: *kuy₄l₃ug > *tilğ₂ > til  ✗
+   36. tüy  (tüy ~ feather)   Ön Dil: *u₃ea₂therüy
+       Türkçe   : *u₃ea₂therüy > tüy
+       Ingilizce: *u₃ea₂therüy > *w₃eather > *v₂eather > feather
+   37. saç  (saç ~ hair)   Ön Dil: *sa₃i₂rx
+       Türkçe   : *sa₃i₂rx > saç
+       Ingilizce: *sa₃i₂rx > *ş₅airh₂ > hair
+   38. baş  (baş ~ head)   Ön Dil: *heba₃k₃
+       Türkçe   : *heba₃k₃ > baş
+       Ingilizce: *heba₃k₃ > *hew₄at₆ > head
+   39. kulak  (kulak ~ ear)   Ön Dil: *egul₂a₃r
+       Türkçe   : *egul₂a₃r > *kulan₁₇ > *kulad₁₃ > *kulat₉ > kulak
+       Ingilizce: *egul₂a₃r > *eğ₂ar > ear
+   40. göz  (göz ~ eye)   Ön Dil: *g₃öje
+       Türkçe   : *g₃öje > göz
+       Ingilizce: *g₃öje > *ğ₃eye > eye
+   41. burun  (burun ~ nose)   Ön Dil: *bun₅u₅d₂e
+       Türkçe   : *bun₅u₅d₂e > burun
+       Ingilizce: *bun₅u₅d₂e > *w₄noze > nose
+   42. ağız  (ağız ~ mouth)   Ön Dil: *ma₄ğb₂d₅h
+       Türkçe   : *ma₄ğb₂d₅h > *ağv₅z > *ağğ₈z > ağız
+       Ingilizce: *ma₄ğb₂d₅h > momth  ✗
+   43. diş  (diş ~ tooth)   Ön Dil: *tu₂u₂ik₃h
+       Türkçe   : *tu₂u₂ik₃h > diş
+       Ingilizce: *tu₂u₂ik₃h > tooth
+   44. dil  (dil ~ tongue)   Ön Dil: *tu₂ngu₃e₄l₂
+       Türkçe   : *tu₂ngu₃e₄l₂ > dkil  ✗
+       Ingilizce: *tu₂ngu₃e₄l₂ > *tonğ₅ue > tonyue  ✗
+   45. tırnak  (tırnak ~ claw)   Ön Dil: *t₃ır₂n₃a₃b
+       Türkçe   : *t₃ır₂n₃a₃b > tırnab  ✗
+       Ingilizce: *t₃ır₂n₃a₃b > *qlaw₄ > *çla > cla  ✗
+   46. ayak  (ayak ~ foot)   Ön Dil: *u₃a₄ya₄k
+       Türkçe   : *u₃a₄ya₄k > ayak
+       Ingilizce: *u₃a₄ya₄k > *w₃oot > *v₂oot > foot
+   47. diz  (diz ~ knee)   Ön Dil: *dizee
+       Türkçe   : *dizee > diz
+       Ingilizce: *dizee > *t₄d₁₀ee > knee
+   48. el  (el ~ hand)   Ön Dil: *ha₆nl₂
+       Türkçe   : *ha₆nl₂ > el
+       Ingilizce: *ha₆nl₂ > *hann₁₀ > hand
+   49. karın  (karın ~ belly)   Ön Dil: *g₂a₅l₃ın₃y₂
+       Türkçe   : *g₂a₅l₃ın₃y₂ > karın
+       Ingilizce: *g₂a₅l₃ın₃y₂ > *d₆elly > belly
+   50. boyun  (boyun ~ neck)   Ön Dil: *bojud₂
+       Türkçe   : *bojud₂ > bozun  ✗
+       Ingilizce: *bojud₂ > *w₄ayt > ayt  ✗
+   51. göğüs  (göğüs ~ breast)   Ön Dil: *d₂röa₂d₂üs
+       Türkçe   : *d₂röa₂d₂üs > gönüs  ✗
+       Ingilizce: *d₂röa₂d₂üs > *breazt > breast
+   52. yürek  (yürek ~ heart)   Ön Dil: *hea₂yür₃e₂k
+       Türkçe   : *hea₂yür₃e₂k > yürek
+       Ingilizce: *hea₂yür₃e₂k > heart
+   53. karaciğer  (karaciğer ~ liver)   Ön Dil: *gal₃aai₂ğe₃r₃
+       Türkçe   : *gal₃aai₂ğe₃r₃ > karaağer  ✗
+       Ingilizce: *gal₃aai₂ğe₃r₃ > *ğ₂lier > lier  ✗
+   54. içmek  (iç ~ drink)   Ön Dil: *d₃ri₂nk₆
+       Türkçe   : *d₃ri₂nk₆ > *n₆ç > ç  ✗
+       Ingilizce: *d₃ri₂nk₆ > drink
+   55. yemek  (ye ~ eat)   Ön Dil: *ye₃a₂u₂
+       Türkçe   : *ye₃a₂u₂ > ye
+       Ingilizce: *ye₃a₂u₂ > *eaw₆ > *eab₆ > *eap₂ > eat
+   56. ısırmak  (ısır ~ bite)   Ön Dil: *i₂i₂sır₂
+       Türkçe   : *i₂i₂sır₂ > sır  ✗
+       Ingilizce: *i₂i₂sır₂ > *ıit > *ğit > *vit > bit  ✗
+   57. görmek  (gör ~ see)   Ön Dil: *d₂eör₂
+       Türkçe   : *d₂eör₂ > gör
+       Ingilizce: *d₂eör₂ > *zee > see
+   58. duymak  (duy ~ hear)   Ön Dil: *hea₂d₄uy
+       Türkçe   : *hea₂d₄uy > duy
+       Ingilizce: *hea₂d₄uy > *hean₈ > hear
+   59. bilmek  (bil ~ know)   Ön Dil: *k₅il₄u₂w
+       Türkçe   : *k₅il₄u₂w > *t₁₀il > *p₄il > bil
+       Ingilizce: *k₅il₄u₂w > know
+   60. uyumak  (uyu ~ sleep)   Ön Dil: *uj₂leeu
+       Türkçe   : *uj₂leeu > uyu
+       Ingilizce: *uj₂leeu > *zlee > slee  ✗
+   61. ölmek  (öl ~ die)   Ön Dil: *d₃i₂öl₂
+       Türkçe   : *d₃i₂öl₂ > *n₆öl > öl
+       Ingilizce: *d₃i₂öl₂ > die
+   62. öldürmek  (öldür ~ kill)   Ön Dil: *öl₂di₂ll₃
+       Türkçe   : *öl₂di₂ll₃ > öldr  ✗
+       Ingilizce: *öl₂di₂ll₃ > *t₄ill > kill
+   63. yüzmek  (yüz ~ swim)   Ön Dil: *yüzwi₂m
+       Türkçe   : *yüzwi₂m > yüz
+       Ingilizce: *yüzwi₂m > swim
+   64. uçmak  (uç ~ fly)   Ön Dil: *uxly₂
+       Türkçe   : *uxly₂ > uç
+       Ingilizce: *uxly₂ > *s₂ly > fly
+   65. yürümek  (yürü ~ walk)   Ön Dil: *wa₂lj₂ür₂ü
+       Türkçe   : *wa₂lj₂ür₂ü > yürü
+       Ingilizce: *wa₂lj₂ür₂ü > *walş₃ > walk
+   66. gelmek  (gel ~ come)   Ön Dil: *g₃u₂me₃l₂
+       Türkçe   : *g₃u₂me₃l₂ > gel
+       Ingilizce: *g₃u₂me₃l₂ > *ğ₃ome > ome  ✗
+   67. yatmak  (yat ~ lie)   Ön Dil: *ly₄a₅t₂
+       Türkçe   : *ly₄a₅t₂ > yat
+       Ingilizce: *ly₄a₅t₂ > *lied₉ > *lien₁₃ > lie
+   68. oturmak  (otur ~ sit)   Ön Dil: *m₂t₂u₄t
+       Türkçe   : *m₂t₂u₄t > *b₄tud₈ > *w₂tun₁₂ > *u₆tur > otur
+       Ingilizce: *m₂t₂u₄t > *süt > sit
+   69. durmak  (dur ~ stand)   Ön Dil: *y₂ta₂nud₃
+       Türkçe   : *y₂ta₂nud₃ > *dun₇ > dur
+       Ingilizce: *y₂ta₂nud₃ > *jtand > *ztand > stand
+   70. vermek  (ver ~ give)   Ön Dil: *gi₂be₃r₂
+       Türkçe   : *gi₂be₃r₂ > kber  ✗
+       Ingilizce: *gi₂be₃r₂ > *ğ₂iw₄e > ie  ✗
+   71. demek  (de ~ say)   Ön Dil: *d₄a₆y₂
+       Türkçe   : *d₄a₆y₂ > de
+       Ingilizce: *d₄a₆y₂ > *zay > say
+   72. güneş  (güneş ~ sun)   Ön Dil: *d₂u₃n₂e₂ü
+       Türkçe   : *d₂u₃n₂e₂ü > *gnei₄ > *gney₅ > *gnej₃ > gneş  ✗
+       Ingilizce: *d₂u₃n₂e₂ü > *zun > sun
+   73. ay  (ay ~ moon)   Ön Dil: *mu₂a₄ny
+       Türkçe   : *mu₂a₄ny > ay
+       Ingilizce: *mu₂a₄ny > moon
+   74. yıldız  (yıldız ~ star)   Ön Dil: *j₂ıl₂tıd
+       Türkçe   : *j₂ıl₂tıd > yıldıd  ✗
+       Ingilizce: *j₂ıl₂tıd > *ztd > std  ✗
+   75. su  (su ~ water)   Ön Dil: *wa₂seru
+       Türkçe   : *wa₂seru > su
+       Ingilizce: *wa₂seru > water
+   76. yağmur  (yağmur ~ rain)   Ön Dil: *rya₃ğm₂u₄n₅
+       Türkçe   : *rya₃ğm₂u₄n₅ > yağmur
+       Ingilizce: *rya₃ğm₂u₄n₅ > *raün > rain
+   77. taş  (taş ~ stone)   Ön Dil: *t₂ak₃u₂ne
+       Türkçe   : *t₂ak₃u₂ne > taş
+       Ingilizce: *t₂ak₃u₂ne > stone
+   78. kum  (kum ~ sand)   Ön Dil: *k₂a₂num₃
+       Türkçe   : *k₂a₂num₃ > kum
+       Ingilizce: *k₂a₂num₃ > *ş₄ann₁₆ > sand
+   79. toprak  (toprak ~ earth)   Ön Dil: *ea₂dm₂tr₂ah
+       Türkçe   : *ea₂dm₂tr₂ah > *tb₄tra > *tw₂tra > *tu₆tra > totra  ✗
+       Ingilizce: *ea₂dm₂tr₂ah > eadth  ✗
+   80. bulut  (bulut ~ cloud)   Ön Dil: *bulu₂u₃t₃
+       Türkçe   : *bulu₂u₃t₃ > but  ✗
+       Ingilizce: *bulu₂u₃t₃ > *w₄loud > loud  ✗
+   81. duman  (duman ~ smoke)   Ön Dil: *d₄um₃a₄d₂e
+       Türkçe   : *d₄um₃a₄d₂e > duman
+       Ingilizce: *d₄um₃a₄d₂e > *zmoze > smose  ✗
+   82. ateş  (ateş ~ fire)   Ön Dil: *at₃i₂re₃ü
+       Türkçe   : *at₃i₂re₃ü > *atei₄ > *atey₅ > *atej₃ > ateş
+       Ingilizce: *at₃i₂re₃ü > *s₃ire > fire
+   83. kül  (kül ~ ash)   Ön Dil: *a₂k₂hül₂
+       Türkçe   : *a₂k₂hül₂ > kül
+       Ingilizce: *a₂k₂hül₂ > *aş₄h > ash
+   84. yanmak  (yan ~ burn)   Ön Dil: *i₂u₃ryan₂
+       Türkçe   : *i₂u₃ryan₂ > yan
+       Ingilizce: *i₂u₃ryan₂ > *ıurn > *ğurn > *vurn > burn
+   85. yol  (yol ~ path)   Ön Dil: *bol₄h
+       Türkçe   : *bol₄h > bol  ✗
+       Ingilizce: *bol₄h > *w₄an₁₁h > *ad₇h > ath  ✗
+   86. dağ  (dağ ~ mountain)   Ön Dil: *mu₂u₃nta₃i₂nğ
+       Türkçe   : *mu₂u₃nta₃i₂nğ > dağ
+       Ingilizce: *mu₂u₃nta₃i₂nğ > mountain
+   87. kırmızı  (kırmızı ~ red)   Ön Dil: *gır₃m₂ıdı
+       Türkçe   : *gır₃m₂ıdı > kırmıdı  ✗
+       Ingilizce: *gır₃m₂ıdı > *ğ₂rd > rd  ✗
+   88. yeşil  (yeşil ~ green)   Ön Dil: *y₃re₃üe₄l₄
+       Türkçe   : *y₃re₃üe₄l₄ > *yei₄il > *yey₅il > *yej₃il > yeşil
+       Ingilizce: *y₃re₃üe₄l₄ > *ğ₇reen > green
+   89. sarı  (sarı ~ yellow)   Ön Dil: *ja₅ll₃u₂ı
+       Türkçe   : *ja₅ll₃u₂ı > *xarı > sarı
+       Ingilizce: *ja₅ll₃u₂ı > *yellou₇ > yellow
+   90. beyaz  (beyaz ~ white)   Ön Dil: *b₃he₂y₄ad₅e
+       Türkçe   : *b₃he₂y₄ad₅e > beyaz
+       Ingilizce: *b₃he₂y₄ad₅e > white
+   91. kara  (kara ~ black)   Ön Dil: *i₂la₂hk₅ar₂a
+       Türkçe   : *i₂la₂hk₅ar₂a > kara
+       Ingilizce: *i₂la₂hk₅ar₂a > *ılahk > *ğlahk > *vlahk > blahk  ✗
+   92. gece  (gece ~ night)   Ön Dil: *ni₂g₃he₂u₄e₂
+       Türkçe   : *ni₂g₃he₂u₄e₂ > *geı₂e > *geğ₆e > *gej₅e > gece
+       Ingilizce: *ni₂g₃he₂u₄e₂ > *nighw₇ > *nighb₇ > *nighp₃ > night
+   93. sıcak  (sıcak ~ hot)   Ön Dil: *sıaa₄k
+       Türkçe   : *sıaa₄k > sıaak  ✗
+       Ingilizce: *sıaa₄k > *ş₅ot > hot
+   94. soğuk  (soğuk ~ cold)   Ön Dil: *jolğuk₄
+       Türkçe   : *jolğuk₄ > *xoğuk > soğuk
+       Ingilizce: *jolğuk₄ > *yalt₇ > yald  ✗
+   95. dolu  (dolu ~ full)   Ön Dil: *bu₃llu
+       Türkçe   : *bu₃llu > bu  ✗
+       Ingilizce: *bu₃llu > *w₄ull > ull  ✗
    96. yeni  (yeni ~ new)   Ön Dil: *ye₂n₂e₄w
        Türkçe   : *ye₂n₂e₄w > yeni
        Ingilizce: *ye₂n₂e₄w > new
-   97. iyi  (iyi ~ good)   Ön Dil: *ijoon₃i
-       Türkçe   : *ijoon₃i > iyi
-       Ingilizce: *ijoon₃i > good
-   98. yuvarlak  (yuvarlak ~ round)   Ön Dil: *r₂yu₃u₂arn₅ad
-       Türkçe   : *r₂yu₃u₂arn₅ad > *yuarlat₅ > yuarlak  ✗
-       Ingilizce: *r₂yu₃u₂arn₅ad > round
-   99. kuru  (kuru ~ dry)   Ön Dil: *dur₄y₂u
-       Türkçe   : *dur₄y₂u > *t₅uru > kuru
-       Ingilizce: *dur₄y₂u > dry
-  100. ad  (ad ~ name)   Ön Dil: *na₃n₄e
-       Türkçe   : *na₃n₄e > ad
-       Ingilizce: *na₃n₄e > name
+   97. iyi  (iyi ~ good)   Ön Dil: *iy₃u₂u₂d₃i
+       Türkçe   : *iy₃u₂u₂d₃i > *iyn₆i > iyi
+       Ingilizce: *iy₃u₂u₂d₃i > *ğ₇ood > good
+   98. yuvarlak  (yuvarlak ~ round)   Ön Dil: *ryu₅u₃ar₂l₄ak₄
+       Türkçe   : *ryu₅u₃ar₂l₄ak₄ > yuarlak  ✗
+       Ingilizce: *ryu₅u₃ar₂l₄ak₄ > *rount₇ > round
+   99. kuru  (kuru ~ dry)   Ön Dil: *k₄ur₃y₂u
+       Türkçe   : *k₄ur₃y₂u > kuru
+       Ingilizce: *k₄ur₃y₂u > *t₇ry > dry
+  100. ad  (ad ~ name)   Ön Dil: *na₃b₂e
+       Türkçe   : *na₃b₂e > ad
+       Ingilizce: *na₃b₂e > name
 
 ------------------------------------------------------------------------
 5. İSTİSNALAR
 ------------------------------------------------------------------------
-    1. ben (Ingilizce): beklenen 'i', kurallar 'n' üretti
-    2. sen (Ingilizce): beklenen 'you', kurallar 'soun' üretti
-    3. biz (Ingilizce): beklenen 'we', kurallar 'en' üretti
-    4. bu (Türkçe): beklenen 'bu', kurallar 'ts' üretti
-    5. şu (Türkçe): beklenen 'şu', kurallar 'şt' üretti
+    1. ben (Türkçe): beklenen 'ben', kurallar 'bn' üretti
+    1. ben (Ingilizce): beklenen 'i', kurallar 'e' üretti
     6. kim (Türkçe): beklenen 'kim', kurallar 'im' üretti
-    7. ne (Türkçe): beklenen 'ne', kurallar 'te' üretti
-    9. hep (Türkçe): beklenen 'hep', kurallar 'ep' üretti
-    9. hep (Ingilizce): beklenen 'all', kurallar 'hall' üretti
-   10. çok (Türkçe): beklenen 'çok', kurallar 'çk' üretti
    11. bir (Ingilizce): beklenen 'one', kurallar 'oe' üretti
-   13. büyük (Türkçe): beklenen 'büyük', kurallar 'büyk' üretti
-   13. büyük (Ingilizce): beklenen 'big', kurallar 'i' üretti
-   15. küçük (Ingilizce): beklenen 'small', kurallar 'smal' üretti
-   16. kadın (Türkçe): beklenen 'kadın', kurallar 'kadn' üretti
-   16. kadın (Ingilizce): beklenen 'woman', kurallar 'oman' üretti
-   17. adam (Ingilizce): beklenen 'man', kurallar 'ma' üretti
-   18. insan (Türkçe): beklenen 'insan', kurallar 'yinsan' üretti
-   18. insan (Ingilizce): beklenen 'person', kurallar 'penson' üretti
-   19. balık (Türkçe): beklenen 'balık', kurallar 'alk' üretti
-   20. kuş (Ingilizce): beklenen 'bird', kurallar 'bir' üretti
-   21. köpek (Türkçe): beklenen 'köpek', kurallar 'kpek' üretti
-   21. köpek (Ingilizce): beklenen 'dog', kurallar 'dop' üretti
-   22. bit (Türkçe): beklenen 'bit', kurallar 'it' üretti
-   23. ağaç (Türkçe): beklenen 'ağaç', kurallar 'ağat' üretti
-   24. tohum (Türkçe): beklenen 'tohum', kurallar 'tuk' üretti
-   24. tohum (Ingilizce): beklenen 'seed', kurallar 'seehd' üretti
-   25. yaprak (Türkçe): beklenen 'yaprak', kurallar 'açrak' üretti
-   26. kök (Türkçe): beklenen 'kök', kurallar 'kk' üretti
-   27. kabuk (Türkçe): beklenen 'kabuk', kurallar 'kabud' üretti
-   27. kabuk (Ingilizce): beklenen 'bark', kurallar 'bak' üretti
-   28. deri (Türkçe): beklenen 'deri', kurallar 'zderi' üretti
-   28. deri (Ingilizce): beklenen 'skin', kurallar 'skn' üretti
-   30. kan (Türkçe): beklenen 'kan', kurallar 'kak' üretti
-   31. kemik (Ingilizce): beklenen 'bone', kurallar 'be' üretti
-   32. yağ (Türkçe): beklenen 'yağ', kurallar 'at' üretti
-   34. boynuz (Ingilizce): beklenen 'horn', kurallar 'hnn' üretti
-   35. kuyruk (Türkçe): beklenen 'kuyruk', kurallar 'kyruk' üretti
-   37. saç (Türkçe): beklenen 'saç', kurallar 'aç' üretti
-   38. baş (Ingilizce): beklenen 'head', kurallar 'hea' üretti
-   39. kulak (Ingilizce): beklenen 'ear', kurallar 'ea' üretti
-   40. göz (Türkçe): beklenen 'göz', kurallar 'köy' üretti
-   40. göz (Ingilizce): beklenen 'eye', kurallar 'bee' üretti
-   41. burun (Türkçe): beklenen 'burun', kurallar 'burus' üretti
-   42. ağız (Türkçe): beklenen 'ağız', kurallar 'ağt' üretti
-   44. dil (Türkçe): beklenen 'dil', kurallar 'dnil' üretti
-   45. tırnak (Türkçe): beklenen 'tırnak', kurallar 'tırak' üretti
-   45. tırnak (Ingilizce): beklenen 'claw', kurallar 'tla' üretti
-   49. karın (Türkçe): beklenen 'karın', kurallar 'karı' üretti
-   50. boyun (Türkçe): beklenen 'boyun', kurallar 'bcud' üretti
-   50. boyun (Ingilizce): beklenen 'neck', kurallar 'eck' üretti
-   51. göğüs (Türkçe): beklenen 'göğüs', kurallar 'bösüs' üretti
-   51. göğüs (Ingilizce): beklenen 'breast', kurallar 'reast' üretti
-   53. karaciğer (Türkçe): beklenen 'karaciğer', kurallar 'karacver' üretti
-   53. karaciğer (Ingilizce): beklenen 'liver', kurallar 'lciver' üretti
-   54. içmek (Türkçe): beklenen 'iç', kurallar 'd' üretti
-   55. yemek (Türkçe): beklenen 'ye', kurallar 'yet' üretti
-   56. ısırmak (Türkçe): beklenen 'ısır', kurallar 'sr' üretti
-   57. görmek (Türkçe): beklenen 'gör', kurallar 'sör' üretti
-   58. duymak (Ingilizce): beklenen 'hear', kurallar 'head' üretti
-   59. bilmek (Türkçe): beklenen 'bil', kurallar 'dil' üretti
-   60. uyumak (Türkçe): beklenen 'uyu', kurallar 'uzp' üretti
+   13. büyük (Türkçe): beklenen 'büyük', kurallar 'düyk' üretti
+   14. uzun (Ingilizce): beklenen 'long', kurallar 'lont' üretti
+   16. kadın (Türkçe): beklenen 'kadın', kurallar 'badın' üretti
+   16. kadın (Ingilizce): beklenen 'woman', kurallar 'omn' üretti
+   17. adam (Türkçe): beklenen 'adam', kurallar 'ada' üretti
+   17. adam (Ingilizce): beklenen 'man', kurallar 'mam' üretti
+   18. insan (Türkçe): beklenen 'insan', kurallar 'binsan' üretti
+   18. insan (Ingilizce): beklenen 'person', kurallar 'erson' üretti
+   19. balık (Türkçe): beklenen 'balık', kurallar 'balk' üretti
+   19. balık (Ingilizce): beklenen 'fish', kurallar 'ish' üretti
+   21. köpek (Ingilizce): beklenen 'dog', kurallar 'deg' üretti
+   22. bit (Türkçe): beklenen 'bit', kurallar 'dit' üretti
+   22. bit (Ingilizce): beklenen 'louse', kurallar 'lomse' üretti
+   24. tohum (Ingilizce): beklenen 'seed', kurallar 'sead' üretti
+   26. kök (Ingilizce): beklenen 'root', kurallar 'roet' üretti
+   28. deri (Türkçe): beklenen 'deri', kurallar 'dri' üretti
+   28. deri (Ingilizce): beklenen 'skin', kurallar 'sken' üretti
+   31. kemik (Türkçe): beklenen 'kemik', kurallar 'kaik' üretti
+   31. kemik (Ingilizce): beklenen 'bone', kurallar 'bme' üretti
+   32. yağ (Türkçe): beklenen 'yağ', kurallar 'yan' üretti
+   33. yumurta (Ingilizce): beklenen 'egg', kurallar 'egs' üretti
+   34. boynuz (Ingilizce): beklenen 'horn', kurallar 'harn' üretti
+   35. kuyruk (Ingilizce): beklenen 'tail', kurallar 'til' üretti
+   42. ağız (Ingilizce): beklenen 'mouth', kurallar 'momth' üretti
+   44. dil (Türkçe): beklenen 'dil', kurallar 'dkil' üretti
+   44. dil (Ingilizce): beklenen 'tongue', kurallar 'tonyue' üretti
+   45. tırnak (Türkçe): beklenen 'tırnak', kurallar 'tırnab' üretti
+   45. tırnak (Ingilizce): beklenen 'claw', kurallar 'cla' üretti
+   50. boyun (Türkçe): beklenen 'boyun', kurallar 'bozun' üretti
+   50. boyun (Ingilizce): beklenen 'neck', kurallar 'ayt' üretti
+   51. göğüs (Türkçe): beklenen 'göğüs', kurallar 'gönüs' üretti
+   53. karaciğer (Türkçe): beklenen 'karaciğer', kurallar 'karaağer' üretti
+   53. karaciğer (Ingilizce): beklenen 'liver', kurallar 'lier' üretti
+   54. içmek (Türkçe): beklenen 'iç', kurallar 'ç' üretti
+   56. ısırmak (Türkçe): beklenen 'ısır', kurallar 'sır' üretti
+   56. ısırmak (Ingilizce): beklenen 'bite', kurallar 'bit' üretti
+   60. uyumak (Ingilizce): beklenen 'sleep', kurallar 'slee' üretti
    62. öldürmek (Türkçe): beklenen 'öldür', kurallar 'öldr' üretti
-   65. yürümek (Türkçe): beklenen 'yürü', kurallar 'dürü' üretti
-   67. yatmak (Ingilizce): beklenen 'lie', kurallar 'liet' üretti
-   68. oturmak (Türkçe): beklenen 'otur', kurallar 'ott' üretti
-   69. durmak (Türkçe): beklenen 'dur', kurallar 'zduk' üretti
-   70. vermek (Türkçe): beklenen 'ver', kurallar 'nver' üretti
-   71. demek (Türkçe): beklenen 'de', kurallar 'se' üretti
-   72. güneş (Türkçe): beklenen 'güneş', kurallar 'sneş' üretti
-   74. yıldız (Türkçe): beklenen 'yıldız', kurallar 'sıld' üretti
-   76. yağmur (Türkçe): beklenen 'yağmur', kurallar 'yağmr' üretti
-   78. kum (Türkçe): beklenen 'kum', kurallar 'kuk' üretti
-   79. toprak (Türkçe): beklenen 'toprak', kurallar 'topra' üretti
-   79. toprak (Ingilizce): beklenen 'earth', kurallar 'eatth' üretti
-   80. bulut (Ingilizce): beklenen 'cloud', kurallar 'out' üretti
-   81. duman (Türkçe): beklenen 'duman', kurallar 'sumad' üretti
-   81. duman (Ingilizce): beklenen 'smoke', kurallar 'soke' üretti
-   82. ateş (Türkçe): beklenen 'ateş', kurallar 'açeş' üretti
-   85. yol (Türkçe): beklenen 'yol', kurallar 'yt' üretti
-   87. kırmızı (Türkçe): beklenen 'kırmızı', kurallar 'kırmdı' üretti
-   89. sarı (Ingilizce): beklenen 'yellow', kurallar 'sellow' üretti
-   90. beyaz (Türkçe): beklenen 'beyaz', kurallar 'beyat' üretti
-   90. beyaz (Ingilizce): beklenen 'white', kurallar 'hite' üretti
-   91. kara (Türkçe): beklenen 'kara', kurallar 'dara' üretti
-   92. gece (Türkçe): beklenen 'gece', kurallar 'nete' üretti
-   93. sıcak (Türkçe): beklenen 'sıcak', kurallar 'ıcak' üretti
-   93. sıcak (Ingilizce): beklenen 'hot', kurallar 'hcot' üretti
-   94. soğuk (Ingilizce): beklenen 'cold', kurallar 'sld' üretti
-   95. dolu (Türkçe): beklenen 'dolu', kurallar 'olu' üretti
-   95. dolu (Ingilizce): beklenen 'full', kurallar 'fl' üretti
+   66. gelmek (Ingilizce): beklenen 'come', kurallar 'ome' üretti
+   70. vermek (Türkçe): beklenen 'ver', kurallar 'kber' üretti
+   70. vermek (Ingilizce): beklenen 'give', kurallar 'ie' üretti
+   72. güneş (Türkçe): beklenen 'güneş', kurallar 'gneş' üretti
+   74. yıldız (Türkçe): beklenen 'yıldız', kurallar 'yıldıd' üretti
+   74. yıldız (Ingilizce): beklenen 'star', kurallar 'std' üretti
+   79. toprak (Türkçe): beklenen 'toprak', kurallar 'totra' üretti
+   79. toprak (Ingilizce): beklenen 'earth', kurallar 'eadth' üretti
+   80. bulut (Türkçe): beklenen 'bulut', kurallar 'but' üretti
+   80. bulut (Ingilizce): beklenen 'cloud', kurallar 'loud' üretti
+   81. duman (Ingilizce): beklenen 'smoke', kurallar 'smose' üretti
+   85. yol (Türkçe): beklenen 'yol', kurallar 'bol' üretti
+   85. yol (Ingilizce): beklenen 'path', kurallar 'ath' üretti
+   87. kırmızı (Türkçe): beklenen 'kırmızı', kurallar 'kırmıdı' üretti
+   87. kırmızı (Ingilizce): beklenen 'red', kurallar 'rd' üretti
+   91. kara (Ingilizce): beklenen 'black', kurallar 'blahk' üretti
+   93. sıcak (Türkçe): beklenen 'sıcak', kurallar 'sıaak' üretti
+   94. soğuk (Ingilizce): beklenen 'cold', kurallar 'yald' üretti
+   95. dolu (Türkçe): beklenen 'dolu', kurallar 'bu' üretti
+   95. dolu (Ingilizce): beklenen 'full', kurallar 'ull' üretti
    98. yuvarlak (Türkçe): beklenen 'yuvarlak', kurallar 'yuarlak' üretti
 
 ------------------------------------------------------------------------
 6. DEĞERLENDİRME
 ------------------------------------------------------------------------
-  Ön Dil dağarcığının %48 kadarı türetilmiş (zorlama) harftir
+  Ön Dil dağarcığının %62 kadarı türetilmiş (zorlama) harftir
   ve Türkçe ile Ingilizce listelerini ortak ataya bağlamak için toplam
-  140 kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf
+  250 kural gerekmiştir. Tutumluluk eşiği yükseltildikçe harf
   sayısı düşer ama düzenlilik de düşer: harf sayısı ile istisna
   sayısı arasındaki bu ödünleşim eğrisi (bkz. --tarama) iki listenin
   akrabalık derecesinin sayısal ölçüsüdür; akraba dillerde az harfle

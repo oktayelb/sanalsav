@@ -86,7 +86,13 @@ def main(argv=None):
             s = seri_oluştur(çiftler, (ad1, ad2), args.en_az_katman, eşik)
             dağarcık = {t for w in s.proto_kelimeler for t in w}
             türetilmiş = sum(1 for t in dağarcık if any(c in "₀₁₂₃₄₅₆₇₈₉" for c in t))
-            kural = sum(len(k) for dal in (0, 1) for k in s.tablolar[dal].values())
+            kural = sum(
+                1
+                for dal in (0, 1)
+                for ks in s.tablolar[dal].values()
+                for k in ks
+                if k.hedef != k.kaynak
+            )
             düzenlilik = 100.0 * (2 * len(çiftler) - len(s.istisnalar)) / (2 * len(çiftler))
             print(f"  {eşik:>4}  {len(dağarcık):>12}  {türetilmiş:>10}  "
                   f"{kural:>6}  {len(s.istisnalar):>7}  %{düzenlilik:>9.1f}")
