@@ -18,15 +18,16 @@ için türkçe.txt ve ingilizce.txt Swadesh-100 listeleri eklenmiştir; eylemler
 kök biçimiyle (iç, ye, gör...) verilmiştir ki -mek/-mak eki yapay kural üretmesin.
 Yazılış esaslıdır; okunuş kullanılmaz.
 
-MEVCUT DİLLER (17)
+MEVCUT DİLLER (27)
 
   Türk: türkçe, azerbaycanca, türkmence, gagavuzca, kazakça
-  Germen: almanca, ingilizce
-  Roman: romence
+  Germen: almanca, ingilizce, hollandaca, isveççe
+  Roman: romence, ispanyolca, italyanca, fransızca, portekizce
   İran: tacikçe, kürtçe (Kurmancî)
   Arnavut: arnavutça
-  Ural: estonca, fince
-  Slav: slovence, hırvatça, boşnakça, slovakça
+  Ural: estonca, fince, macarca
+  Balt: litvanca
+  Slav: slovence, hırvatça, boşnakça, slovakça, lehçe, çekçe
 
 Çiftler arası ön dil harf maliyeti (akrabalık ölçüsü) için bkz. ../tüm_diller.md.
 
@@ -42,7 +43,11 @@ Kürtçe ê->e, î->i, û->u; Arnavutça ë->ə, ünlü y->ü (ikili harfler dh/
 korunur); Türkmence ä->ə, ž->j, ň->n, y->ı, ý->y; Tacikçe Kiril'den Latin'e
 (ғ->ğ, қ->q, ҳ->h, х->x, ҷ->c, ч->ç, ш->ş); Sloven/Slav c->ţ, č/ć->ç, š->ş,
 ž->j, kayıcı j->y; Eston õ->ı; Fin ünlü y->ü; Slovak uzun ünlüler kısaltılır,
-ch->x; Kazak ä->ə, ñ korunur. Genel kural: ş, c, j, x, q, ğ, ö, ü, ı zaten
+ch->x; Kazak ä->ə, ñ korunur. Roman dilleri (İsp/İta/Fra/Por): aksanlar tabana
+indirgenir, ç->s (Fr/Pt'de [s]), İsp ñ korunur. Germen (Hol/İsv): kayıcı j->y,
+İsv å->o ä->ə y->ü. Lehçe/Çekçe/Macarca: ıslıklılar sese göre (Macar s->ş,
+sz->s, zs->j), c[ts]->ţ, gy->c. Litvanca: uzun/burunsu ünlüler sadeleşir.
+Genel kural: ş, c, j, x, q, ğ, ö, ü, ı zaten
 yazılı; [ts]=ţ ve [ŋ]=ñ yeni eklendi (sesbiçim/ünsüz.py). č->ç olduğundan
 Hırvatçanın č/ć ayrımı kaba boğumlanma ölçeğinde birleşir. Bu listeler ilk
 taslaktır; sözcük seçimleri (eş anlamlılar, eylem citation biçimleri) gözden
