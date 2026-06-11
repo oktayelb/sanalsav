@@ -13,7 +13,7 @@ ama iki gerçek harf arasındaki yol boş sesin "içinden" geçemez.
 
 from collections import deque
 
-from .ünlü import ÜNLÜLER, TÜM_ÜNLÜLER, ünlü_komşu_mu
+from .ünlü import DOĞUMLAR, ÜNLÜLER, TÜM_ÜNLÜLER, ünlü_komşu_mu
 from .ünsüz import (
     BİÇİM_KOMŞULUĞU, YERLER, ÜNSÜZLER, TÜM_ÜNSÜZLER, ünsüz_komşu_mu,
 )
@@ -36,6 +36,29 @@ def taban(token):
 
 def ünlü_mü(token):
     return taban(token) in TÜM_ÜNLÜLER
+
+
+# --- çok-harf (doğum) dizileri ---------------------------------------------
+# README'deki "grupça değişim"in tek harften çok harf yarısı: şimdilik
+# yalnız uzun ünlüler doğurabilir (bkz. ünlü.DOĞUMLAR). Bir dizi, ayırıcıyla
+# birleştirilmiş harf dizgesidir ("u+v+u"); böylece karşılıklık ve kural
+# tablolarında tek bir belirteç gibi taşınır ama harflerine açılabilir.
+DİZİ_AYIRICI = "+"
+
+
+def dizi_yap(harfler):
+    return DİZİ_AYIRICI.join(harfler)
+
+
+def dizi_mi(token):
+    return DİZİ_AYIRICI in token
+
+
+def dizi_harfleri(token):
+    return token.split(DİZİ_AYIRICI)
+
+
+DOĞUM_KAYNAĞI = {dizi_yap(g): v for g, v in DOĞUMLAR.items()}
 
 
 # Özellik adımlarıyla yakalanamayan ama doğal dillerde iyi bilinen geçişler.
@@ -165,8 +188,8 @@ def özellik_uzaklığı(a, b):
         )
         return max(1, yf + bf + (sa != sb))
     if a in TÜM_ÜNLÜLER and b in TÜM_ÜNLÜLER:
-        (ha, aa, ya), (hb, ab, yb) = TÜM_ÜNLÜLER[a], TÜM_ÜNLÜLER[b]
-        return max(1, abs(ha - hb) + (aa != ab) + (ya != yb))
+        (ha, aa, ya, ua), (hb, ab, yb, ub) = TÜM_ÜNLÜLER[a], TÜM_ÜNLÜLER[b]
+        return max(1, abs(ha - hb) + (aa != ab) + (ya != yb) + (ua != ub))
     return 5  # ünlü ~ ünsüz (köprü çiftleri dışında uzak)
 
 
@@ -176,7 +199,17 @@ def silme_maliyeti(h):
 
 
 def uzaklık(a, b):
-    """İki harf arasındaki en kısa doğal yolun adım sayısı."""
+    """İki harf arasındaki en kısa doğal yolun adım sayısı.
+
+    Hedef bir doğum dizisiyse (u+v+u gibi) yol, doğuran uzun ünlüye gidip
+    son adımda doğurmaktır: uzaklık = (a -> uzun ünlü) + 1.
+    """
+    if dizi_mi(b):
+        kaynak = DOĞUM_KAYNAĞI.get(b)
+        if kaynak is None:
+            return 99
+        ara = uzaklık(a, kaynak)
+        return ara + 1 if ara < 99 else 99
     a, b = taban(a), taban(b)
     if a == b:
         return 0

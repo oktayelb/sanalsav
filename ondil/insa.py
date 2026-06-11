@@ -25,7 +25,9 @@ Uygulanan yöntem, README'deki 1. ve 4. varsayımsal yöntemlerin bileşimidir:
 from dataclasses import dataclass, field
 
 from sesbiçim.harf import (
-    BOŞ, HARFLER, SANAL_HARFLER, alt_yazı, taban, uzaklık, yol, yollar,
+    BOŞ, DOĞUM_KAYNAĞI, HARFLER, SANAL_HARFLER, alt_yazı, dizi_harfleri,
+    dizi_mi, dizi_yap, taban, uzaklık, yol, yollar, ünlü_mü,
+    özellik_uzaklığı,
 )
 from sesbiçim.ünsüz import ÜNSÜZLER
 
@@ -80,6 +82,7 @@ class Seri:
     düzensiz: list = None  # dal başına kural dışı bırakılan karşılıklıklar
     türetim_eşiği: int = 1
     etiketli_sayısı: int = 0
+    doğum_olayları: list = field(default_factory=list)  # (kelime, sütun, çift)
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +113,67 @@ def _metatez_ayıkla(sütunlar):
                 continue
         yeni.append(sütunlar[i])
         i += 1
+    return yeni, olaylar
+
+
+def _doğum_eşi(sütunlar, i):
+    """i konumunda uzun ünlü doğum örüntüsü arar; (çift, sütun_sayısı) döner.
+
+    Pencere içindeki her dalın harfleri boşluklar atılarak sıkıştırılır
+    (hizalama gövdeyi boşluklu sütunlara dağıtabilir). İki örüntü tanınır
+    (önce geniş pencere denenir):
+    - İki dal da AYNI uzun ünlünün FARKLI gövdesi: aa ~ ay, uvu ~ ubu.
+    - Bir dal gövde, öbür dalda yalnız tek bir ünlü sağ: uvu ~ u, ağa ~ a.
+      İki harflik gövde (ay tipi) tek ünlüyle yalnız söz sonunda eşlenir;
+      yoksa olağan kayıcı silinmeleri toptan uzun ünlüye dönerdi.
+    """
+    n = len(sütunlar)
+    for boy in (4, 3, 2):
+        if i + boy > n:
+            continue
+        pencere = sütunlar[i:i + boy]
+        yanlar = [[p[d] for p in pencere if p[d] != BOŞ] for d in DALLAR]
+        diziler = [dizi_yap(y) if len(y) >= 2 else None for y in yanlar]
+        kaynaklar = [DOĞUM_KAYNAĞI.get(d) if d else None for d in diziler]
+        if (kaynaklar[0] is not None and kaynaklar[0] == kaynaklar[1]
+                and diziler[0] != diziler[1]):
+            return (diziler[0], diziler[1]), boy
+        for dal in DALLAR:
+            if kaynaklar[dal] is None:
+                continue
+            if len(yanlar[dal]) == 2 and i + boy != n:
+                continue
+            karşı = yanlar[1 - dal]
+            if len(karşı) != 1 or not ünlü_mü(karşı[0]):
+                continue
+            if özellik_uzaklığı(yanlar[dal][0], karşı[0]) > 2:
+                continue
+            çift = ((diziler[dal], karşı[0]) if dal == 0
+                    else (karşı[0], diziler[dal]))
+            return çift, boy
+    return None, 0
+
+
+def _doğum_ayıkla(sütunlar):
+    """Uzun ünlü doğum örüntülerini tek karşılıklık sütununa indirir.
+
+    Tek harften çok harf türetme (README'deki grupça değişimin ilk yarısı)
+    şimdilik yalnız uzun ünlülere tanınır: yakalanan pencere tek sütuna
+    çekilir, Ön Dil harfi adayı doğuran uzun ünlü olur ve doğum, kuralın
+    son adımı olarak uygulanır.
+    """
+    olaylar = []
+    yeni = []
+    i = 0
+    while i < len(sütunlar):
+        çift, boy = _doğum_eşi(sütunlar, i)
+        if çift is not None:
+            yeni.append(çift)
+            olaylar.append((len(yeni) - 1, çift))
+            i += boy
+        else:
+            yeni.append(sütunlar[i])
+            i += 1
     return yeni, olaylar
 
 
@@ -457,6 +521,12 @@ def _çakışma_çöz(atama, korr_yerleri, hizalamalar, sayaç, eşik=1,
 
 def _zincir_kur(g):
     b = taban(g.token)
+    if dizi_mi(g.refleks):
+        # doğum: önce doğuran uzun ünlüye yürünür, son adımda doğrulur
+        kaynak = DOĞUM_KAYNAĞI[g.refleks]
+        if b == kaynak:
+            return [g.token, g.refleks]
+        return [g.token] + yol(b, kaynak)[1:] + [g.refleks]
     if g.refleks == g.token:
         return None  # değişmeyen harf
     if g.refleks == b:
@@ -484,8 +554,12 @@ def _katman_tablosu(gruplar, katman):
                         tablo[1][anahtar] = kural
                     kural.gruplar.append(g)
                 continue
+            ilk = True
             for j in range(1, len(g.zincir)):
-                bağlam = g.bağlam if j == 1 else "her yerde"
+                if g.zincir[j - 1] == g.zincir[j]:
+                    continue  # doğum zinciri dolgusu: bu katmanda durulur
+                bağlam = g.bağlam if ilk else "her yerde"
+                ilk = False
                 anahtar = (g.zincir[j - 1], g.zincir[j], bağlam)
                 kural = tablo[j].get(anahtar)
                 if kural is None:
@@ -622,7 +696,12 @@ def kör_türet(proto, dal, tablolar, katman, metatez_kuralları):
         yeni = []
         for i in range(len(w)):
             k = _kural_seç(tablolar.get(j, []), w, i)
-            yeni.append(k.hedef if k else w[i])
+            if k is None:
+                yeni.append(w[i])
+            elif dizi_mi(k.hedef):
+                yeni.extend(dizi_harfleri(k.hedef))  # doğum: tek harf > çok
+            else:
+                yeni.append(k.hedef)
         w = [t for t in yeni if t != BOŞ]
         biçimler.append(list(w))
     return biçimler
@@ -638,9 +717,13 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
 
     hizalamalar = []
     metatezler = []
+    doğumlar = []
     for kno, (a, b) in enumerate(sözcükler):
-        sütunlar, olaylar = _metatez_ayıkla(hizala(a, b))
+        sütunlar, d_olayları = _doğum_ayıkla(hizala(a, b))
+        sütunlar, olaylar = _metatez_ayıkla(sütunlar)
         hizalamalar.append(sütunlar)
+        for sütun, çift in d_olayları:
+            doğumlar.append((kno, sütun, çift))
         for sütun, çift in olaylar:
             metatezler.append((kno, sütun, çift))
 
@@ -668,6 +751,17 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
         )
         for dal in DALLAR
     ]
+
+    # Doğum (tek harften çok harf) adımı her zaman dalın SON katmanına
+    # yerleştirilir: harf sayısı katman ortasında değişirse kör doğrulamanın
+    # konum eşlemesi bozulur. Aradaki katmanlar kimlik adımıyla doldurulur
+    # (_katman_tablosu kimlik adımlarına kural üretmez).
+    for g in gruplar:
+        if g.zincir and dizi_mi(g.zincir[-1]):
+            eksik = katman[g.dal] - (len(g.zincir) - 1)
+            if eksik > 0:
+                g.zincir = (g.zincir[:-1]
+                            + [g.zincir[-2]] * eksik + [g.zincir[-1]])
 
     grup_bul = {(g.token, g.dal, g.refleks): g for g in gruplar}
     etiket_uygula = _etiketle(gruplar, sayaç)
@@ -727,4 +821,5 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
         düzensiz=düzensiz,
         türetim_eşiği=türetim_eşiği,
         etiketli_sayısı=etiketli_sayısı,
+        doğum_olayları=doğumlar,
     )

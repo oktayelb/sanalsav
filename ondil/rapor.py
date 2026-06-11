@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ön Dil serisi sonuç raporu üretimi."""
 
-from sesbiçim.harf import BOŞ, SANAL_HARFLER, taban
+from sesbiçim.harf import BOŞ, SANAL_HARFLER, dizi_harfleri, dizi_mi, taban
 
 from .insa import DALLAR
 
@@ -86,6 +86,15 @@ def rapor_üret(seri):
              f"{ad1} dalı {kural_sayısı[1]} "
              f"({bağlamlı[1]} bağlamlı, +{korunma[1]} korunma)")
     S.append(f"  göçüşüm (metathesis) kuralı     : {len(set(ç for _, _, ç in seri.metatez_olayları))}")
+    doğum_kuralı = sum(
+        1
+        for dal in DALLAR
+        for j in seri.tablolar[dal]
+        for k in seri.tablolar[dal][j]
+        if dizi_mi(k.hedef)
+    )
+    S.append(f"  doğum (tek harf > çok harf)     : {doğum_kuralı} kural, "
+             f"{len(seri.doğum_olayları)} konum (yalnız uzun ünlüler)")
     S.append(f"  ara katman ayrım harfi          : {seri.etiketli_sayısı} zincirde")
     S.append(f"  istisna                         : {istisna} / {2 * n} türetim")
     S.append(f"  düzenlilik                      : %{düzenlilik:.1f}")
@@ -144,9 +153,15 @@ def rapor_üret(seri):
             S.append(f"    Katman {j} ({kaynak_adı} -> {hedef_adı}): "
                      f"{len(kurallar)} kural")
             for k in kurallar:
-                hedef = "∅" if k.hedef == BOŞ else k.hedef
+                if k.hedef == BOŞ:
+                    hedef, not_ = "∅", ""
+                elif dizi_mi(k.hedef):
+                    hedef = "".join(dizi_harfleri(k.hedef))
+                    not_ = "  (doğum: tek harften çok harf)"
+                else:
+                    hedef = k.hedef
+                    not_ = "  (korunur)" if k.hedef == k.kaynak else ""
                 bağlam = "" if k.bağlam == "her yerde" else f"  / {k.bağlam}"
-                not_ = "  (korunur)" if k.hedef == k.kaynak else ""
                 S.append(f"      *{k.kaynak} -> {hedef}{bağlam}{not_}")
         S.append("")
 

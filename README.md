@@ -58,7 +58,7 @@ GERÇEKLEŞTİRİM
 Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış:
 
 1. "sesbiçim/" : Her harf (ünlü/ünsüz) tek tek değil, özellik vektörü olarak tanımlıdır
-   (ünlüler: yükseklik-arkalık-yuvarlaklık; ünsüzler: yer-biçim-ötümlülük). Yer ölçeği
+   (ünlüler: yükseklik-arkalık-yuvarlaklık-uzunluk; ünsüzler: yer-biçim-ötümlülük). Yer ölçeği
    IPA'ya uygun 7 bölgedir (dudaksıl, dişdudaksıl, dişsil, öndamaksıl, artdamaksıl,
    küçükdilsil, gırtlaksıl); l yansıl, r çarpmalı ayrı biçim sınıflarıdır; ğ tarihsel
    değeriyle artdamaksıl sızıcıdır (/ɣ/), q küçükdilsildir. Böylece hiçbir iki yazılı
@@ -135,6 +135,28 @@ Eşitlikte yazılı harf yeğlenir (sanal harf ancak yolu gerçekten kısaltıyo
 seçilir) ve hizalama yalnız yazılı harf grafiğini görür: sanal harfler sözcük
 karşılaştırmasını değil, yalnız yeniden kurmayı etkiler.
 
+UZUN ÜNLÜLER VE DOĞUM (TEK HARFTEN ÇOK HARF)
+
+Ünlü vektörüne dördüncü boyut olarak uzunluk eklendi (0 kısa, 1 uzun).
+Türk yazılarında uzunluk imlenmediğinden bütün yazılı ünlüler kısadır;
+12 uzun ünlü (aː, uː, eː...) sanal harftir ve uzama/kısalma (a ~ aː) tek
+adımlık doğal komşuluktur. Başka dillerin yazıdaki uzun ünlüleri (ikiz
+yazım: aa) ve uzun ünlüye özgü ses kuralları böylece temsil edilebilir.
+
+Uzun ünlüler ayrıca, 1. varsayımsal yöntemdeki "grupça değişim"in tek
+harften çok harf yarısını taşıyan İLK harf sınıfıdır: doğum hamlesi
+şimdilik yalnız uzun ünlülere tanınmıştır. Her uzun ünlü, kısa eşinin
+çevresinde iyi bilinen gövdeleri doğurabilir: büzülme gövdesi (uː > uvu /
+ubu, aː > ağa), ikiz yazım (aː > aa) ve söz sonunda çift ünlüleşme
+(aː > ay). Hizalamada bir dalda gövde, öbür dalda tek ünlü (uvu ~ u) ya
+da aynı uzun ünlünün başka bir gövdesi (aa ~ ay, eğ ~ ey) görülürse sütunlar
+tek karşılıklığa çekilir; Ön Dil harfi doğuran uzun ünlü olur ve doğum,
+kural zincirinin SON katman adımı olarak uygulanır (harf sayısı katman
+ortasında değişirse kör doğrulamanın konum eşlemesi bozulurdu). Türkçe ~
+Azerbaycanca'da bu hamle klasik ğ ~ y denkliğini kendiliğinden uzun
+ünlüye bağlar: *deːil > değil / deyil, *soːuk > soğuk / soyuq; Türkçe ~
+İngilizce'de *büːk > büyük (büzülme) ve *saː > say (çift ünlüleşme) çıkar.
+
 Harf türetimi ve etiketleme ayrıca iki "son çare" mekanizmasıyla geciktirilir:
 
 1. KONAK HARF: Bağlamla ayrışmayan bir grup için yeni harf türetmeden önce, biraz
@@ -147,9 +169,9 @@ Alfabe sıkıştıkça kural sayısının bir miktar artması beklenen bilgi-kur
 bedeldir (az harf = çok kural). Türkçe ~ İngilizce Swadesh-100 için:
 
     eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
-       1           104          73    345        0     %100.0
-       3            68          41    237       65     % 67.5
-       8            29          11     66      169     % 15.5
+       1           105          74    357        0     %100.0
+       3            67          40    241       64     % 68.0
+       8            30          12     72      168     % 16.0
 
 Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
 akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
@@ -164,14 +186,15 @@ olmayan maddeler de listede bırakıldı):
 
     eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
            harf / kural / düzenlilik   harf / kural / düzenlilik
-       1   104  / 345   / %100         66  / 168   / %100
-       3    68  / 237   / %67.5        45  / 115   / %87.0
-       5    44  / 133   / %35.0        30  /  44   / %71.5
-       8    29  /  66   / %15.5        22  /  23   / %52.0
+       1   105  / 357   / %100         67  / 172   / %100
+       3    67  / 241   / %68.0        44  / 123   / %86.5
+       5    44  / 139   / %35.5        30  /  49   / %72.5
+       8    30  /  72   / %16.0        21  /  26   / %48.0
 
 Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 5'te yalnız 30
-soyut harf ve 44 kuralla düzenlilik %71.5'te tutunuyor (kalan istisnaların çoğu
-zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %35'e,
-eşik 8'de %15.5'a çöküyor. Düzenli
+soyut harf ve 49 kuralla düzenlilik %72.5'te tutunuyor (kalan istisnaların çoğu
+zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %35.5'e,
+eşik 8'de %16'ya çöküyor. Düzenli
 kurallar da gerçek ses denkliklerini kendiliğinden buluyor: k -> q (kadın ~ qadın),
-t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) gibi.
+t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) ve
+uzun ünlü doğumuyla ğ ~ y denkliği (*soːuk > soğuk ~ soyuq) gibi.
