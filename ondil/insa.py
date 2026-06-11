@@ -37,7 +37,7 @@ _SANAL_CEZA = 0.05
 _SANAL_KÜME = set(SANAL_HARFLER)
 
 from .hizalama import hizala
-from .kurallar import BAĞLAM_SIRASI, ayır, ayır_biçimlerle, bağlam_işlevi
+from .kurallar import ayır, ayır_biçimlerle, bağlam_işlevi, bağlam_özgüllük
 
 DALLAR = (0, 1)
 
@@ -585,7 +585,7 @@ def _kural_seç(kurallar, w, i):
     ]
     if not adaylar:
         return None
-    return min(adaylar, key=lambda k: BAĞLAM_SIRASI.index(k.bağlam))
+    return min(adaylar, key=lambda k: bağlam_özgüllük(k.bağlam))
 
 
 # ---------------------------------------------------------------------------
@@ -688,7 +688,9 @@ def _ara_katman_dene(g, j, kelime_gez):
             if atla[p] or gez[p][j - 1] != s:
                 continue
             (kendi if gez[p][j] == t else diğer).append((w, idx))
-    bağlam = ayır_biçimlerle(kendi, diğer)
+    # Ara katmanda yalnız kaba (sınıf) bağlam: harfe özgü koşullar ideal
+    # zincir ile kör türetilen biçim ayrıştığında kırılır.
+    bağlam = ayır_biçimlerle(kendi, diğer, kaba=True)
     if bağlam is None:
         return False
     for g2 in kelime_gez_grupları(kelime_gez, g.dal, j, s, t):
