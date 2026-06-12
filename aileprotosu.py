@@ -1,68 +1,73 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""AİLE PROTOSU — veri-türevli kümeleri GERÇEK çok-dilli yeniden-kurulumla sınar.
+"""AİLE PROTOSU — programın KENDİ deneyleriyle aile ağacı + bağdaşıklık sınaması.
 
-Tez: dil aileleri yalnız Ön Dil harf maliyetinden ortaya çıkar. dil_ağacı.md
-bunu çiftler-arası mesafelerin UPGMA *ortalamasıyla* gösteriyordu. Bu betik
-tezi kesinleştirir: ağacı (tüm_diller.md'den, aile bilgisi GÖMÜLÜ DEĞİL) bir
-eşikte keser, ortaya çıkan her kümeyi TEK bir çok-dilli proto olarak yeniden
-kurar (UPGMA ortalaması değil, gerçek maliyet), sonra küme-protolarını birbirine
-besleyip "grupların grubu"nu (üst-proto / Hint-Avrupa düzeyi) kurar.
+Tez: dil aileleri yalnız Ön Dil harf maliyetinden ortaya çıkar. Bu betik ağacı
+DIŞARIDAN (UPGMA, eşik, aile bilgisi) hiçbir şey dayatmadan, programın kendi
+yeniden-kurulum deneylerinden, AŞAĞIDAN YUKARI ve hep İKİLİ kurar.
 
-İki kanıt üretir:
-  1) Bağdaşıklık: gerçek aile kümesi ucuz + %100 düzenli (dil başına az harf).
-  2) Denetim: aynı boyda ama ailelerden KARMA bir küme pahalı + istisnalı.
+İlke ("protoların protosu"):
+  - Her dil bir düğüm; temsilcisi kendi sözcük listesidir.
+  - İki düğümün YAKINLIĞI = temsilci protolarının İKİLİ protosunun Ön Dil harf
+    sayısı. Hep iki girdi olduğundan ölçü düğüm boyutundan bağımsızdır (adil):
+    büyük aile protosunun şişen harf sayısı karara hiç girmez.
+  - En ucuz çift birleştirilir; yeni düğümün temsilcisi o GERÇEK protodur
+    (ortalama değil; harfler yazılı alfabeye indirilir, bkz. yazıya).
+  - Tek kök kalana dek yinelenir.
+
+Bu, "d1~d2, d2~d3, d3~d1 hepsi ucuz ve ötekilerden uzak" üçgenini kendiliğinden
+yakalar (üçü önce kendi arasında birleşir) ve "5'li ailede en doğru ikili
+bölünme nedir" sorusunu yanıtlar: alt-ağacın kök bölünmesi en küçük
+protoların-protosu veren bölmedir.
+
+Sonra, kendi çıkardığı ağacı bir maliyette keserek ortaya çıkan her aileyi TEK
+çok-dilli proto olarak yeniden kurup BAĞDAŞIKLIĞINI ölçer ve aynı boyda KARMA
+bir denetim kümesiyle karşılaştırır.
 
 Çıktı: aile_protosu.md
 
 Kullanım:
-    python3 aileprotosu.py [--eşik 75] [--rapor aile_protosu.md]
+    python3 aileprotosu.py                       # diller/ içindeki TÜM diller
+    python3 aileprotosu.py türkçe azerbaycanca türkmence   # yalnız alt küme
+    python3 aileprotosu.py --eşik 90 --eşikler 50,70,90
 """
 
 import argparse
 import pathlib
 import unicodedata
 
-import dilağacı as ağaç
-from ana import liste_yükle
 from ondil.insa import seri_oluştur
+from ana import liste_yükle
 from sesbiçim.harf import taban, özellik_uzaklığı
 from sesbiçim.harf import YAZILI_HARFLER
-
-# dilağacı.KOD2AD görünen ad verir; burada KOD -> dosya kökü gerekiyor.
-KOD2DOSYA = {
-    "Tür": "türkçe", "Aze": "azerbaycanca", "Tkm": "türkmence",
-    "Gag": "gagavuzca", "Kaz": "kazakça", "Est": "estonca", "Fin": "fince",
-    "Mac": "macarca", "Alm": "almanca", "İng": "ingilizce", "Hol": "hollandaca",
-    "İsv": "isveççe", "Rom": "romence", "İsp": "ispanyolca", "İta": "italyanca",
-    "Fra": "fransızca", "Por": "portekizce", "Tac": "tacikçe", "Kür": "kürtçe",
-    "Arn": "arnavutça", "Lit": "litvanca", "Slv": "slovence", "Hır": "hırvatça",
-    "Boş": "boşnakça", "Slk": "slovakça", "Leh": "lehçe", "Çek": "çekçe",
-}
 
 DİL_DİZİN = pathlib.Path("diller")
 
 
-def yazıya(token):
-    """Bir proto belirtecini tek yazılı harfe indirger (alt simge + uzunluk atılır).
+# ---------------------------------------------------------------------------
+# proto biçimini yazılı alfabeye indirme (üst kademe girdileri yazılı olmalı)
+# ---------------------------------------------------------------------------
 
-    Üst-proto kurarken küme-protosu girdi sözcüğü olur; sözcükler karakter
-    karakter belirteçlenir, bu yüzden a₂/eː gibi çok-imli belirteçler taban
-    kısa harfe düşürülür. Aile-içi ince ayrımlar (a₂ vs a) zaten üst düzeyde
-    taban harfle birleşir; bu kayıp kasıtlı ve doğru.
+def _en_yakın_yazılı(g):
+    return min(YAZILI_HARFLER, key=lambda w: (özellik_uzaklığı(g, w), w))
+
+
+def yazıya(token):
+    """Bir proto belirtecini tek yazılı harfe indirger.
+
+    Üst kademe (protoların protosu) kurarken küme-protosu girdi sözcüğü olur;
+    sözcükler karakter karakter belirteçlenir, bu yüzden a₂/eː/r̥ gibi çok-imli
+    ya da sanal belirteçler taban yazılı harfe düşürülür. Aile-içi ince ayrımlar
+    (a₂ vs a) zaten üst düzeyde taban harfle birleşir; bu kayıp kasıtlı.
     """
     t = taban(token).replace("ː", "")
     # ayrık birleşen imleri (ör. r̥ sessiz halkası U+0325) at; ama ö/ü/ç/ş/ğ
     # gibi BİLEŞİK yazılı harfler tek kod noktasıdır, NFD AÇMADAN korunur.
     t = "".join(c for c in t if unicodedata.category(c) != "Mn")
-    # her grafem YAZILI alfabeye indirilir: sanal harfler (ŋ, ʦ, ɬ...) yol
-    # grafiğinde düğüm değildir; üst koşu girdileri yazılı olmalı (ŋ -> ñ vb.)
+    # her grafem YAZILI alfabeye iner: sanal harfler (ŋ, ʦ, ɬ...) yol grafiğinde
+    # düğüm değildir; üst koşu girdileri yazılı olmalı (ŋ -> ñ vb.)
     t = "".join(c if c in YAZILI_HARFLER else _en_yakın_yazılı(c) for c in t)
     return t or _en_yakın_yazılı(taban(token)[:1] or "ə")
-
-
-def _en_yakın_yazılı(g):
-    return min(YAZILI_HARFLER, key=lambda w: (özellik_uzaklığı(g, w), w))
 
 
 def proto_sözcükleri(seri):
@@ -76,7 +81,7 @@ def proto_sözcükleri(seri):
 
 
 def sütunlardan_çiftler(sütunlar):
-    """Her biri [(anlam, sözcük)] olan sütunları (anlam, s0, s1, ...) satırlarına."""
+    """Her biri [(anlam, sözcük)] olan sütunları (anlam, s0, s1, ...) satırına."""
     n = len(sütunlar[0])
     return [
         (sütunlar[0][i][0],) + tuple(s[i][1] for s in sütunlar)
@@ -97,129 +102,250 @@ def maliyet(seri):
     return len(dağarcık), türetilmiş, len(seri.istisnalar), düz, len(dağarcık) / B
 
 
-def küme_kur(kodlar, eşik_değeri):
-    """Verilen KOD listesini tek çok-dilli proto olarak kurar; (seri, sütun)."""
-    adlar = [ağaç.KOD2AD[k] for k in kodlar]
-    sütunlar = [liste_yükle(DİL_DİZİN / f"{KOD2DOSYA[k]}.txt") for k in kodlar]
-    çiftler = sütunlardan_çiftler(sütunlar)
-    seri = seri_oluştur(çiftler, tuple(adlar), türetim_eşiği=eşik_değeri)
-    return seri, proto_sözcükleri(seri)
+# ---------------------------------------------------------------------------
+# 1. programın kendi çıkardığı ağaç (aşağıdan yukarı, hep ikili)
+# ---------------------------------------------------------------------------
 
+class Düğüm:
+    def __init__(self, ad, temsilci, üyeler, h=0.0, çocuklar=None):
+        self.ad = ad                # görünen/kısa ad
+        self.temsilci = temsilci    # [(anlam, sözcük)] — proto ya da dil listesi
+        self.üyeler = üyeler        # yaprak dil adları (görünen)
+        self.h = h                  # bu düğümde birleşmenin proto harf maliyeti
+        self.çocuklar = çocuklar or []
+
+
+def ikili_proto(a, b):
+    """İki düğümün protolarının ikili protosu; (harf sayısı, yeni temsilci)."""
+    çiftler = sütunlardan_çiftler([a.temsilci, b.temsilci])
+    seri = seri_oluştur(çiftler, (a.ad, b.ad), türetim_eşiği=1)
+    harf = len({t for w in seri.proto_kelimeler for t in w})
+    return harf, proto_sözcükleri(seri)
+
+
+def kümele(yapraklar, günlük=None):
+    """Açgözlü ikili birleştirme; kökü döndürür. Maliyetleri önbellekler."""
+    düğümler = list(yapraklar)
+    önbellek = {}
+
+    def maliyet_çift(i, j):
+        anahtar = (id(düğümler[i]), id(düğümler[j]))
+        if anahtar not in önbellek:
+            önbellek[anahtar] = ikili_proto(düğümler[i], düğümler[j])
+        return önbellek[anahtar]
+
+    while len(düğümler) > 1:
+        en_iyi = None  # (harf, i, j, temsilci)
+        for i in range(len(düğümler)):
+            for j in range(i + 1, len(düğümler)):
+                harf, temsilci = maliyet_çift(i, j)
+                if en_iyi is None or (harf, düğümler[i].ad, düğümler[j].ad) < \
+                        (en_iyi[0], düğümler[en_iyi[1]].ad, düğümler[en_iyi[2]].ad):
+                    en_iyi = (harf, i, j, temsilci)
+        harf, i, j, temsilci = en_iyi
+        a, b = düğümler[i], düğümler[j]
+        yeni = Düğüm(
+            ad=f"({a.ad}+{b.ad})",
+            temsilci=temsilci,
+            üyeler=a.üyeler + b.üyeler,
+            h=float(harf),
+            çocuklar=[a, b],
+        )
+        if günlük is not None:
+            günlük.append((harf, a, b))
+        print(f"  birleşti [{harf:>4}]: {a.ad}  +  {b.ad}", flush=True)
+        düğümler = [d for k, d in enumerate(düğümler) if k not in (i, j)]
+        düğümler.append(yeni)
+    return düğümler[0]
+
+
+def girintili(kök):
+    satırlar = []
+
+    def etiket(d):
+        if d.çocuklar:
+            return f"[{int(d.h)}]  ({len(d.üyeler)} dil)"
+        return d.üyeler[0]
+
+    def yürü(d, önek, bağ):
+        satırlar.append(önek + bağ + etiket(d))
+        if not d.çocuklar:
+            return
+        alt = (önek + ("   " if bağ.startswith("└") else "│  ")) if bağ else önek
+        n = len(d.çocuklar)
+        for k, ç in enumerate(d.çocuklar):
+            yürü(ç, alt, "└─ " if k == n - 1 else "├─ ")
+
+    yürü(kök, "", "")
+    return "\n".join(satırlar)
+
+
+def eşik_kümeleri(kök, eşik):
+    gruplar = []
+
+    def topla(d):
+        if d.çocuklar and d.h <= eşik:
+            gruplar.append(d.üyeler)
+        elif d.çocuklar:
+            for ç in d.çocuklar:
+                topla(ç)
+        else:
+            gruplar.append(d.üyeler)
+
+    topla(kök)
+    return gruplar
+
+
+# ---------------------------------------------------------------------------
+# 2. bağdaşıklık: kendi ağacından çıkan her aileyi TEK çok-dilli proto kur
+# ---------------------------------------------------------------------------
+
+def _dosya(üye):
+    # yaprak görünen adı (Türkçe) -> dosya kökü (türkçe); capitalize tersine.
+    return DİL_DİZİN / f"{üye.lower()}.txt"
+
+
+def küme_kur_tam(üyeler):
+    """Üye dilleri TEK çok-dilli proto olarak kurar; (seri, metrik, proto)."""
+    sütunlar = [liste_yükle(_dosya(ü)) for ü in üyeler]
+    çiftler = sütunlardan_çiftler(sütunlar)
+    seri = seri_oluştur(çiftler, tuple(üyeler), türetim_eşiği=1)
+    return seri, maliyet(seri)
+
+
+# ---------------------------------------------------------------------------
+# sürücü
+# ---------------------------------------------------------------------------
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--eşik", type=int, default=75,
-                   help="ağacı bu harf-mesafesinde kes (veri-türevli küme)")
-    p.add_argument("--türetim-eşiği", type=int, default=1,
-                   help="seri_oluştur türetim eşiği (1 = tam düzenlilik)")
-    p.add_argument("--matris", default="tüm_diller.md")
+    p.add_argument("diller", nargs="*",
+                   help="dil adları (boşsa diller/ içindeki TÜM diller)")
     p.add_argument("--rapor", default="aile_protosu.md")
+    p.add_argument("--eşik", type=int, default=90,
+                   help="bağdaşıklık için ağacı bu maliyette kes (aileler)")
+    p.add_argument("--eşikler", default="50,70,90",
+                   help="raporda gösterilecek kesit maliyetleri (virgülle)")
     args = p.parse_args(argv)
 
-    teş = args.türetim_eşiği
+    if args.diller:
+        adlar = args.diller
+    else:
+        adlar = sorted(y.stem for y in DİL_DİZİN.glob("*.txt"))
 
-    # 1. veri-türevli ağaç ve kesit
-    kodlar, D = ağaç.matris_oku(args.matris)
-    kök = ağaç.upgma(kodlar, D)
-    öbekler = ağaç.eşik_kümeleri(kök, args.eşik)  # her öğe bir KOD listesi
-    kümeler = sorted((ö for ö in öbekler if len(ö) > 1),
-                     key=len, reverse=True)
+    print(f"{len(adlar)} dil yaprak olarak yükleniyor: {', '.join(adlar)}")
+    yapraklar = []
+    for ad in adlar:
+        yol = DİL_DİZİN / f"{ad}.txt"
+        if not yol.exists():
+            raise SystemExit(f"Dil dosyası bulunamadı: {yol}")
+        yapraklar.append(
+            Düğüm(ad.capitalize(), liste_yükle(yol), [ad.capitalize()])
+        )
+
+    print("Aşağıdan yukarı birleştirme (her adım gerçek ikili proto):")
+    günlük = []
+    kök = kümele(yapraklar, günlük)
+
+    # bağdaşıklık: kendi ağacını --eşik'te kes -> aileler
+    öbekler = eşik_kümeleri(kök, args.eşik)
+    aileler = sorted((ö for ö in öbekler if len(ö) > 1), key=len, reverse=True)
     tekiller = [ö[0] for ö in öbekler if len(ö) == 1]
-
-    print(f"Eşik {args.eşik}: {len(kümeler)} çok-üyeli küme, "
+    print(f"Bağdaşıklık (kesit ≤ {args.eşik}): {len(aileler)} aile, "
           f"{len(tekiller)} tekil.")
 
-    satırlar = []  # rapor için (etiket, üyeler, metrik)
-    küme_protoları = []  # üst kademe girdileri: (etiket, proto_sütun)
-
-    # 2. her küme: gerçek çok-dilli proto
-    for üyeler in kümeler:
-        etiket = "+".join(ağaç.KOD2AD[k] for k in üyeler)
-        print(f"  küme kuruluyor ({len(üyeler)}): {etiket} ...", flush=True)
-        seri, proto = küme_kur(üyeler, teş)
-        m = maliyet(seri)
-        satırlar.append((etiket, üyeler, m))
-        küme_protoları.append((f"*{ağaç.KOD2AD[üyeler[0]][:3]}…", proto))
-        print(f"    -> {m[0]} harf, %{m[3]:.1f}, dil/harf {m[4]:.1f}, "
+    bağ_satır = []  # (üyeler, metrik)
+    for üyeler in aileler:
+        print(f"  aile protosu ({len(üyeler)}): {'+'.join(üyeler)} ...",
+              flush=True)
+        _, m = küme_kur_tam(üyeler)
+        bağ_satır.append((üyeler, m))
+        print(f"    -> {m[0]} harf, dil/harf {m[4]:.1f}, %{m[3]:.1f}, "
               f"{m[2]} istisna", flush=True)
 
-    # 3. üst-proto: küme protoları + tekil diller birlikte (grupların grubu)
-    üst_sütunlar = [proto for _, proto in küme_protoları]
-    üst_etiketler = [et for et, _ in küme_protoları]
-    for k in tekiller:
-        üst_sütunlar.append(liste_yükle(DİL_DİZİN / f"{KOD2DOSYA[k]}.txt"))
-        üst_etiketler.append(ağaç.KOD2AD[k])
-    print(f"  üst-proto kuruluyor ({len(üst_sütunlar)} girdi) ...", flush=True)
-    üst_çiftler = sütunlardan_çiftler(üst_sütunlar)
-    üst_seri = seri_oluştur(üst_çiftler, tuple(üst_etiketler), türetim_eşiği=teş)
-    üst_m = maliyet(üst_seri)
-    print(f"    -> {üst_m[0]} harf, %{üst_m[3]:.1f}, dil/harf {üst_m[4]:.1f}, "
-          f"{üst_m[2]} istisna", flush=True)
+    # denetim: en büyük ailenin boyunda, her aileden birer dil seçilir
+    boy = len(aileler[0]) if aileler else 3
+    karma = [ü[0] for ü in aileler][:boy]
+    i = 0
+    while len(karma) < boy and i < len(tekiller):
+        karma.append(tekiller[i])
+        i += 1
+    karma_m = None
+    if len(karma) >= 2:
+        print(f"  denetim (karma {len(karma)}): {'+'.join(karma)} ...", flush=True)
+        _, karma_m = küme_kur_tam(karma)
+        print(f"    -> {karma_m[0]} harf, dil/harf {karma_m[4]:.1f}, "
+              f"%{karma_m[3]:.1f}, {karma_m[2]} istisna", flush=True)
 
-    # 4. denetim: en büyük küme boyunda, her aileden birer KARMA küme
-    boy = len(kümeler[0]) if kümeler else 3
-    karma = [üyeler[0] for üyeler in kümeler][:boy]
-    while len(karma) < boy and tekiller:
-        karma.append(tekiller[len(karma) - len(kümeler)] if
-                     len(karma) - len(kümeler) < len(tekiller) else tekiller[0])
-    karma = karma[:boy]
-    print(f"  denetim (karma {len(karma)}): "
-          f"{'+'.join(ağaç.KOD2AD[k] for k in karma)} ...", flush=True)
-    karma_seri, _ = küme_kur(karma, teş)
-    karma_m = maliyet(karma_seri)
-    print(f"    -> {karma_m[0]} harf, %{karma_m[3]:.1f}, dil/harf {karma_m[4]:.1f}, "
-          f"{karma_m[2]} istisna", flush=True)
-
-    # 5. rapor
-    yaz_rapor(args, kümeler, tekiller, satırlar, üst_etiketler, üst_m,
-              karma, karma_m)
+    eşikler = [int(e) for e in args.eşikler.split(",")]
+    yaz_rapor(args, kök, günlük, eşikler, bağ_satır, karma, karma_m)
     print(f"(rapor {args.rapor} dosyasına yazıldı)")
 
 
-def yaz_rapor(args, kümeler, tekiller, satırlar, üst_etiketler, üst_m,
-              karma, karma_m):
+def yaz_rapor(args, kök, günlük, eşikler, bağ_satır, karma, karma_m):
     L = []
-    L.append("# Aile Protosu — gerçek çok-dilli yeniden-kurulumla tez sınaması\n")
-    L.append(f"Kaynak ağaç: `{args.matris}` (UPGMA, aile bilgisi GÖMÜLÜ DEĞİL). "
-             f"Ağaç **{args.eşik}** harf mesafesinde kesildi; ortaya çıkan her "
-             f"küme TEK bir çok-dilli Ön Dil (proto) olarak yeniden kuruldu. "
-             f"Buradaki sayılar UPGMA *ortalaması* değil, kümenin tamamını tek "
-             f"protodan türetmenin GERÇEK maliyetidir.\n")
-    L.append("## 1. Küme bağdaşıklığı (gerçek aile protoları)\n")
-    L.append("| Küme | dil | Ön Dil harfi | dil başına | düzenlilik | istisna |")
+    L.append("# Aile Protosu — programın kendi deneyleriyle aile ağacı\n")
+    L.append("Ağaç YALNIZCA programın yeniden-kurulum deneylerinden, aşağıdan "
+             "yukarı ve hep İKİLİ kuruldu. Hiçbir aile bilgisi, eşik ya da UPGMA "
+             "ortalaması DIŞARIDAN dayatılmadı. İki düğümü birleştirme maliyeti "
+             "= temsilci protolarının ikili protosunun Ön Dil harf sayısıdır; "
+             "hep iki girdi olduğundan ölçü grup boyutundan bağımsızdır (büyük "
+             "aile protosunun şişen harf sayısı karara girmez). Her adımda en "
+             "ucuz çift birleşir; köşeli parantezdeki sayı o birleşmenin gerçek "
+             "proto harf maliyetidir. Kök maliyeti = tüm dillerin "
+             "protoların-protosu (Hint-Avrupa düzeyi).\n")
+
+    L.append("## 1. Birleşme sırası (programın çıkarım günlüğü)\n")
+    L.append("| # | maliyet | birleşen A | birleşen B |")
+    L.append("|---:|---:|---|---|")
+    for no, (harf, a, b) in enumerate(günlük, 1):
+        L.append(f"| {no} | {harf} | {a.ad} | {b.ad} |")
+    L.append("")
+
+    L.append("## 2. Çıkarılan ağaç\n```")
+    L.append(girintili(kök))
+    L.append("```\n")
+
+    L.append("## 3. Maliyet kesitlerinde ortaya çıkan gruplar\n")
+    L.append("Bir kesit değeri seçince, o maliyetin ALTINDA birleşmiş kollar "
+             "birer grup sayılır (programın kendiliğinden bulduğu aileler ve "
+             "alt-bölünmeleri):\n")
+    for e in eşikler:
+        gruplar = [g for g in eşik_kümeleri(kök, e) if len(g) > 1]
+        tekil = [g[0] for g in eşik_kümeleri(kök, e) if len(g) == 1]
+        L.append(f"**Kesit ≤ {e}:**")
+        for g in sorted(gruplar, key=len, reverse=True):
+            L.append(f"- {{{', '.join(g)}}} ({len(g)})")
+        if tekil:
+            L.append(f"- (tek başına: {', '.join(tekil)})")
+        L.append("")
+
+    L.append(f"## 4. Küme bağdaşıklığı (kendi ağacından, kesit ≤ {args.eşik})\n")
+    L.append("Ağacın kendi bulduğu her aile, TEK bir çok-dilli Ön Dil olarak "
+             "yeniden kuruldu (yıldız hizalama). Dil başına harf düşük ve "
+             "düzenlilik %100 ise küme gerçek bağdaşık bir birimdir:\n")
+    L.append("| Aile | dil | Ön Dil harfi | dil başına | düzenlilik | istisna |")
     L.append("|---|---:|---:|---:|---:|---:|")
-    for etiket, üyeler, m in satırlar:
-        L.append(f"| {etiket} | {len(üyeler)} | {m[0]} | {m[4]:.1f} | "
+    for üyeler, m in bağ_satır:
+        L.append(f"| {'+'.join(üyeler)} | {len(üyeler)} | {m[0]} | {m[4]:.1f} | "
                  f"%{m[3]:.1f} | {m[2]} |")
     L.append("")
-    L.append("Veri-türevli her küme tek protodan ucuza ve yüksek düzenlilikle "
-             "kurulur — kümeler gerçek bağdaşık birimlerdir.\n")
 
-    L.append("## 2. Grupların grubu (üst-proto / Hint-Avrupa düzeyi)\n")
-    L.append(f"Küme protoları + tekil diller ({len(üst_etiketler)} girdi) "
-             f"birlikte beslendi: " + ", ".join(üst_etiketler) + ".\n")
-    L.append(f"- Üst-proto Ön Dil harfi: **{üst_m[0]}** "
-             f"(dil başına {üst_m[4]:.1f})")
-    L.append(f"- Düzenlilik: %{üst_m[3]:.1f}, istisna: {üst_m[2]}\n")
-    L.append("Üst düzeyde dil başına harf, aile-içi kümelerdekinden belirgin "
-             "yüksektir: aile-içi yakınlık aileler-arası yakınlıktan ölçülebilir "
-             "biçimde fazladır.\n")
-
-    L.append("## 3. Denetim: aynı boyda KARMA küme\n")
-    L.append("En büyük gerçek kümenin boyunda, her aileden birer dil seçilerek "
-             "kasıtlı karma bir küme kuruldu:\n")
-    L.append("| Küme | dil | Ön Dil harfi | dil başına | düzenlilik | istisna |")
-    L.append("|---|---:|---:|---:|---:|---:|")
-    en_iyi = min(satırlar, key=lambda s: s[2][4])
-    L.append(f"| {en_iyi[0]} (gerçek aile) | {len(en_iyi[1])} | {en_iyi[2][0]} | "
-             f"{en_iyi[2][4]:.1f} | %{en_iyi[2][3]:.1f} | {en_iyi[2][2]} |")
-    L.append(f"| {'+'.join(ağaç.KOD2AD[k] for k in karma)} (karma) | {len(karma)} | "
-             f"{karma_m[0]} | {karma_m[4]:.1f} | %{karma_m[3]:.1f} | "
-             f"{karma_m[2]} |")
-    L.append("")
-    L.append("Aynı dil sayısında, gerçek aile kümesi karma kümeden belirgin "
-             "ucuz ve daha düzenli; karma kümede istisnalar (kökendaş olmayan "
-             "sözcükler) belirir. Akrabalık, harf maliyetinin DOĞRUDAN sonucudur.\n")
+    if karma_m is not None and bağ_satır:
+        L.append("## 5. Denetim: aynı boyda KARMA küme\n")
+        L.append("En büyük gerçek ailenin boyunda, her aileden birer dil "
+                 "seçilerek kasıtlı karma bir küme kuruldu. Aynı dil sayısında "
+                 "karma küme gerçek aileden belirgin pahalı ve daha az düzenli "
+                 "olur; akrabalık harf maliyetinin DOĞRUDAN sonucudur:\n")
+        L.append("| Küme | dil | Ön Dil harfi | dil başına | düzenlilik | istisna |")
+        L.append("|---|---:|---:|---:|---:|---:|")
+        en_iyi = min(bağ_satır, key=lambda s: s[1][4])
+        L.append(f"| {'+'.join(en_iyi[0])} (gerçek aile) | {len(en_iyi[0])} | "
+                 f"{en_iyi[1][0]} | {en_iyi[1][4]:.1f} | %{en_iyi[1][3]:.1f} | "
+                 f"{en_iyi[1][2]} |")
+        L.append(f"| {'+'.join(karma)} (karma) | {len(karma)} | {karma_m[0]} | "
+                 f"{karma_m[4]:.1f} | %{karma_m[3]:.1f} | {karma_m[2]} |")
+        L.append("")
 
     pathlib.Path(args.rapor).write_text("\n".join(L) + "\n", encoding="utf-8")
 
