@@ -236,20 +236,26 @@ def _aday_seç(çift):
     eski (x, y) davranışıyla aynıdır, ikiden çoğunda toplam genelleşir.
     """
     en_iyi, en_puan = None, None
+    yedek_iyi, yedek_puan = None, None  # hiçbir aday sonlu menzilde değilse
     for p in HARFLER:
         ds = [uzaklık(p, y) for y in çift]
-        if max(ds) >= 99:
-            continue
-        c = sum(ds)
+        uzak = sum(1 for d in ds if d >= 99)
+        c = sum(d for d in ds if d < 99)
         if p in çift:
             c -= 0.25  # değişmeyen dal = daha az kural
         if p in ÜNSÜZLER and ÜNSÜZLER[p][2]:
             c += 0.1  # eşitlikte ötümsüz (arkaik) biçim yeğlenir
         if p in _SANAL_KÜME:
             c += _SANAL_CEZA
-        if en_puan is None or (c, p) < (en_puan, en_iyi):
-            en_iyi, en_puan = p, c
-    return en_iyi
+        if uzak == 0:
+            if en_puan is None or (c, p) < (en_puan, en_iyi):
+                en_iyi, en_puan = p, c
+        # yedek: en az ulaşılamaz refleks, sonra en kısa sonlu toplam.
+        # İkiden çok akrabasız dilde bir sütunun ortak çapası olmayabilir;
+        # bu durumda kümelenme yine de bir ad almalı (kaderini 2. aşama verir).
+        if yedek_puan is None or (uzak, c, p) < yedek_puan:
+            yedek_iyi, yedek_puan = p, (uzak, c, p)
+    return en_iyi if en_iyi is not None else yedek_iyi
 
 
 def _proto_kelimeler(hizalamalar, atama):
