@@ -3,12 +3,14 @@
 """SANAL SAV — verilen sözcük listelerinden varsayımsal Ön Dil serisi kurar.
 
 Kullanım:
-    python3 ana.py [dil1] [dil2] [dil3 ...] [--rapor rapor.txt]
+    python3 ana.py türkçe ingilizce
+    python3 ana.py türkçe azerbaycanca türkmence [--eşik 2]
 
-İKİ ya da DAHA ÇOK dil dosyası verilebilir; ikiden çok dilde ortak ön dil
-yıldız hizalamayla kurulur. Dosya biçimi: her satırda "anlam<boşluk>sözcük";
-bütün dosyalar aynı anlam sırasını izlemelidir (bkz. diller/README.md).
-Varsayılan: Türkçe ve İngilizce Swadesh-100.
+İKİ ya da DAHA ÇOK dil ADI verilir (diller/<ad>.txt olarak çözülür); ikiden
+çok dilde ortak ön dil yıldız hizalamayla kurulur. Dosya biçimi: her satırda
+"anlam<boşluk>sözcük"; bütün dosyalar aynı anlam sırasını izlemelidir
+(bkz. diller/README.md). Rapor adı verilmezse 'rapor_<kısaltmalar>.txt'
+olarak dillerden türetilir. Varsayılan diller: Türkçe ve İngilizce.
 """
 
 import argparse
@@ -47,15 +49,18 @@ def harfleri_doğrula(ad, sözcükler):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("diller", nargs="*",
-                   default=["diller/türkçe.txt", "diller/ingilizce.txt"],
-                   help="iki ya da DAHA ÇOK dil dosyası (aynı anlam sırasında)")
+                   default=["türkçe", "ingilizce"],
+                   help="iki ya da DAHA ÇOK dil ADI (ör. türkçe ingilizce); "
+                        "diller/<ad>.txt olarak çözülür. Dosya yolu da verilebilir.")
     p.add_argument("--adlar", default=None,
                    help="dillerin görünen adları, virgülle ayrılmış "
                         "(boşsa dosya adından türetilir)")
-    p.add_argument("--rapor", default="rapor.txt", help="rapor dosyası")
+    p.add_argument("--rapor", default=None,
+                   help="rapor dosyası (boşsa 'rapor_<kısaltmalar>.txt' "
+                        "olarak verilen dillerden türetilir)")
     p.add_argument("--en-az-katman", type=int, default=0,
                    help="dallar için en az katman sayısı")
-    p.add_argument("--türetim-eşiği", type=int, default=1,
+    p.add_argument("--eşik", dest="türetim_eşiği", type=int, default=1,
                    help="yeni bir Ön Dil harfi en az bu kadar konumu "
                         "kurtarmalı; altında kalan karşılıklıklar istisna "
                         "sayılır (varsayılan 1 = tam düzenlilik garantisi)")
@@ -69,21 +74,37 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     if len(args.diller) < 2:
-        raise SystemExit("En az iki dil dosyası gerekir.")
+        raise SystemExit("En az iki dil gerekir.")
+
+    # kullanıcı sadece dil ADI yazar (türkçe); diller/<ad>.txt olarak çözülür.
+    # Geriye uyum: dosya yolu (/ içeren ya da .txt ile biten) doğrudan kullanılır.
+    def yola_çevir(d):
+        if "/" in d or d.endswith(".txt"):
+            return pathlib.Path(d)
+        return pathlib.Path("diller") / f"{d}.txt"
+
+    yollar = [yola_çevir(d) for d in args.diller]
+    for y in yollar:
+        if not y.exists():
+            raise SystemExit(f"Dil dosyası bulunamadı: {y}")
 
     if args.adlar:
         adlar = [a.strip() for a in args.adlar.split(",")]
-        if len(adlar) != len(args.diller):
-            raise SystemExit("--adlar sayısı dil dosyası sayısıyla eşleşmeli.")
+        if len(adlar) != len(yollar):
+            raise SystemExit("--adlar sayısı dil sayısıyla eşleşmeli.")
     else:
-        adlar = [pathlib.Path(d).stem.capitalize() for d in args.diller]
+        adlar = [y.stem.capitalize() for y in yollar]
 
-    listeler = [liste_yükle(d) for d in args.diller]
+    if args.rapor is None:
+        kısa = "_".join(y.stem[:3] for y in yollar)
+        args.rapor = f"rapor_{kısa}.txt"
+
+    listeler = [liste_yükle(y) for y in yollar]
     boy = len(listeler[0])
-    for d, l in zip(args.diller, listeler):
+    for y, l in zip(yollar, listeler):
         if len(l) != boy:
             raise SystemExit(
-                f"Listeler aynı uzunlukta olmalı: {d} {len(l)} != {boy}"
+                f"Listeler aynı uzunlukta olmalı: {y} {len(l)} != {boy}"
             )
     for i in range(boy):
         anlamlar = {l[i][0] for l in listeler}
@@ -98,7 +119,7 @@ def main(argv=None):
         (listeler[0][i][0],) + tuple(l[i][1] for l in listeler)
         for i in range(boy)
     ]
-    B = len(args.diller)
+    B = len(yollar)
 
     if args.tarama:
         print("Eşik taraması (harf sayısı ~ düzenlilik ödünleşimi):")
