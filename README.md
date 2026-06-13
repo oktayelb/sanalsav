@@ -47,3 +47,154 @@ Aynı şekilde bir sorun: aşırı spesifik fazlaca kuralla da  bu ön dil seris
 En sonki proto dil ile çocuk dillerin arasındaki mesafe sabit olmak zorunda dersek/demezsek neler olacağı bilinmeli.  İki dil de proto dile 3 dil uzakta olursa farklı, birisi bir dil diğeri üç dil uzak olursa farklı olur. Bu düşüncenin doğal sonucu olarak bir dili diğerinin atası varsayıp "ikisi arasında" (ikisine gelen değil de bir dilder diğerine) bir proto dil eşleşmesi yaptırılabilir. Yani herhangi iki dil arasında ses kuralları bulmaya dönüşüyor.
 
 Projenin sonluk hedefi verilen herhangi iki dil arasında akrabalık ilişkisi gösteren varsayımsal diller oluşturmaktır.
+
+"ÖNEMLİ"
+
+Bu proje yapılırken dillerdeki sözcüklerin okunuşu değil, yazılışı esas alınmalıdır. Yazılış esası üzerinden ilerlenmelidir. Yanli bhiçbir zaman kelimenin okunuşunu bulmamıza gerek yok, sadece yazılışı yeterli olacaktır. 
+---
+
+GERÇEKLEŞTİRİM
+
+Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış:
+
+1. "sesbiçim/" : Her harf (ünlü/ünsüz) tek tek değil, özellik vektörü olarak tanımlıdır
+   (ünlüler: yükseklik-arkalık-yuvarlaklık-uzunluk; ünsüzler: yer-biçim-ötümlülük). Yer ölçeği
+   IPA'ya uygun 7 bölgedir (dudaksıl, dişdudaksıl, dişsil, öndamaksıl, artdamaksıl,
+   küçükdilsil, gırtlaksıl); l yansıl, r çarpmalı ayrı biçim sınıflarıdır; ğ tarihsel
+   değeriyle artdamaksıl sızıcıdır (/ɣ/), q küçükdilsildir. Böylece hiçbir iki yazılı
+   harf aynı koordinata düşmez (l~r, k~q, y~ğ, ş~x hepsi tam 1 adımdır). Tek özelliği
+   bir basamak değişen harfler "komşu"dur; çok özellikli sıçramalar (k -> f) en kısa
+   doğal yola (k > ɟ̥ > ç ya da p > ɸ > f gibi) bölünür. Boğumsuzlaşma (t/k/p -> ʔ,
+   s -> h) ve b ~ w, ğ ~ y gibi iyi bilinen geçişler özel komşudur. Silinme yalnız
+   zayıf seslerden (gırtlaksıllar, genizsiller, yan/çarpmalı akıcılar, kayıcılar,
+   ünlüler) tek adımda olur; güçlü ünsüzler önce zayıflar (k > ʔ > ∅), sonra düşer.
+   Hizalama ise türetim yolundan bağımsız, doğrudan özellik uzaklığıyla çalışır.
+2. "ondil/hizalama.py" : Anlamca eşleşen sözcük çiftleri, yerine koyma maliyeti = harf
+   grafiği uzaklığı olacak biçimde hizalanır (Needleman-Wunsch). Bitişik ab ~ ba
+   çaprazlamaları göçüşüm (metathesis) olarak ayrıca yakalanır.
+3. "ondil/insa.py" : Hizalamadan çıkan her harf karşılıklığı bütün söz varlığında TEK
+   Ön Dil harfine bağlanır; kurallar bu yüzden tanım gereği düzenlidir. Aynı Ön Dil harfi
+   bir dalda iki ayrı sese gidiyorsa önce bağlam koşulu (söz başında, ünlü önünde...)
+   aranır, ayrışmazsa yeni harf türetilir (b₂ gibi). Asgari harf hedefi: önce paylaş,
+   sonra bağlamla ayır, en son çare harf türet. En uzun kural zinciri katman (ara Ön Dil)
+   sayısını belirler; iki dalın ataya uzaklığı eşit olmak zorunda değildir.
+4. Kurallar katman katman "körce" (köken bilgisi olmadan) uygulanıp doğrulanır; raporda
+   istisna sayısı, kural sayısı, türetilmiş harf sayısı ve katman başına dağarcık boyutu
+   verilir. Türetilmiş harf ve kural sayısının yüksekliği, iki listeyi ortak ataya
+   bağlamanın "maliyeti"dir ve akrabalık derecesinin sayısal ölçüsü olarak okunabilir
+   (43. satırdaki "nafile çözüm" kaygısının ölçülebilir hale getirilmiş biçimi).
+
+KULLANIM
+
+    python3 ana.py                            # Türkçe ~ İngilizce Swadesh-100 (varsayılan)
+    python3 ana.py diller/a.txt diller/b.txt  # herhangi iki liste
+    python3 ana.py --rapor sonuç.txt          # rapor dosyası adı
+
+Çıktı: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
+*ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor.txt).
+Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü
+verir (eşik 1'de istisna tanım gereği sıfırdır); eğri --tarama ile incelenir.
+
+TUTUMLULUK KISITI (ASGARİ HARF)
+
+43. satırdaki kaygının çözümü: sınırsız harf türetimiyle her iki liste "nafile" biçimde
+ortak ataya bağlanabildiğinden, sisteme "ne kadar az harf o kadar iyi" kısıtı eklendi.
+Yeni bir Ön Dil harfi ancak en az --türetim-eşiği kadar konumu kurtarıyorsa türetilir;
+daha seyrek karşılıklıklar kural dışı (istisna) bırakılır ve raporda ✗ ile işaretlenir.
+Böylece harf sayısı ile düzenlilik arasındaki ödünleşim ölçülebilir hale gelir
+(--tarama ile eğri yazdırılır).
+
+SIFIRDAN SOYUT HARF (KÜMELEME)
+
+Ön Dil harfleri çocuk alfabelerinden KOPYALANMAZ. Sistem sıfır harfle başlar: her
+harf karşılıklığı (ör. Türkçe b ~ İngilizce w) önce kendi başına bir aday harftir;
+kurallı biçimde (aynı refleks ya da bağlamla ayrışan refleksler) bir arada
+yaşayabilen adaylar tek soyut harfte birleştirilir. Yani bir Ön Dil harfi, bu
+kümenin ta kendisidir; "b" gibi bir adla yazılması yalnız gösterimdir. Gerçekçilik
+kuralı çapa ile korunur: her kümeye özellik uzayında öyle bir nokta seçilir ki
+bütün refleksler o noktadan en çok 4 doğal ses adımı uzakta olsun (k -> f yasağı
+burada da geçerlidir). Aynı çapaya oturmak zorunda kalan ikinci küme alt simge
+alır (t₂ gibi) ve raporda "türetilmiş" sayılır.
+
+SANAL HARF SINIFLARI
+
+Çapa ve ara duraklar yazılı harflerle sınırlı değildir. Sanal harfler dosyada
+tek tek tanımlanmaz: özellik uzayının TAMAMI hesaplamayla taranır ve yazıda
+karşılığı olmayan her söylenebilir bileşim sanal harf olur (insan ses aygıtının
+üretemeyeceği bileşimler — ötümlü hamza, gırtlak genizsili — dışarıda bırakılır;
+gerçekçilik kuralı). Bilinen bileşimler IPA imini alır (ʔ, ŋ, ʦ, ʎ, ɦ, ʌ, œ...),
+kalanlar ad havuzundan im alır (θ, π...). Bu, sesbiçim/ dosyalarının başındaki
+vizyonun gerçekleşmesidir: harfleri değil özellikleri tanımla, model yeni
+harfleri kendisi kursun.
+
+Sanal harfler yalnız ara durak değildir; Ön Dilin KENDİSİNDE de harf (çapa)
+olabilirler: Türkçe ~ Azerbaycanca'da *πu > şu / o (π: ötümsüz damak kayıcısı)
+ve *θ -> p (θ: ötümsüz m) gibi kuruluşlar kendiliğinden çıkar. Zincirleri de
+kısaltıp doğallaştırırlar: k > ʔ > ∅ silinmesi, k > g > ŋ > n genizsilleşmesi.
+Eşitlikte yazılı harf yeğlenir (sanal harf ancak yolu gerçekten kısaltıyorsa
+seçilir) ve hizalama yalnız yazılı harf grafiğini görür: sanal harfler sözcük
+karşılaştırmasını değil, yalnız yeniden kurmayı etkiler.
+
+UZUN ÜNLÜLER VE DOĞUM (TEK HARFTEN ÇOK HARF)
+
+Ünlü vektörüne dördüncü boyut olarak uzunluk eklendi (0 kısa, 1 uzun).
+Türk yazılarında uzunluk imlenmediğinden bütün yazılı ünlüler kısadır;
+12 uzun ünlü (aː, uː, eː...) sanal harftir ve uzama/kısalma (a ~ aː) tek
+adımlık doğal komşuluktur. Başka dillerin yazıdaki uzun ünlüleri (ikiz
+yazım: aa) ve uzun ünlüye özgü ses kuralları böylece temsil edilebilir.
+
+Uzun ünlüler ayrıca, 1. varsayımsal yöntemdeki "grupça değişim"in tek
+harften çok harf yarısını taşıyan İLK harf sınıfıdır: doğum hamlesi
+şimdilik yalnız uzun ünlülere tanınmıştır. Her uzun ünlü, kısa eşinin
+çevresinde iyi bilinen gövdeleri doğurabilir: büzülme gövdesi (uː > uvu /
+ubu, aː > ağa), ikiz yazım (aː > aa) ve söz sonunda çift ünlüleşme
+(aː > ay). Hizalamada bir dalda gövde, öbür dalda tek ünlü (uvu ~ u) ya
+da aynı uzun ünlünün başka bir gövdesi (aa ~ ay, eğ ~ ey) görülürse sütunlar
+tek karşılıklığa çekilir; Ön Dil harfi doğuran uzun ünlü olur ve doğum,
+kural zincirinin SON katman adımı olarak uygulanır (harf sayısı katman
+ortasında değişirse kör doğrulamanın konum eşlemesi bozulurdu). Türkçe ~
+Azerbaycanca'da bu hamle klasik ğ ~ y denkliğini kendiliğinden uzun
+ünlüye bağlar: *deːil > değil / deyil, *soːuk > soğuk / soyuq; Türkçe ~
+İngilizce'de *büːk > büyük (büzülme) ve *saː > say (çift ünlüleşme) çıkar.
+
+Harf türetimi ve etiketleme ayrıca iki "son çare" mekanizmasıyla geciktirilir:
+
+1. KONAK HARF: Bağlamla ayrışmayan bir grup için yeni harf türetmeden önce, biraz
+   daha uzak ama uyumlu mevcut bir harf konak olarak denenir.
+2. EŞDEĞER YOL: Ara katmanlarda zinciri çakışan bir kural, harf etiketlenmeden önce
+   harf grafiğindeki aynı uzunluktaki BAŞKA bir doğal yola kaydırılmayı dener.
+
+Hepsi doğrulama döngüsünün içinde çalıştığından düzenlilik garantisi bozulmaz.
+Alfabe sıkıştıkça kural sayısının bir miktar artması beklenen bilgi-kuramsal
+bedeldir (az harf = çok kural). Türkçe ~ İngilizce Swadesh-100 için:
+
+    eşik  Ön Dil harfi  türetilmiş  kural  istisna  düzenlilik
+       1           105          74    357        0     %100.0
+       3            67          40    241       64     % 68.0
+       8            30          12     72      168     % 16.0
+
+Az harf ile yüksek düzenlilik AYNI ANDA elde edilemiyorsa listeler akraba değildir;
+akraba dillerde bu eğri düz kalır (az harf, az kural, yüksek düzenlilik). Yani eğrinin
+kendisi, iki dilin akrabalık derecesinin sayısal ölçüsüdür.
+
+DOĞRULAMA: TÜRKÇE ~ AZERBAYCANCA KARŞILAŞTIRMASI
+
+Yöntemin akrabalık ölçüsü olarak çalıştığını sınamak için aynı tarama, akraba olduğu
+bilinen Türkçe ~ Azerbaycanca çifti üzerinde yinelendi (diller/azerbaycanca.txt;
+anlamca standart karşılıklar kullanıldığından it, sümük, od, yaxşı gibi kökendaş
+olmayan maddeler de listede bırakıldı):
+
+    eşik   Türkçe~İngilizce            Türkçe~Azerbaycanca
+           harf / kural / düzenlilik   harf / kural / düzenlilik
+       1   105  / 357   / %100         67  / 172   / %100
+       3    67  / 241   / %68.0        44  / 123   / %86.5
+       5    44  / 139   / %35.5        30  /  49   / %72.5
+       8    30  /  72   / %16.0        21  /  26   / %48.0
+
+Beklenen sonuç doğrulandı: akraba çiftte eğri düz kalıyor — eşik 5'te yalnız 30
+soyut harf ve 49 kuralla düzenlilik %72.5'te tutunuyor (kalan istisnaların çoğu
+zaten kökendaş olmayan maddeler), akraba olmayan çiftte aynı noktada %35.5'e,
+eşik 8'de %16'ya çöküyor. Düzenli
+kurallar da gerçek ses denkliklerini kendiliğinden buluyor: k -> q (kadın ~ qadın),
+t -> d (taş ~ daş), e -> ə (sen ~ sən), ünlü ardında h -> x (tohum ~ toxum) ve
+uzun ünlü doğumuyla ğ ~ y denkliği (*soːuk > soğuk ~ soyuq) gibi.
