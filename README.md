@@ -87,11 +87,13 @@ Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış
 KULLANIM
 
     python3 ana.py                            # Türkçe ~ İngilizce Swadesh-100 (varsayılan)
-    python3 ana.py diller/a.txt diller/b.txt  # herhangi iki liste
-    python3 ana.py --rapor sonuç.txt          # rapor dosyası adı
+    python3 ana.py türkçe almanca kazakça  # herhangi iki liste
+      
 
-Çıktı: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
-*ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor.txt).
+Çıktı: rapor_dil1_dil2_diln.txt 
+
+Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
+*ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor_dil1_dil2_diln.txt.txt).
 Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü
 verir (eşik 1'de istisna tanım gereği sıfırdır); eğri --tarama ile incelenir.
 
