@@ -29,7 +29,7 @@ MEVCUT DİLLER (27)
   Balt: litvanca
   Slav: slovence, hırvatça, boşnakça, slovakça, lehçe, çekçe
 
-Çiftler arası ön dil harf maliyeti (akrabalık ölçüsü) için bkz. ../tüm_diller.md.
+Çiftler arası ön dil harf maliyeti (akrabalık ölçüsü) için bkz. ../sanalsav/tüm_diller.md.
 
 Herhangi iki ya da DAHA ÇOK dosya verilebilir (ikiden çok dilde ortak ön dil
 yıldız hizalamayla kurulur):

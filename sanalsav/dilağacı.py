@@ -8,8 +8,8 @@ bir ağaç kurar. HİÇBİR dil-ailesi bilgisi koda girmez; gruplama tamamen har
 maliyetinden doğar. Çıktı: girintili ağaç, yatay ASCII dendrogram ve eşik
 kesitleri; hem ekrana yazılır hem de bir markdown dosyasına kaydedilir.
 
-Kullanım:
-    python3 dilağacı.py [matris.md] [--çıktı dil_ağacı.md]
+Kullanım (proje kökünden çalıştırın):
+    python3 sanalsav/dilağacı.py [matris.md] [--çıktı sanalsav/dil_ağacı.md]
 
 Matris dosyası, `ana.py --tarama` benzeri akışla üretilen `tüm_diller.md`
 biçimindedir: kod başlıklı bir markdown tablosu (köşegen "—").
@@ -17,6 +17,10 @@ biçimindedir: kod başlıklı bir markdown tablosu (köşegen "—").
 
 import argparse
 import pathlib
+
+# md dosyaları (girdi matrisi ve çıktı ağacı) bu betikle aynı klasörde
+# (sanalsav/) durur; varsayılan yollar cwd'ye değil betik konumuna bağlanır.
+BURASI = pathlib.Path(__file__).resolve().parent
 
 # Matris başlığındaki kısa kodları görünen adlara çevirir (yalnız etikettir;
 # gruplama bu adlardan değil, sayısal mesafelerden çıkar).
@@ -204,9 +208,10 @@ def _ad_listesi(üyeler):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("matris", nargs="?", default="tüm_diller.md",
+    p.add_argument("matris", nargs="?", default=str(BURASI / "tüm_diller.md"),
                    help="harf-maliyeti matrisini içeren markdown dosyası")
-    p.add_argument("--çıktı", default="dil_ağacı.md", help="kaydedilecek dosya")
+    p.add_argument("--çıktı", default=str(BURASI / "dil_ağacı.md"),
+                   help="kaydedilecek dosya")
     args = p.parse_args(argv)
 
     kodlar, D = matris_oku(args.matris)

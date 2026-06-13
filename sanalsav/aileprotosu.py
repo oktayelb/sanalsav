@@ -24,23 +24,31 @@ Sonra, kendi çıkardığı ağacı bir maliyette keserek ortaya çıkan her ail
 çok-dilli proto olarak yeniden kurup BAĞDAŞIKLIĞINI ölçer ve aynı boyda KARMA
 bir denetim kümesiyle karşılaştırır.
 
-Çıktı: aile_protosu.md
+Çıktı: sanalsav/aile_protosu.md
 
-Kullanım:
-    python3 aileprotosu.py                       # diller/ içindeki TÜM diller
-    python3 aileprotosu.py türkçe azerbaycanca türkmence   # yalnız alt küme
-    python3 aileprotosu.py --eşik 90 --eşikler 50,70,90
+Kullanım (proje kökünden çalıştırın):
+    python3 sanalsav/aileprotosu.py                  # diller/ içindeki TÜM diller
+    python3 sanalsav/aileprotosu.py türkçe azerbaycanca türkmence   # alt küme
+    python3 sanalsav/aileprotosu.py --eşik 90 --eşikler 50,70,90
 """
 
 import argparse
 import pathlib
+import sys
 import unicodedata
+
+# Betik kök dizinden bir alt klasöre (sanalsav/) taşındı; kök paketleri
+# (ondil, sesbiçim) ile ana.py'yi bulabilmek için proje kökünü yola ekle.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from ondil.insa import seri_oluştur
 from ana import liste_yükle
 from sesbiçim.harf import taban, özellik_uzaklığı
 from sesbiçim.harf import YAZILI_HARFLER
 
+# Rapor md'si bu betikle aynı klasörde (sanalsav/) yazılır; diller/ ise proje
+# kökünde durur (cwd kök varsayılır).
+BURASI = pathlib.Path(__file__).resolve().parent
 DİL_DİZİN = pathlib.Path("diller")
 
 
@@ -221,7 +229,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("diller", nargs="*",
                    help="dil adları (boşsa diller/ içindeki TÜM diller)")
-    p.add_argument("--rapor", default="aile_protosu.md")
+    p.add_argument("--rapor", default=str(BURASI / "aile_protosu.md"))
     p.add_argument("--eşik", type=int, default=90,
                    help="bağdaşıklık için ağacı bu maliyette kes (aileler)")
     p.add_argument("--eşikler", default="50,70,90",

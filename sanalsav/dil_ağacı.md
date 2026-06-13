@@ -1,6 +1,6 @@
 # Dil Ailesi Ağacı (harf-sayısı mesafelerinden, UPGMA)
 
-Kaynak matris: `tüm_diller.md` (27 dil). Bu ağaç YALNIZCA
+Kaynak matris: `/home/oktay/Masaüstü/code/python/sanalsav/sanalsav/tüm_diller.md` (27 dil). Bu ağaç YALNIZCA
 Ön Dil harf-sayısı mesafelerinden üretilmiştir; hiçbir dil-ailesi
 bilgisi koda girilmemiştir. Yöntem: ağırlıklı ortalama bağlantılı
 hiyerarşik kümeleme (UPGMA). Her iç düğüm bir GRUPtur; üst düğümler
