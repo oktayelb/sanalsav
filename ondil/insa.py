@@ -230,27 +230,35 @@ def _hizala_çok(kelimeler):
 # ---------------------------------------------------------------------------
 
 def _aday_seç(çift):
-    """BÜTÜN çocuk harflere toplamda en kısa doğal yolla bağlanan harf.
+    """BÜTÜN çocuk harflere bağlanırken EN UZUN dalı en kısa tutan harf.
 
-    çift, dal sayısı kadar (N) refleksten oluşan bir demettir; iki dil için
-    eski (x, y) davranışıyla aynıdır, ikiden çoğunda toplam genelleşir.
+    Maliyet çift ölçütlüdür: önce en uzak refleksin yol uzunluğu, sonra
+    toplam yol. En uzak refleks, o çapanın doğuracağı EN UZUN kural zincirini
+    (dolayısıyla o dalın katman sayısını) belirler; onu küçültmek zincirleri
+    ve kural sayısını doğrudan düşürür. Yalnız toplamı en aza indiren eski
+    ölçü, çapayı bir dalın harfine yaslayıp öbür dalın zincirini uzatabiliyordu
+    (özellikle "değişmez dal" primiyle); minimax çapayı iki refleksin ortasında
+    tutar. çift, dal sayısı kadar (N) reflekstir; ölçü N'den bağımsızdır.
     """
     en_iyi, en_puan = None, None
     yedek_iyi, yedek_puan = None, None  # hiçbir aday sonlu menzilde değilse
     for p in HARFLER:
         ds = [uzaklık(p, y) for y in çift]
         uzak = sum(1 for d in ds if d >= 99)
-        c = sum(d for d in ds if d < 99)
+        sonlu = [d for d in ds if d < 99]
+        ençok = max(sonlu) if sonlu else 0  # en uzun dal = en uzun zincir
+        toplam = sum(sonlu)
         if p in çift:
-            c -= 0.25  # değişmeyen dal = daha az kural
+            toplam -= 0.25  # eşit zincirde değişmeyen dal = daha az kural
         if p in ÜNSÜZLER and ÜNSÜZLER[p][2]:
-            c += 0.1  # eşitlikte ötümsüz (arkaik) biçim yeğlenir
+            toplam += 0.1  # eşitlikte ötümsüz (arkaik) biçim yeğlenir
         if p in _SANAL_KÜME:
-            c += _SANAL_CEZA
+            toplam += _SANAL_CEZA
+        c = (ençok, toplam)  # önce en uzun dalı, sonra toplam yolu küçült
         if uzak == 0:
             if en_puan is None or (c, p) < (en_puan, en_iyi):
                 en_iyi, en_puan = p, c
-        # yedek: en az ulaşılamaz refleks, sonra en kısa sonlu toplam.
+        # yedek: en az ulaşılamaz refleks, sonra en kısa (minimax) maliyet.
         # İkiden çok akrabasız dilde bir sütunun ortak çapası olmayabilir;
         # bu durumda kümelenme yine de bir ad almalı (kaderini 2. aşama verir).
         if yedek_puan is None or (uzak, c, p) < yedek_puan:
