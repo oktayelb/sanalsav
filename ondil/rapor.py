@@ -156,11 +156,6 @@ def rapor_üret(seri):
     S.append("-" * 72)
     S.append("3. SES DEĞİŞİM KURALLARI")
     S.append("-" * 72)
-    if seri.metatez_olayları:
-        S.append(f"  Göçüşüm ({adlar[1]} dalı, katman 1 öncesi):")
-        for ç in sorted({ç for _, _, ç in seri.metatez_olayları}):
-            S.append(f"    *{ç[0]}{ç[1]} -> {ç[1]}{ç[0]}")
-        S.append("")
     for dal, ad in enumerate(adlar):
         S.append(f"  {ad} dalı:")
         for j in range(1, seri.katman[dal] + 1):
