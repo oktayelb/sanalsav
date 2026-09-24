@@ -19,6 +19,7 @@ import sys
 
 from sesbiçim.harf import YAZILI_HARFLER
 from ondil import asgari
+from ondil.html import html_üret
 from ondil.insa import seri_oluştur
 from ondil.rapor import rapor_üret
 from ondil.rapor_asgari import rapor_üret as asgari_rapor_üret
@@ -169,6 +170,9 @@ def main(argv=None):
         }
         seri = asgari.seri_oluştur(çiftler, adlar, args.en_uzun_yol)
         metin = asgari_rapor_üret(seri, karşılaştırma)
+        html_yolu = args.html or str(pathlib.Path(args.rapor).with_suffix(".html"))
+        pathlib.Path(html_yolu).write_text(
+            html_üret(seri, karşılaştırma), encoding="utf-8")
     else:
         seri = seri_oluştur(çiftler, adlar, args.en_az_katman,
                             args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
@@ -177,6 +181,8 @@ def main(argv=None):
     pathlib.Path(args.rapor).write_text(metin + "\n", encoding="utf-8")
     print(metin)
     print(f"(rapor {args.rapor} dosyasına da yazıldı)")
+    if args.yöntem == "asgari":
+        print(f"(etkileşimli görünüm: {html_yolu})")
 
 
 if __name__ == "__main__":
