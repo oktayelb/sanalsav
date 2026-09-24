@@ -131,12 +131,15 @@ def rapor_üret(seri, karşılaştırma=None):
              f"(çapa {len(ist['çapalar'])} + gırtlaksıl işaret {len(ist['işaretler'])})")
     S.append("  türetilmiş (alt simgeli) harf   : 0")
     S.append("  ara katmanda etiketli harf      : 0")
-    S.append(f"  en uzun ses zinciri (D)         : {seri.en_uzun_yol} adım")
+    S.append(f"  işaret basamağı (dal başına)    : {seri.basamak} "
+             f"(her dal {seri.basamak} işaretle kodlanır; {len(ist['işaretler'])} işaret "
+             f"harfiyle {len(ist['işaretler']) ** seri.basamak} ayrım)")
+    S.append(f"  çapa erişimi (D)                : en çok {seri.en_uzun_yol} doğal adım")
     S.append("  ön dile uzaklık (katman sayısı) :")
     for x in ist["dallar"]:
         S.append(f"      {x['ad']:<14} {x['katman']} katman"
-                 f" ({x['ön_katman']} işaret düşürme + "
-                 f"{x['katman'] - x['ön_katman']} ses katmanı)")
+                 f" ({x['katman'] - x['ön_katman']} ses katmanı + "
+                 f"{x['ön_katman']} yalnız işaret düşüren katman)")
     S.append("  kural sayısı                    :")
     for x in ist["dallar"]:
         S.append(f"      {x['ad']:<14} {x['kural']} kural "
@@ -184,9 +187,12 @@ def rapor_üret(seri, karşılaştırma=None):
     S.append(f"  refleksleri ondan en çok {seri.en_uzun_yol} doğal adım uzaktadır. İşaretler")
     S.append("  Hint-Avrupa laringalleri (*h₁ *h₂ *h₃) gibi gizli gırtlak sesleridir:")
     S.append("  önlerindeki sesi 'boyar' (kural: X -> Y / H² önünde), sonra düşerler.")
-    S.append("  Her birimin ardında dal sırasıyla bir işaret öbeği durur; k. dal ilk")
-    S.append("  k katmanda öbek başlarını düşürüp kendi işaretine ulaşır. H⁰ yalnız")
-    S.append("  yer tutucudur (o dalda boyama yok).")
+    S.append("  Her birimin ardında dal ve basamak sırasıyla bir işaret öbeği durur.")
+    S.append("  Bir dal önce öbek başlarını düşürerek kendi ilk basamağına ulaşır;")
+    S.append("  ses o basamağın boyamasıyla bir ARA HARFE yürür, basamak düşer, bir")
+    S.append("  sonraki basamak onu reflekse (ya da bir sonraki ara harfe) yöneltir.")
+    S.append("  Böylece k işaret harfiyle k^basamak ayrım yapılır: harf azalır,")
+    S.append("  katman artar. H⁰ boyamasız yer tutucudur.")
     S.append("")
     S.append("  Katman başına harf dağarcığı (her katman bir alt ön dil):")
     for x in ist["dallar"]:
@@ -196,19 +202,18 @@ def rapor_üret(seri, karşılaştırma=None):
                             else f"{len(k['harf'])} (+{len(k['doğan'])})")
         S.append(f"    {x['ad']:<10}: " + " > ".join(parçalar))
     S.append("")
-    S.append("  Çapa -> refleks izleri ve işaret sınıfları:")
+    S.append("  Çapa -> refleks izleri (işaret kodu: dal içindeki basamaklar):")
     for d, ad in enumerate(adlar):
         S.append(f"    {ad} dalı:")
-        for (A, R), c in sorted(seri.sınıflar[d].items(),
-                                key=lambda kv: (kv[0][0], kv[1], kv[0][1])):
-            z = seri.izler[d][(A, R)]
+        for (A, R), kod in sorted(seri.sınıflar[d].items(),
+                                  key=lambda kv: (kv[0][0], kv[1], kv[0][1])):
             adımlar = []
-            for t in z:
+            for t in seri.izler[d][(A, R)]:
                 t = "∅" if t == BOŞ else ("".join(dizi_harfleri(t)) if dizi_mi(t) else t)
                 if not adımlar or adımlar[-1] != t:
                     adımlar.append(t)
-            işaret = "—" if c == 0 else işaret_adı(c)
-            S.append(f"      *{A} [{işaret:>2}] : {' > '.join(adımlar)}")
+            kod_m = "".join(işaret_adı(c) for c in kod)
+            S.append(f"      *{A} [{kod_m}] : {' > '.join(adımlar)}")
     S.append("")
 
     S.append("-" * 72)
@@ -254,9 +259,13 @@ def rapor_üret(seri, karşılaştırma=None):
     S.append("-" * 72)
     S.append("6. ÇAPA ARAMASI (harf ~ katman ödünleşimi)")
     S.append("-" * 72)
-    S.append(f"  {'harf':>4}  {'çapa':>4}  {'işaret':>6}  {'derinlik':>8}  çapa kümesi")
-    for harf, n, K, derinlik, küme in seri.arama_özeti:
-        S.append(f"  {harf:>4}  {n:>4}  {K:>6}  {derinlik:>8}  {' '.join(küme)}")
-    S.append("  (harf = çapa + işaret (+ H⁰); derinlik = dalların katman toplamı)")
+    S.append(f"  {'harf':>4}  {'çapa':>4}  {'işaret':>6}  {'basamak':>7}  "
+             f"{'öbek':>4}  {'derinlik':>8}  çapa kümesi")
+    for harf, n, K, w, k, derinlik, küme in seri.arama_özeti:
+        S.append(f"  {harf:>4}  {n:>4}  {K:>6}  {w:>7}  {k:>4}  {derinlik:>8}  "
+                 f"{' '.join(küme)}")
+    S.append("  (harf = çapa + işaret (+ H⁰); öbek = bir ara harfin ayırdığı en çok")
+    S.append("   refleks; derinlik = dalların katman toplamı. Daha çok basamak daha")
+    S.append("   az harf ama daha çok katman demektir: --en-çok-basamak ile açılır.)")
     S.append("")
     return "\n".join(S)

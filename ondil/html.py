@@ -311,7 +311,7 @@ function ağaç() {
       const sel = seçili.d === d && seçili.j === j ? 'sel' : '';
       s += `<div class="edge"></div><button class="node ${son ? 'leaf' : ''} ${sel}" data-d="${d}" data-j="${j}">
         <div class="n">${esc(son ? D.ad : K.ad)}</div>
-        <div class="m">katman ${j} · ${K.harf.length} harf (+${K.doğan.length}) · ${K.kurallar.length} kural</div></button>`;
+        <div class="m">katman ${j} · ${K.harf.length} harf (+${K.doğan.length}) · ${K.kurallar.length} kural${K.kurallar.length && K.kurallar.every(r => r.i) ? ' · yalnız işaret' : ''}</div></button>`;
     }
     return s + '</div></div>';
   }).join('');

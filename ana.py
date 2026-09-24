@@ -67,6 +67,10 @@ def main(argv=None):
     p.add_argument("--en-uzun-yol", type=int, default=7,
                    help="asgari yöntem: bir çapadan refleksine en çok kaç "
                         "doğal ses adımı (büyüdükçe harf azalır, katman artar)")
+    p.add_argument("--en-çok-basamak", type=int, default=3,
+                   help="asgari yöntem: dal başına en çok kaç işaret basamağı "
+                        "denensin (büyüdükçe harf azalır, katman artar; "
+                        "Türkçe~İngilizce: 3 -> 5 harf, 5 -> 4 harf)")
     p.add_argument("--html", default=None,
                    help="etkileşimli HTML görünümü (boşsa rapor adından türetilir)")
     p.add_argument("--en-az-katman", type=int, default=0,
@@ -168,7 +172,9 @@ def main(argv=None):
                          for kr in ks if kr.hedef != kr.kaynak),
             "düzenlilik": 100.0 * (B * boy - len(k.istisnalar)) / (B * boy),
         }
-        seri = asgari.seri_oluştur(çiftler, adlar, args.en_uzun_yol)
+        seri = asgari.seri_oluştur(
+            çiftler, adlar, args.en_uzun_yol,
+            basamaklar=tuple(range(1, args.en_çok_basamak + 1)))
         metin = asgari_rapor_üret(seri, karşılaştırma)
         html_yolu = args.html or str(pathlib.Path(args.rapor).with_suffix(".html"))
         pathlib.Path(html_yolu).write_text(

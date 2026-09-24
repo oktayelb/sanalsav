@@ -81,9 +81,11 @@ class AsgariSeri:
     çapalar: list  # kullanılan çapa harfleri (S)
     işaretler: list  # kullanılan işaret harfleri (H⁰ dahil)
     sütun_çapası: dict  # karşılıklık -> çapa
-    sınıflar: list  # dal başına {(çapa, refleks): sınıf}
+    sınıflar: list  # dal başına {(çapa, refleks): basamak sınıfları}
     izler: list  # dal başına {(çapa, refleks): katman katman harf zinciri}
-    ön_katman: list  # dal başına işaret düşürme katmanı sayısı
+    yönler: list  # dal başına {(çapa, refleks): [çapa, ara harfler..., refleks]}
+    basamak: int  # dal başına işaret basamağı sayısı
+    ön_katman: list  # dal başına yalnız işaret düşüren katman sayısı
     katman: list  # dal başına toplam katman sayısı
     proto_kelimeler: list
     tablolar: list  # dal başına {katman: [KatmanKural]}
@@ -279,7 +281,7 @@ class _ÇapaArama:
 
 
 # ---------------------------------------------------------------------------
-# 3. aşama: dal başına iz renklendirmesi (işaret sınıfları + zamanlama)
+# 3. aşama: basamaklı yönlendirme ağacı (çapa -> ara harf -> ... -> refleks)
 # ---------------------------------------------------------------------------
 
 def _yol_adayları(A, R, en_çok=24):
@@ -289,18 +291,96 @@ def _yol_adayları(A, R, en_çok=24):
     return yollar(A, R, en_çok)
 
 
-def _dal_renklendir(izler, ön, T, geç_önce):
-    """izler: [(çapa, refleks, ağırlık)]. Katman 1..ön işaret düşürmedir;
-    yürüyüşler ön+1 .. ön+T katmanlarındadır.
+def _ağaç_kur(kaynaklar, w, k, D):
+    """Her (kaynak, refleks) için w basamaklı bir yol kurar.
 
-    Döner: ({iz: sınıf}, {iz: zincir}, sınıf_sayısı) ya da None.
-    Tutarlılık: (katman, harf, sınıf) -> tek hedef.
+    kaynaklar: {harf: Counter(refleks -> ağırlık)}. w = 1 ise yol
+    doğrudan [kaynak, refleks]'tir (tek işaret basamağı). w > 1 ise her
+    kaynağın refleksleri en çok k öbeğe bölünür; her öbek bir ara harfe
+    (öbeğin merkezine) yürür ve oradan kalan w-1 basamakla ayrışır. Bir ara
+    harfe (başka kaynaklardan da) en çok k^(w-1) refleks bağlanabilir.
+    Döner: {(kaynak, refleks): [kaynak, ara1, ..., refleks]} ya da None.
     """
-    L = ön + T
+    if w == 1:
+        return {(A, R): [A, R] for A, rs in kaynaklar.items() for R in rs}
+    tavan = k ** (w - 1)
+    yük = {}  # ara harf -> ona bağlanan refleksler (bütün kaynaklardan)
+    yön = {}  # (kaynak, refleks) -> ara harf
+    for A in sorted(kaynaklar, key=lambda A: (-len(kaynaklar[A]), A)):
+        ağırlık = kaynaklar[A]
+        plan = None
+        for ρ in range(0, D + 1):
+            plan = _öbekle(A, ağırlık, ρ, k, tavan, yük, D)
+            if plan is not None:
+                break
+        if plan is None:
+            return None
+        for B, öbek in plan:
+            yük.setdefault(B, set()).update(öbek)
+            for R in öbek:
+                yön[(A, R)] = B
+    alt_kaynak = {}
+    for (A, R), B in yön.items():
+        alt_kaynak.setdefault(B, Counter())[R] += kaynaklar[A][R]
+    alt = _ağaç_kur(alt_kaynak, w - 1, k, D)
+    if alt is None:
+        return None
+    return {(A, R): [A] + alt[(B, R)] for (A, R), B in yön.items()}
+
+
+def _öbekle(A, ağırlık, ρ, k, tavan, yük, D):
+    """A'nın reflekslerini en çok k öbeğe (yarıçap ρ, öbek başına tavan)
+    açgözlü kapsamayla böler; her öbeğin merkezi bir ara harftir."""
+    kalan = set(ağırlık)
+    yerel = {B: set(v) for B, v in yük.items()}
+    plan = []
+    while kalan:
+        if len(plan) == k:
+            return None
+        en_iyi = None
+        for B in HARFLER:
+            dAB = uzaklık(A, B)
+            if dAB > D:
+                continue
+            yakın = [R for R in kalan if uzaklık(B, R) <= ρ]
+            if not yakın:
+                continue
+            mevcut = yerel.get(B, set())
+            bedava = [R for R in yakın if R in mevcut]
+            yeni = sorted((R for R in yakın if R not in mevcut),
+                          key=lambda R: (uzaklık(B, R), -ağırlık[R], R))
+            öbek = bedava + yeni[:max(0, tavan - len(mevcut))]
+            if not öbek:
+                continue
+            puan = (len(öbek), -dAB,
+                    -sum(uzaklık(B, R) for R in öbek), B not in _SANAL, B)
+            if en_iyi is None or puan > en_iyi[0]:
+                en_iyi = (puan, B, öbek)
+        if en_iyi is None:
+            return None
+        _, B, öbek = en_iyi
+        plan.append((B, öbek))
+        yerel.setdefault(B, set()).update(öbek)
+        kalan -= set(öbek)
+    return plan
+
+
+# ---------------------------------------------------------------------------
+# 4. aşama: evre başına iz renklendirmesi (işaret sınıfları + zamanlama)
+# ---------------------------------------------------------------------------
+
+def _renklendir(izler, T, geç_önce, son_evre):
+    """izler: [(kaynak, hedef, ağırlık)]; yürüyüş 1..T yerel katmanlarında.
+
+    Tutarlılık: (katman, harf, sınıf) -> tek hedef. Aynı sınıftaki izler
+    aynı katmanda aynı harfte buluşup farklı yöne gidemez. Son evrede
+    işaretli düşme ve bütün doğumlar son katmana sabitlenir (işaretler o
+    katmanda düşer; doğan harfler başka kurala uğramasın).
+    Döner: ({iz: sınıf}, {iz: zincir (T+1 harf)}, en büyük sınıf) ya da None.
+    """
     tablo = {}
     sınıf, zincir = {}, {}
-    sıralı = sorted(izler, key=lambda z: (-z[2], z[0], z[1]))
-    for A, R, _ in sıralı:
+    for A, R, _ in sorted(izler, key=lambda z: (-z[2], z[0], z[1])):
         yerleşti = False
         c = 0
         while not yerleşti:
@@ -310,25 +390,23 @@ def _dal_renklendir(izler, ön, T, geç_önce):
                 ℓ = len(p) - 1
                 if ℓ > T:
                     continue
-                # işaretli düşme ve her doğum son katmana sabitlenir
-                sabit = dizi_mi(R) or (c != 0 and R == BOŞ)
+                sabit = son_evre and (dizi_mi(R) or (c != 0 and R == BOŞ))
                 zamanlar = [T - ℓ] if sabit else list(range(0, T - ℓ + 1))
                 if geç_önce:
                     zamanlar.reverse()
                 for t in zamanlar:
-                    z = [A] * (ön + t + 1) + p[1:] + [R] * (T - t - ℓ)
+                    z = [A] * (t + 1) + p[1:] + [R] * (T - t - ℓ)
                     uygun = True
-                    for j in range(ön + 1, L + 1):
-                        X = z[j - 1]
-                        if X == BOŞ:
+                    for j in range(1, T + 1):
+                        if z[j - 1] == BOŞ:
                             break
-                        Y = tablo.get((j, X, c))
+                        Y = tablo.get((j, z[j - 1], c))
                         if Y is not None and Y != z[j]:
                             uygun = False
                             break
                     if not uygun:
                         continue
-                    for j in range(ön + 1, L + 1):
+                    for j in range(1, T + 1):
                         if z[j - 1] == BOŞ:
                             break
                         tablo[(j, z[j - 1], c)] = z[j]
@@ -342,103 +420,164 @@ def _dal_renklendir(izler, ön, T, geç_önce):
     return sınıf, zincir, max(sınıf.values(), default=0)
 
 
-def _dal_planla(izler, ön, gevşeklik_listesi=(0, 1, 2, 3)):
-    """En az sınıflı (sonra en sığ) renklendirmeyi arar."""
+def _evre_planla(izler, son_evre, gevşeklik=(0, 1, 2, 3)):
+    """En az sınıflı (sonra en sığ) renklendirme: (sınıf, zincir, K, T)."""
     en_kısa = max(
         (min(len(p) - 1 for p in _yol_adayları(A, R)) for A, R, _ in izler),
         default=0,
     )
     en_iyi = None
-    for g in gevşeklik_listesi:
+    for g in gevşeklik:
         for geç in (False, True):
-            r = _dal_renklendir(izler, ön, en_kısa + g, geç)
+            r = _renklendir(izler, en_kısa + g, geç, son_evre)
             if r is None:
                 continue
             puan = (r[2], g)
             if en_iyi is None or puan < en_iyi[0]:
                 en_iyi = (puan, r, en_kısa + g)
+    if en_iyi is None:
+        return None
     _, (sınıf, zincir, K), T = en_iyi
     return sınıf, zincir, K, T
 
 
+def _dal_kur(d, w, k, D, atama, sıklık):
+    """Bir dalın yönlendirme ağacı, evre planları ve katman düzeni."""
+    kaynaklar = {}
+    for ç, n in sıklık.items():
+        kaynaklar.setdefault(atama[ç], Counter())[ç[d]] += n
+    yönler = _ağaç_kur(kaynaklar, w, k, D)
+    if yönler is None:
+        return None
+    evreler = []
+    for p in range(1, w + 1):
+        ağırlık = Counter()
+        for (A, R), yol_ in yönler.items():
+            ağırlık[(yol_[p - 1], yol_[p])] += kaynaklar[A][R]
+        izler = [(x, y, n) for (x, y), n in ağırlık.items()]
+        plan = _evre_planla(izler, son_evre=(p == w))
+        if plan is None:
+            return None
+        evreler.append(plan)
+    # katman düzeni: ön düşürme, evreler (araya öbek başı düşürme), son
+    düzen = [("baş_sil", None, None)] * (d * w)
+    for p, (_, _, _, T) in enumerate(evreler):
+        if p:
+            düzen.append(("baş_sil", None, None))
+        düzen.extend(("hareket", p, t) for t in range(1, T + 1))
+    if evreler[-1][3] == 0:
+        düzen.append(("son", None, None))
+    sınıflar = {
+        iz: tuple(evreler[p][0][(yol_[p], yol_[p + 1])] for p in range(w))
+        for iz, yol_ in yönler.items()
+    }
+    # rapor için her (çapa, refleks) izinin katman katman zinciri
+    zincirler = {}
+    for iz, yol_ in yönler.items():
+        z = [yol_[0]]
+        for tür, p, t in düzen:
+            if tür == "hareket":
+                z.append(evreler[p][1][(yol_[p], yol_[p + 1])][t])
+            else:
+                z.append(z[-1])
+        zincirler[iz] = z
+    return {
+        "yönler": yönler, "evreler": evreler, "düzen": düzen,
+        "sınıflar": sınıflar, "zincirler": zincirler,
+        "K": max(K for _, _, K, _ in evreler),
+    }
+
+
 # ---------------------------------------------------------------------------
-# 4. aşama: ön biçimler, kural tabloları, kör türetim
+# 5. aşama: ön biçimler, kural tabloları, kör türetim
 # ---------------------------------------------------------------------------
 
-def _ön_biçim(sütunlar, sütun_çapası, sınıflar, N):
-    """Her birim: çapa + dal sırasıyla işaret öbeği (sondaki boşlar atılır)."""
-    w = []
+def _ön_biçim(sütunlar, atama, dallar, N):
+    """Her birim: çapa + dal ve basamak sırasıyla işaret öbeği."""
+    w_ = []
     for ç in sütunlar:
-        A = sütun_çapası[ç]
-        w.append(A)
-        öbek = [sınıflar[d][(A, ç[d])] for d in range(N)]
+        A = atama[ç]
+        w_.append(A)
+        öbek = [c for d in range(N) for c in dallar[d]["sınıflar"][(A, ç[d])]]
         while öbek and öbek[-1] == 0:
             öbek.pop()
-        w.extend(işaret_adı(c) for c in öbek)
-    return w
+        w_.extend(işaret_adı(c) for c in öbek)
+    return w_
 
 
-def _ön_düşürme_kuralları(protolar, ön):
-    """İlk `ön` katmanda her öbeğin BAŞINDAKİ işareti düşüren kurallar.
-
-    Öbek başı, işaret olmayan bir harfin ardındadır. Önce kaba bağlam
-    (ünlü ardında) denenir; ünsüz çapalar için harfe özgü bağlam yazılır.
-    Her katmanda öbek başı yeniden hesaplanır.
-    """
-    tablolar = {}
-    biçimler = [list(w) for w in protolar]
-    for j in range(1, ön + 1):
-        kurallar = {}
-        yeni_biçimler = []
-        for w in biçimler:
-            yeni = []
-            for i, t in enumerate(w):
-                if işaret_mi(t) and i > 0 and not işaret_mi(w[i - 1]):
-                    önceki = w[i - 1]
-                    bağlam = ("ünlü ardında" if ünlü_mü(önceki)
-                              else f"{önceki} ardında")
-                    kurallar[(t, BOŞ, bağlam)] = KatmanKural(t, BOŞ, bağlam)
-                    continue
-                yeni.append(t)
-            yeni_biçimler.append(yeni)
-        biçimler = yeni_biçimler
-        tablolar[j] = sorted(kurallar.values(),
-                             key=lambda k: (k.kaynak, k.bağlam))
-    return tablolar
-
-
-def _dal_tablosu(zincirler, sınıflar, ön, L, işaretler, protolar,
-                 göçler):
-    """Bir dalın bütün katman kuralları."""
-    tablo = {j: [] for j in range(1, L + 1)}
-    for j, ks in _ön_düşürme_kuralları(protolar, ön).items():
-        tablo[j].extend(ks)
-    anahtarlar = {}
-    for iz, z in zincirler.items():
-        c = sınıflar[iz]
-        for j in range(ön + 1, L + 1):
-            if z[j - 1] == BOŞ:
-                break
-            anahtarlar[(j, z[j - 1], c)] = z[j]
-    varsayılan = {(j, X): Y for (j, X, c), Y in anahtarlar.items() if c == 0}
-    for (j, X, c), Y in sorted(anahtarlar.items(),
-                               key=lambda kv: (kv[0][0], kv[0][2], kv[0][1])):
-        if c == 0:
-            if Y != X:
-                tablo[j].append(KatmanKural(X, Y, "her yerde"))
+def _katman_uygula(w, kurallar):
+    if kurallar and kurallar[0].bağlam == GÖÇÜŞÜM_BAĞLAMI:
+        return _göçüşüm_uygula(w, kurallar)
+    yeni = []
+    for i in range(len(w)):
+        k = _kural_seç(kurallar, w, i)
+        if k is None:
+            yeni.append(w[i])
+        elif dizi_mi(k.hedef):
+            yeni.extend(dizi_harfleri(k.hedef))
         else:
-            if Y != varsayılan.get((j, X), X):
-                tablo[j].append(
-                    KatmanKural(X, Y, f"{işaret_adı(c)} önünde"))
-    # son katman: kalan bütün işaretler düşer
-    for H in işaretler:
-        tablo[L].append(KatmanKural(H, BOŞ, "her yerde"))
+            yeni.append(k.hedef)
+    return [t for t in yeni if t != BOŞ]
+
+
+def _baş_sil_kuralları(biçimler):
+    """Her işaret öbeğinin BAŞINDAKİ işareti düşüren kurallar.
+
+    Öbek başı işaret olmayan bir harfin ardındadır: ünlü ardındaysa kaba
+    bağlam, ünsüz ardındaysa harfe özgü bağlam yazılır.
+    """
+    kurallar = {}
+    for w in biçimler:
+        for i, t in enumerate(w):
+            if işaret_mi(t) and i > 0 and not işaret_mi(w[i - 1]):
+                önceki = w[i - 1]
+                bağlam = ("ünlü ardında" if ünlü_mü(önceki)
+                          else f"{önceki} ardında")
+                kurallar[(t, bağlam)] = KatmanKural(t, BOŞ, bağlam)
+    return sorted(kurallar.values(), key=lambda k: (işaret_no(k.kaynak), k.bağlam))
+
+
+def _dal_tablosu(dal, protolar, işaretler, göçler):
+    """Bir dalın bütün katman kuralları (ileri benzetimle kurulur)."""
+    düzen = dal["düzen"]
+    L = len(düzen)
+    anahtarlar = {}
+    for p, (sınıf, zincir, _, T) in enumerate(dal["evreler"]):
+        küresel = [g for g, (tür, pp, t) in enumerate(düzen, 1)
+                   if tür == "hareket" and pp == p]
+        for iz, z in zincir.items():
+            c = sınıf[iz]
+            for t in range(1, T + 1):
+                if z[t - 1] == BOŞ:
+                    break
+                anahtarlar[(küresel[t - 1], z[t - 1], c)] = z[t]
+    varsayılan = {(j, X): Y for (j, X, c), Y in anahtarlar.items() if c == 0}
+    tablo = {}
+    biçimler = [list(w) for w in protolar]
+    for g, (tür, _, _) in enumerate(düzen, 1):
+        kurallar = []
+        if tür == "baş_sil":
+            kurallar = _baş_sil_kuralları(biçimler)
+        elif tür == "hareket":
+            for (j, X, c), Y in sorted(anahtarlar.items(),
+                                       key=lambda kv: (kv[0][2], kv[0][1])):
+                if j != g:
+                    continue
+                if c == 0:
+                    if Y != X:
+                        kurallar.append(KatmanKural(X, Y, "her yerde"))
+                elif Y != varsayılan.get((j, X), X):
+                    kurallar.append(KatmanKural(X, Y, f"{işaret_adı(c)} önünde"))
+        if g == L:
+            kurallar += [KatmanKural(H, BOŞ, "her yerde") for H in işaretler]
+        tablo[g] = kurallar
+        biçimler = [_katman_uygula(w, kurallar) for w in biçimler]
     if göçler:
         tablo[L + 1] = [
             KatmanKural(dizi_yap([x, y]), dizi_yap([y, x]), GÖÇÜŞÜM_BAĞLAMI)
             for x, y in göçler
         ]
-    return {j: ks for j, ks in tablo.items()}
+    return tablo
 
 
 def _göçüşüm_uygula(w, kurallar):
@@ -459,21 +598,7 @@ def kör_türet(proto, tablolar, katman):
     w = list(proto)
     biçimler = [list(w)]
     for j in range(1, katman + 1):
-        kurallar = tablolar.get(j, [])
-        if kurallar and kurallar[0].bağlam == GÖÇÜŞÜM_BAĞLAMI:
-            w = _göçüşüm_uygula(w, kurallar)
-            biçimler.append(list(w))
-            continue
-        yeni = []
-        for i in range(len(w)):
-            k = _kural_seç(kurallar, w, i)
-            if k is None:
-                yeni.append(w[i])
-            elif dizi_mi(k.hedef):
-                yeni.extend(dizi_harfleri(k.hedef))
-            else:
-                yeni.append(k.hedef)
-        w = [t for t in yeni if t != BOŞ]
+        w = _katman_uygula(w, tablolar.get(j, []))
         biçimler.append(list(w))
     return biçimler
 
@@ -482,61 +607,77 @@ def kör_türet(proto, tablolar, katman):
 # ana akış
 # ---------------------------------------------------------------------------
 
+def _yapılandırma_dene(sıklık, atama, N, w, k, D):
+    """Bir (basamak w, öbek k, çapa ataması) için bütün dalları kurar."""
+    dallar = []
+    for d in range(N):
+        dal = _dal_kur(d, w, k, D, atama, sıklık)
+        if dal is None:
+            return None
+        dallar.append(dal)
+    K = max(dal["K"] for dal in dallar)
+    boş = any(0 in dallar[d]["sınıflar"][(atama[ç], ç[d])][:-1]
+              or (dallar[d]["sınıflar"][(atama[ç], ç[d])][-1] == 0
+                  and any(any(dallar[e]["sınıflar"][(atama[ç], ç[e])])
+                          for e in range(d + 1, N)))
+              for ç in sıklık for d in range(N))
+    harf = len(set(atama.values())) + K + (1 if boş else 0)
+    derinlik = sum(len(dal["düzen"]) for dal in dallar)
+    return harf, derinlik, dallar
+
+
 def _kur(çiftler, dal_adları, hizalamalar, doğumlar, göçler, D, tohum,
-         aday_sayısı):
+         basamaklar):
     N = len(dal_adları)
     sıklık = Counter(ç for sütunlar in hizalamalar for ç in sütunlar)
     arama = _ÇapaArama(sıklık, N, D, tohum)
-    adaylar = arama.ara()
+    adaylar = arama.ara(boylar=range(1, 10))
     if not adaylar:
         return None
+    # boy başına en iyi çapa kümesi: (boy, çeşitlilik, S, atama)
+    boylar = sorted(
+        (puan[3], puan[0] - puan[3], S, atama) for puan, S, atama in adaylar
+    )
 
     özet = []
     en_iyi = None
-    for puan, S, atama in adaylar[:aday_sayısı]:
-        planlar = []
-        for d in range(N):
-            ağırlık = Counter()
-            for ç, n in sıklık.items():
-                ağırlık[(atama[ç], ç[d])] += n
-            izler = [(A, R, n) for (A, R), n in ağırlık.items()]
-            planlar.append(_dal_planla(izler, ön=d))
-        K = max(p[2] for p in planlar)
-        boş_gerekli = any(
-            any(planlar[d][0][(atama[ç], ç[d])] == 0
-                and any(planlar[e][0][(atama[ç], ç[e])] for e in range(d + 1, N))
-                for d in range(N))
-            for ç in sıklık
-        )
-        harf = len(set(atama.values())) + K + (1 if boş_gerekli else 0)
-        derinlik = sum(d + p[3] for d, p in enumerate(planlar))
-        özet.append((harf, len(set(atama.values())), K, derinlik, S))
-        anahtar = (harf, derinlik)
-        if en_iyi is None or anahtar < en_iyi[0]:
-            en_iyi = (anahtar, S, atama, planlar)
+    for w in basamaklar:
+        for k in range(2, 16):
+            if k ** w < min(ç for _, ç, _, _ in boylar):
+                continue
+            uygun = [b for b in boylar if b[1] <= k ** w][:2]
+            if not uygun:
+                continue
+            alt_sınır = min(b[0] for b in uygun) + (k - 1)
+            if en_iyi is not None and alt_sınır > en_iyi[0][0]:
+                continue  # daha büyük k daha küçük çapa kümesine izin verebilir
+            for n, çeşit, S, atama in uygun:
+                r = _yapılandırma_dene(sıklık, atama, N, w, k, D)
+                if r is None:
+                    continue
+                harf, derinlik, dallar = r
+                özet.append((harf, n, dallar and max(x["K"] for x in dallar),
+                             w, k, derinlik, S))
+                anahtar = (harf, derinlik)
+                if en_iyi is None or anahtar < en_iyi[0]:
+                    en_iyi = (anahtar, w, S, atama, dallar)
+    if en_iyi is None:
+        return None
 
-    _, S, atama, planlar = en_iyi
-    sınıflar = [p[0] for p in planlar]
-    zincirler = [p[1] for p in planlar]
-    ön_katman = list(range(N))
-    katman = [ön_katman[d] + planlar[d][3] for d in range(N)]
-
-    protolar = [_ön_biçim(s, atama, sınıflar, N) for s in hizalamalar]
-    işaretler = sorted({t for w in protolar for t in w if işaret_mi(t)},
+    _, w, S, atama, dallar = en_iyi
+    protolar = [_ön_biçim(s, atama, dallar, N) for s in hizalamalar]
+    işaretler = sorted({t for w_ in protolar for t in w_ if işaret_mi(t)},
                        key=işaret_no)
-
     göç_dal = [[] for _ in range(N)]
     for _, _, çift in göçler:
         if çift not in göç_dal[1]:
             göç_dal[1].append(çift)
-    tablolar = [
-        _dal_tablosu(zincirler[d], sınıflar[d], ön_katman[d], katman[d],
-                     işaretler, protolar, sorted(göç_dal[d]))
-        for d in range(N)
-    ]
-    for d in range(N):
-        if göç_dal[d]:
-            katman[d] += 1
+    tablolar = [_dal_tablosu(dallar[d], protolar, işaretler, sorted(göç_dal[d]))
+                for d in range(N)]
+    katman = [len(dallar[d]["düzen"]) + (1 if göç_dal[d] else 0)
+              for d in range(N)]
+    işaret_katmanı = [sum(1 for tür, _, _ in dallar[d]["düzen"]
+                          if tür != "hareket") for d in range(N)]
 
     türevler, istisnalar = [], []
     for kno, row in enumerate(çiftler):
@@ -552,23 +693,31 @@ def _kur(çiftler, dal_adları, hizalamalar, doğumlar, göçler, D, tohum,
     return AsgariSeri(
         dal_adları=tuple(dal_adları), çiftler=çiftler,
         hizalamalar=hizalamalar, çapalar=sorted(set(atama.values())),
-        işaretler=işaretler, sütun_çapası=atama, sınıflar=sınıflar,
-        izler=zincirler, ön_katman=ön_katman, katman=katman,
+        işaretler=işaretler, sütun_çapası=atama,
+        sınıflar=[dal["sınıflar"] for dal in dallar],
+        izler=[dal["zincirler"] for dal in dallar],
+        yönler=[dal["yönler"] for dal in dallar],
+        basamak=w, ön_katman=işaret_katmanı, katman=katman,
         proto_kelimeler=protolar, tablolar=tablolar, türevler=türevler,
         istisnalar=istisnalar, göçüşümler=göç_dal, doğum_olayları=doğumlar,
-        en_uzun_yol=D, arama_özeti=sorted(özet)[:8],
+        en_uzun_yol=D, arama_özeti=sorted(özet)[:10],
     )
 
 
-def seri_oluştur(çiftler, dal_adları, en_uzun_yol=7, tohum=0, aday_sayısı=6):
-    """Asgari harfli seri. Göçüşüm kuralı başka bir sözcükte yanlış yere
-    düşerse o sözcüğün göçüşümü geri alınır (sıradan değişimle açıklanır)."""
+def seri_oluştur(çiftler, dal_adları, en_uzun_yol=7, tohum=0,
+                 basamaklar=(1, 2, 3)):
+    """Asgari harfli seri. basamaklar: denenecek işaret basamağı sayıları
+    (1 = tek işaret; 2-3 = işaret dizisiyle ara harflerden geçen kodlama).
+
+    Göçüşüm kuralı başka bir sözcükte yanlış yere düşerse o sözcüklerin
+    göçüşümü geri alınır (sıradan değişimle açıklanır) ve seri yeniden
+    kurulur."""
     N = len(dal_adları)
     göçüşüm_yasak = set()
     while True:
         hizalamalar, doğumlar, göçler = _hizalamalar(çiftler, N, göçüşüm_yasak)
         seri = _kur(çiftler, dal_adları, hizalamalar, doğumlar, göçler,
-                    en_uzun_yol, tohum, aday_sayısı)
+                    en_uzun_yol, tohum, basamaklar)
         if seri is None:
             raise SystemExit(
                 f"en uzun yol {en_uzun_yol} ile her karşılıklığa ulaşan "
@@ -577,5 +726,4 @@ def seri_oluştur(çiftler, dal_adları, en_uzun_yol=7, tohum=0, aday_sayısı=6
         bozuk = {kno for kno, _, _, _ in seri.istisnalar}
         if not göç_kelimeleri or not bozuk:
             return seri
-        # göçüşüm yanlış yere de uygulandıysa göçüşümü kaldır ve yeniden kur
         göçüşüm_yasak |= göç_kelimeleri
