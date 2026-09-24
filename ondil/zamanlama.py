@@ -95,7 +95,6 @@ def _yollar(g):
 
 def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
     """Sabit T katmanla zamanlama; (tablo, etiket, çözülemeyen) döner."""
-    etiketler = set()
     for g in gruplar:
         yol_ = min(_yollar(g), key=len)
         g.yol_sırası = 0
@@ -119,6 +118,10 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
 
     def etiketle(g, başla):
         z = list(g.zincir)
+        # bekleme bloğu bölünmesin: yalnız etiketi değişen sahte adım
+        # (ü₆ > ü₇) doğmasın diye aynı harfteki bekleyişin başına dek geri git
+        while başla > 1 and z[başla - 1] == z[başla]:
+            başla -= 1
         son = len(z) - 1
         while son > 0 and z[son] == z[-1]:
             son -= 1
@@ -132,7 +135,6 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
                 b = taban(d)
                 sayaç[b] = sayaç.get(b, 1) + 1
                 yeni[d] = b + alt_yazı(sayaç[b])
-                etiketler.add(yeni[d])
             z[i] = yeni[d]
             değişti = True
         g.zincir = z
@@ -206,7 +208,7 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
                 ilk = (j, çakışmalar)
                 break
         if ilk is None:
-            return tablo, len(etiketler), 0
+            return tablo, _etiket_say(gruplar), 0
         j, çakışmalar = ilk
         onarıldı = False
         onarılan = set()
@@ -225,7 +227,14 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
     zh = zincir_haritası()
     tablo = {jj: katman_öğren(sözcükler, zh, jj)[0] for jj in range(1, T + 1)}
     çözülemeyen = sum(len(katman_öğren(sözcükler, zh, jj)[1]) for jj in range(1, T + 1))
-    return tablo, len(etiketler), çözülemeyen
+    return tablo, _etiket_say(gruplar), çözülemeyen
+
+
+def _etiket_say(gruplar):
+    """Zincirlerde fiilen kalan etiketli ara harf sayısı."""
+    ön = {g.token for g in gruplar}
+    return len({d for g in gruplar for d in g.zincir
+                if d != BOŞ and not dizi_mi(d) and d != taban(d) and d not in ön})
 
 
 def _yerleştir(yol_, T):
