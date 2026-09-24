@@ -65,6 +65,10 @@ def işaret_adı(sınıf):
     return İŞARET_KÖKÜ + "".join(_ÜST[int(c)] for c in str(sınıf))
 
 
+def işaret_no(tok):
+    return int("".join(str(_ÜST.index(c)) for c in tok[len(İŞARET_KÖKÜ):]))
+
+
 def işaret_mi(tok):
     return tok.startswith(İŞARET_KÖKÜ) and len(tok) > 1 and tok[1] in _ÜST
 
@@ -518,7 +522,8 @@ def _kur(çiftler, dal_adları, hizalamalar, doğumlar, göçler, D, tohum,
     katman = [ön_katman[d] + planlar[d][3] for d in range(N)]
 
     protolar = [_ön_biçim(s, atama, sınıflar, N) for s in hizalamalar]
-    işaretler = sorted({t for w in protolar for t in w if işaret_mi(t)})
+    işaretler = sorted({t for w in protolar for t in w if işaret_mi(t)},
+                       key=işaret_no)
 
     göç_dal = [[] for _ in range(N)]
     for _, _, çift in göçler:
