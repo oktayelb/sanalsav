@@ -88,11 +88,60 @@ KULLANIM
 
     python3 ana.py                            # Türkçe ~ İngilizce Swadesh-100 (varsayılan)
     python3 ana.py türkçe almanca kazakça  # herhangi iki liste
-      
+    python3 ana.py türkçe ingilizce --en-çok-basamak 5   # daha az harf, daha çok katman
+    python3 ana.py türkçe ingilizce --yöntem klasik      # harf türeten eski inşa
 
-Çıktı: rapor_dil1_dil2_diln.txt 
+Çıktı: rapor_dil1_dil2_diln.txt ve rapor_dil1_dil2_diln.html
 
-Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
+Varsayılan yöntem "asgari"dir (aşağıda). HTML dosyası tarayıcıda açılır: üstte
+ön ana dil, altında dalların ara katmanları, en altta girdi diller durur. Bir
+katmana basınca o katmanın harf dağarcığı (doğan / yiten harfler), kuralları
+(kaç konumda işlediği) ve bütün sözcüklerin o katmandaki biçimi, önceki katmana
+göre değişen harfler imlenmiş olarak görünür; bir sözcüğe basınca bütün yolu
+açılır. Adrese #d=1&j=3 eklenirse 2. dilin 3. katmanı doğrudan açılır.
+
+ASGARİ HARF YÖNTEMİ (ondil/asgari.py)
+
+Hedef: "5 ön dil 100 harf" yerine "çok ön dil, çok az harf". Kural ve katman
+sayısı serbest bırakılır, Ön Dil harf sayısı en aza indirilir; düzenlilik
+(%100, istisnasız, kör doğrulamalı) ve doğal ses adımı kısıtı korunur.
+
+1. Çapa alfabesi: her karşılıklık küçük bir çapa kümesinden bir harfe bağlanır
+   (bütün refleksler çapadan en çok --en-uzun-yol doğal adım uzakta).
+2. Gırtlaksıl işaretler (Hint-Avrupa *h₁ *h₂ *h₃ gibi laringaller): aynı çapa
+   farklı seslere gidiyorsa ayrım yeni harfle değil, çapanın ardına konan gizli
+   işaretle yapılır: "X -> Y / H² önünde". İşaretler dalın son katmanında düşer.
+   Aynı işaret harfleri bütün dallarda kullanılır; her birimin ardındaki öbekte
+   dalların işaretleri sırayla durur, k. dal önce öbek başlarını düşürür. Bu
+   yüzden dillerin ön dile uzaklığı (katman sayısı) doğal olarak farklıdır.
+3. Basamaklı kodlama: bir dal w işaretle kodlanır. Ses önce 1. basamağın
+   boyamasıyla bir ara harfe yürür, basamak düşer, 2. basamak onu reflekse
+   yöneltir. k işaret harfiyle k^w ayrım yapılır: harf azalır, katman artar.
+4. Renklendirme: aynı işaret sınıfındaki iki iz aynı katmanda aynı harfte
+   buluşup ayrı yöne gidemez; çakışma eşdeğer yol ya da zamanlama ile, olmazsa
+   yeni sınıfla çözülür. Ara katmanlarda etiketli (alt simgeli) harf doğmaz.
+
+Türkçe ~ İngilizce Swadesh-100:
+
+                         klasik     asgari (varsayılan)
+    Ön Dil harfi            102       5  (t u + H⁰ H¹ H²)
+    türetilmiş harf          67       0
+    ara katman etiketi       36       0
+    katman                4 + 4     10 + 12
+    kural                   340     173  (ortalama 7.9 kural/katman)
+    düzenlilik           %100.0  %100.0
+
+    basamak  harf  katman toplamı
+          1    15   14
+          2     7   13
+          3     5   22   (varsayılan üst sınır)
+          5     4   35   (--en-çok-basamak 5)
+
+Uyarı: harf sayısı bu yöntemle akrabalık ölçüsü olmaktan çıkar; akraba
+(Türkçe ~ Azerbaycanca) ve akrabasız (Türkçe ~ İngilizce) çiftlerin ikisi de 5
+harfe iner. Aşağıdaki eşik taraması klasik yönteme aittir.
+
+Klasik yöntemde: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
 *ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor_dil1_dil2_diln.txt.txt).
 Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü
 verir (eşik 1'de istisna tanım gereği sıfırdır); eğri --tarama ile incelenir.
