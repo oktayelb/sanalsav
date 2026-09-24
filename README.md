@@ -74,8 +74,9 @@ Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış
    çaprazlamaları göçüşüm (metathesis) olarak ayrıca yakalanır.
 3. "ondil/insa.py" : Hizalamadan çıkan her harf karşılıklığı bütün söz varlığında TEK
    Ön Dil harfine bağlanır; kurallar bu yüzden tanım gereği düzenlidir. Aynı Ön Dil harfi
-   bir dalda iki ayrı sese gidiyorsa önce bağlam koşulu (söz başında, ünlü önünde...)
-   aranır, ayrışmazsa yeni harf türetilir (b₂ gibi). Asgari harf hedefi: önce paylaş,
+   bir dalda iki ayrı sese gidiyorsa önce doğal ortam ve yasa sırası (söz başında, ön
+   ünlü önünde, ünlüler arasında...; bkz. GERÇEKÇİ HARF AZALTMA) aranır, ayrışmazsa
+   yeni harf türetilir (b₂ gibi). Asgari harf hedefi: önce paylaş,
    sonra bağlamla ayır, en son çare harf türet. En uzun kural zinciri katman (ara Ön Dil)
    sayısını belirler; iki dalın ataya uzaklığı eşit olmak zorunda değildir.
 4. Kurallar katman katman "körce" (köken bilgisi olmadan) uygulanıp doğrulanır; raporda
@@ -87,64 +88,69 @@ Yukarıdaki 1. ve 4. varsayımsal yöntemlerin bileşimi kodlanmıştır. Akış
 KULLANIM
 
     python3 ana.py                            # Türkçe ~ İngilizce Swadesh-100 (varsayılan)
-    python3 ana.py türkçe almanca kazakça  # herhangi iki liste
-    python3 ana.py türkçe ingilizce --en-çok-basamak 5   # daha az harf, daha çok katman
-    python3 ana.py türkçe ingilizce --yöntem klasik      # harf türeten eski inşa
+    python3 ana.py türkçe almanca kazakça     # iki ya da daha çok liste
+    python3 ana.py türkçe ingilizce --boşluk-cezası 0   # eski, boşluğu ucuz hizalama
+    python3 ana.py türkçe ingilizce --en-uzun-yol 4     # daha kısa ses zincirleri
 
 Çıktı: rapor_dil1_dil2_diln.txt ve rapor_dil1_dil2_diln.html
 
-Varsayılan yöntem "asgari"dir (aşağıda). HTML dosyası tarayıcıda açılır: üstte
-ön ana dil, altında dalların ara katmanları, en altta girdi diller durur. Bir
-katmana basınca o katmanın harf dağarcığı (doğan / yiten harfler), kuralları
-(kaç konumda işlediği) ve bütün sözcüklerin o katmandaki biçimi, önceki katmana
-göre değişen harfler imlenmiş olarak görünür; bir sözcüğe basınca bütün yolu
-açılır. Adrese #d=1&j=3 eklenirse 2. dilin 3. katmanı doğrudan açılır.
+Rapor: Ön Dil sözlüğü, katman katman ses yasaları, her sözcüğün *ÖnDil > ara biçimler
+> çocuk dil türetimi ve özet istatistik (Ön Dil harfi, ara katman etiketi, dalların
+ön dile uzaklığı, katman başına ortalama kural sayısı, ses düşmesi sayısı).
 
-ASGARİ HARF YÖNTEMİ (ondil/asgari.py)
+HTML dosyası tarayıcıda açılır: üstte ön ana dil, altında dalların ara katmanları, en
+altta girdi diller durur. Bir katmana basınca o katmanın harf dağarcığı (doğan / yiten
+harfler), yasaları (kaç konumda işlediği) ve bütün sözcüklerin o katmandaki biçimi,
+önceki katmana göre değişen harfler imlenmiş olarak görünür; bir sözcüğe basınca her
+adımda hangi yasanın işlediğiyle bütün yolu açılır. Adrese #d=1&j=3 eklenirse 2. dilin
+3. katmanı, #k=20 eklenirse 21. sözcüğün yolu doğrudan açılır.
 
-Hedef: "5 ön dil 100 harf" yerine "çok ön dil, çok az harf". Kural ve katman
-sayısı serbest bırakılır, Ön Dil harf sayısı en aza indirilir; düzenlilik
-(%100, istisnasız, kör doğrulamalı) ve doğal ses adımı kısıtı korunur.
+GERÇEKÇİ HARF AZALTMA
 
-1. Çapa alfabesi: her karşılıklık küçük bir çapa kümesinden bir harfe bağlanır
-   (bütün refleksler çapadan en çok --en-uzun-yol doğal adım uzakta).
-2. Gırtlaksıl işaretler (Hint-Avrupa *h₁ *h₂ *h₃ gibi laringaller): aynı çapa
-   farklı seslere gidiyorsa ayrım yeni harfle değil, çapanın ardına konan gizli
-   işaretle yapılır: "X -> Y / H² önünde". İşaretler dalın son katmanında düşer.
-   Aynı işaret harfleri bütün dallarda kullanılır; her birimin ardındaki öbekte
-   dalların işaretleri sırayla durur, k. dal önce öbek başlarını düşürür. Bu
-   yüzden dillerin ön dile uzaklığı (katman sayısı) doğal olarak farklıdır.
-3. Basamaklı kodlama: bir dal w işaretle kodlanır. Ses önce 1. basamağın
-   boyamasıyla bir ara harfe yürür, basamak düşer, 2. basamak onu reflekse
-   yöneltir. k işaret harfiyle k^w ayrım yapılır: harf azalır, katman artar.
-4. Renklendirme: aynı işaret sınıfındaki iki iz aynı katmanda aynı harfte
-   buluşup ayrı yöne gidemez; çakışma eşdeğer yol ya da zamanlama ile, olmazsa
-   yeni sınıfla çözülür. Ara katmanlarda etiketli (alt simgeli) harf doğmaz.
+Hedef: ön dil harf sayısını en aza indirmek, ama türetim ağacı gerçekçi kalarak. Ön dil
+sözcüğü hizalamanın sütun başına BİR sesidir (gizli/işaret harf yok); her yasa harf
+grafiğinde tek doğal adımdır; her sözcük yalnız kurallarla, istisnasız türetilir. Harf
+yerine şunlar harcanır:
 
-Türkçe ~ İngilizce Swadesh-100:
+1. Doğal ortamlar (ondil/kurallar.py): yasalar tek bir komşu harfe değil, SINIFA
+   koşullanabilir: ön ünlü önünde, ötümlü ünsüz ardında, genizsil önünde, ünlüler
+   arasında, söz sonunda, ünlü uyumu (ön/arka ünlülü sözcükte). Sınıfa koşullu yasa
+   öbür bütün sözcüklere karşı sınandığı için tek tanıkla da yazılabilir; belirli bir
+   komşu harfe koşullu yasa ise en az iki tanık ister (tek sözcüğü ezberlemesin).
+2. Yasa sırası: aynı harfe birden çok yasa uyarsa önce işleyen sözcüğü alır; sonraki
+   yasa yalnız kalanları ayırmak zorundadır (karar listesi). Aynı çıktıya giden iki
+   yasa birbirinden ayrılmak zorunda değildir.
+3. Katman katman öğrenim (ondil/zamanlama.py): her katmanın yasaları o katmanın gerçek
+   biçimlerinden öğrenilir. İki ses zinciri aynı katmanda aynı harfte buluşup ayrı yöne
+   gidecekse önce GECİKME denenir (ör. u > o yasası yeni u'lar gelmeden işler: gerçek
+   ses tarihindeki besleme karşıtı sıra), sonra eşdeğer başka bir doğal yol, en son
+   çare ara harfin etiketlenmesi (alt simge). Ön dil harfinden çıkan ilk adım hep 1.
+   katmandadır; ortamı orada güvencelidir.
+4. Hizalamada boşluk cezası (ondil/hizalama.py): boşluk ucuz olursa akrabasız sözcükler
+   yan yana dizilir, ön biçim iki sözcüğün yapıştırması olur ve her dal öbürünün
+   harflerini siler (sahte türetim). Ceza karşı karşıya gelen harflerin ses
+   değişimiyle açıklanmasını yeğletir; akraba dillerde etkisi küçüktür.
 
-                         klasik     asgari (varsayılan)
-    Ön Dil harfi            102       5  (t u + H⁰ H¹ H²)
-    türetilmiş harf          67       0
-    ara katman etiketi       36       0
-    katman                4 + 4     10 + 12
-    kural                   340     173  (ortalama 7.9 kural/katman)
-    düzenlilik           %100.0  %100.0
+Denenip bırakılan yol: harfleri gizli "işaret" (laringal) harfleriyle kodlamak harf
+sayısını 5'e indiriyordu ama ön dil sözcükleri uHⁱHʲ... biçimli kod dizilerine, türetim
+de toplu silmeye dönüyordu; gerçekçi olmadığı için kaldırıldı (git geçmişinde durur).
 
-    basamak  harf  katman toplamı
-          1    15   14
-          2     7   13
-          3     5   22   (varsayılan üst sınır)
-          5     4   35   (--en-çok-basamak 5)
+Türkçe ~ İngilizce Swadesh-100 (istisna her satırda 0):
 
-Uyarı: harf sayısı bu yöntemle akrabalık ölçüsü olmaktan çıkar; akraba
-(Türkçe ~ Azerbaycanca) ve akrabasız (Türkçe ~ İngilizce) çiftlerin ikisi de 5
-harfe iner. Aşağıdaki eşik taraması klasik yönteme aittir.
+                              önceki sürüm   şimdiki (varsayılan)
+    Ön Dil harfi                       102    70  (temel 30 + türetilmiş 40)
+    ara katman etiketi                  36    39
+    katman (ön dile uzaklık)         4 + 4    Türkçe 4, İngilizce 6
+    ses düşmesi (Tr / En)        182 / 165    115 / 99  (kaçınılmaz: 71 / 55)
+    ön dil sözcüğü (ort. ses)          5.7    5.0
 
-Klasik yöntemde: Ön Dil sözlüğü, katman katman ses değişim kuralları, her sözcüğün
-*ÖnDil > ara biçimler > çocuk dil türetimi ve özet istatistik (rapor_dil1_dil2_diln.txt.txt).
-Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü
-verir (eşik 1'de istisna tanım gereği sıfırdır); eğri --tarama ile incelenir.
+    Türkçe ~ Azerbaycanca (akraba, denetim): 39 harf, 9 etiket, 5 + 5 katman.
+
+Harf sayısı akrabalığı ölçmeye devam eder: akraba çift (Türkçe ~ Azerbaycanca) 39,
+akrabasız çift (Türkçe ~ İngilizce) 70 harf ister.
+
+Varsayılan türetim eşiği 1'dir: rapor her zaman %100 düzenlilikli tam çözümü verir;
+harf ~ istisna eğrisi --tarama ile incelenir.
 
 TUTUMLULUK KISITI (ASGARİ HARF)
 
