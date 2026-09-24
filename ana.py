@@ -18,11 +18,10 @@ import pathlib
 import sys
 
 from sesbiçim.harf import YAZILI_HARFLER
-from ondil import asgari
+from ondil import hizalama, insa
 from ondil.html import html_üret
 from ondil.insa import seri_oluştur
 from ondil.rapor import rapor_üret
-from ondil.rapor_asgari import rapor_üret as asgari_rapor_üret
 
 
 def liste_yükle(yol):
@@ -61,16 +60,14 @@ def main(argv=None):
     p.add_argument("--rapor", default=None,
                    help="rapor dosyası (boşsa 'rapor_<kısaltmalar>.txt' "
                         "olarak verilen dillerden türetilir)")
-    p.add_argument("--yöntem", choices=("asgari", "klasik"), default="asgari",
-                   help="asgari: en az Ön Dil harfi (çapa + gırtlaksıl işaret, "
-                        "çok katman); klasik: harf türeten eski inşa")
-    p.add_argument("--en-uzun-yol", type=int, default=7,
-                   help="asgari yöntem: bir çapadan refleksine en çok kaç "
-                        "doğal ses adımı (büyüdükçe harf azalır, katman artar)")
-    p.add_argument("--en-çok-basamak", type=int, default=3,
-                   help="asgari yöntem: dal başına en çok kaç işaret basamağı "
-                        "denensin (büyüdükçe harf azalır, katman artar; "
-                        "Türkçe~İngilizce: 3 -> 5 harf, 5 -> 4 harf)")
+    p.add_argument("--boşluk-cezası", type=float, default=1.0,
+                   help="hizalamada her boşluğa eklenen ceza (0 = eski, "
+                        "boşluğu ucuz hizalama: akrabasız sözcükler yan yana "
+                        "dizilir, her dal öbürünün harflerini siler)")
+    p.add_argument("--en-uzun-yol", type=int, default=5,
+                   help="bir Ön Dil harfinin herhangi bir yansımasına en çok kaç "
+                        "doğal ses adımı olabilir (büyüdükçe harf azalabilir, "
+                        "katman artar)")
     p.add_argument("--html", default=None,
                    help="etkileşimli HTML görünümü (boşsa rapor adından türetilir)")
     p.add_argument("--en-az-katman", type=int, default=0,
@@ -90,6 +87,8 @@ def main(argv=None):
 
     if len(args.diller) < 2:
         raise SystemExit("En az iki dil gerekir.")
+    hizalama.BOŞLUK_CEZASI = args.boşluk_cezası
+    insa.EN_UZUN_YOL = args.en_uzun_yol
 
     # kullanıcı sadece dil ADI yazar (türkçe); diller/<ad>.txt olarak çözülür.
     # Geriye uyum: dosya yolu (/ içeren ya da .txt ile biten) doğrudan kullanılır.
@@ -157,38 +156,16 @@ def main(argv=None):
                   f"{kural:>6}  {len(s.istisnalar):>7}  %{düzenlilik:>9.1f}")
         print()
 
-    if args.yöntem == "asgari":
-        # karşılaştırma için klasik inşanın özeti (hızlıdır)
-        k = seri_oluştur(çiftler, adlar, 0, 1)
-        dağarcık = {t for w in k.proto_kelimeler for t in w}
-        karşılaştırma = {
-            "harf": len(dağarcık),
-            "türetilmiş": sum(1 for t in dağarcık
-                              if any(c in "₀₁₂₃₄₅₆₇₈₉" for c in t)),
-            "etiket": k.etiketli_sayısı,
-            "katman": " + ".join(str(x) for x in k.katman),
-            "kural": sum(1 for dal in range(B)
-                         for ks in k.tablolar[dal].values()
-                         for kr in ks if kr.hedef != kr.kaynak),
-            "düzenlilik": 100.0 * (B * boy - len(k.istisnalar)) / (B * boy),
-        }
-        seri = asgari.seri_oluştur(
-            çiftler, adlar, args.en_uzun_yol,
-            basamaklar=tuple(range(1, args.en_çok_basamak + 1)))
-        metin = asgari_rapor_üret(seri, karşılaştırma)
-        html_yolu = args.html or str(pathlib.Path(args.rapor).with_suffix(".html"))
-        pathlib.Path(html_yolu).write_text(
-            html_üret(seri, karşılaştırma), encoding="utf-8")
-    else:
-        seri = seri_oluştur(çiftler, adlar, args.en_az_katman,
-                            args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
-        metin = rapor_üret(seri)
+    seri = seri_oluştur(çiftler, adlar, args.en_az_katman,
+                        args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
+    metin = rapor_üret(seri)
+    html_yolu = args.html or str(pathlib.Path(args.rapor).with_suffix(".html"))
+    pathlib.Path(html_yolu).write_text(html_üret(seri), encoding="utf-8")
 
     pathlib.Path(args.rapor).write_text(metin + "\n", encoding="utf-8")
     print(metin)
     print(f"(rapor {args.rapor} dosyasına da yazıldı)")
-    if args.yöntem == "asgari":
-        print(f"(etkileşimli görünüm: {html_yolu})")
+    print(f"(etkileşimli görünüm: {html_yolu})")
 
 
 if __name__ == "__main__":

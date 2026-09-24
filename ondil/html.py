@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Asgari seri için etkileşimli, tek dosyalık HTML görünümü.
+"""Ön Dil serisi için etkileşimli, tek dosyalık HTML görünümü.
 
 Üstte Ön Dil, altında her dalın ara katmanları, en altta girdi diller
 durur. Bir katmana basınca o katmanın harf dağarcığı (doğan / yiten
@@ -14,14 +14,13 @@ import json
 
 from sesbiçim.harf import BOŞ, dizi_harfleri, dizi_mi
 
-from .asgari import GÖÇÜŞÜM_BAĞLAMI, işaret_mi
-from .insa import _kural_seç
-from .rapor_asgari import istatistik, katman_adı, kural_metni
+from .insa import GÖÇÜŞÜM, _kural_seç
+from .rapor import istatistik, katman_adı, kural_metni
 
 
 def _izli_katman(w, kurallar):
     """Bir katmanı uygular; her kaynak harf için (harf, çıktılar, kural_no)."""
-    if kurallar and kurallar[0].bağlam == GÖÇÜŞÜM_BAĞLAMI:
+    if kurallar and kurallar[0].bağlam == GÖÇÜŞÜM:
         çiftler = {tuple(dizi_harfleri(k.kaynak)): n for n, k in enumerate(kurallar)}
         adımlar = [[t, [t], -1] for t in w]
         i = 0
@@ -65,13 +64,13 @@ def _veri(seri):
                 "harf": k_ist["harf"],
                 "doğan": k_ist["doğan"],
                 "yiten": k_ist["yiten"],
-                "kurallar": [{"m": kural_metni(k), "i": işaret_mi(k.kaynak)}
-                             for k in kurallar],
+                "kurallar": [{"m": kural_metni(k)} for k in kurallar],
             })
+        x = ist["dallar"][d]
         dallar.append({
-            "ad": ad, "L": L, "ön": seri.ön_katman[d],
-            "kural": ist["dallar"][d]["kural"],
-            "ortalama": round(ist["dallar"][d]["ortalama"], 2),
+            "ad": ad, "L": L, "kural": x["kural"],
+            "ortalama": round(x["ortalama"], 2),
+            "silme": x["silme"], "en_az_silme": x["en_az_silme"],
             "katmanlar": katmanlar,
         })
 
@@ -93,14 +92,16 @@ def _veri(seri):
     return {
         "diller": adlar,
         "özet": {
-            "proto": ist["proto"], "çapalar": ist["çapalar"],
-            "işaretler": ist["işaretler"], "sanal": ist["sanal_çapa"],
+            "proto": ist["proto"], "temel": ist["temel"],
+            "türetilmiş": ist["türetilmiş"], "sanal": ist["sanal"],
+            "etiketler": ist["etiketler"],
             "istisna": ist["istisna"], "türetim": ist["türetim"],
             "düzenlilik": round(ist["düzenlilik"], 1),
             "toplam_kural": ist["toplam_kural"],
             "toplam_katman": ist["toplam_katman"],
             "ortalama": round(ist["genel_ortalama"], 2),
-            "tüm_harf": ist["tüm_harf"], "D": seri.en_uzun_yol,
+            "tüm_harf": ist["tüm_harf"],
+            "proto_boy": round(ist["proto_boy"], 2),
         },
         "dallar": dallar,
         "kelimeler": kelimeler,
@@ -108,9 +109,8 @@ def _veri(seri):
     }
 
 
-def html_üret(seri, karşılaştırma=None):
+def html_üret(seri):
     veri = _veri(seri)
-    veri["klasik"] = karşılaştırma
     başlık = " ~ ".join(seri.dal_adları) + " Ön Dil Serisi"
     js = json.dumps(veri, ensure_ascii=False).replace("</", "<\\/")
     return (_ŞABLON.replace("__BAŞLIK__", _html.escape(başlık))
@@ -183,14 +183,13 @@ h3 { font-size: .95rem; margin: 18px 0 8px; color: var(--muted);
 .chip { border: 1px solid var(--line); border-radius: 6px; padding: 1px 8px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .95rem; }
 .chip.new { background: var(--new-soft); border-color: var(--new); color: var(--new); }
-.chip.mk { background: var(--mark-soft); border-color: var(--mark); color: var(--mark); }
+.chip.tg { background: var(--mark-soft); border-color: var(--mark); color: var(--mark); }
 .chip.lost { background: var(--lost-soft); border-color: var(--lost); color: var(--lost);
   text-decoration: line-through; }
 .legend { color: var(--muted); font-size: .82rem; margin-top: 6px; }
 .rules { columns: 3 240px; column-gap: 20px; font-family: ui-monospace, Menlo, monospace;
   font-size: .85rem; }
 .rules div { break-inside: avoid; padding: 1px 0; }
-.rules .mkr { color: var(--mark); }
 .rules .cnt { color: var(--muted); }
 .tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }
 input[type=search] { font: inherit; padding: 5px 10px; border-radius: 6px;
@@ -208,7 +207,7 @@ tr.w:hover td { background: var(--accent-soft); }
 .t.ch { background: var(--new-soft); color: var(--new); font-weight: 600; }
 .t.src { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .t.del { background: var(--lost-soft); color: var(--lost); text-decoration: line-through; }
-.t.hm { color: var(--mark); font-size: .75em; vertical-align: super; }
+.t.tg { color: var(--mark); }
 .muted { color: var(--muted); }
 dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
   color: var(--ink); max-width: min(900px, 94vw); width: 100%; padding: 18px; }
@@ -239,9 +238,8 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
 const V = __VERİ__;
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const isMark = (t) => /^H[⁰¹²³⁴⁵⁶⁷⁸⁹]+$/.test(t);
+const isTag = (t) => /[₀₁₂₃₄₅₆₇₈₉]/.test(t);
 let seçili = {d: -1, j: 0};
-let işaretGöster = true;
 let arama = '';
 
 try { const t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
@@ -254,12 +252,8 @@ $('#tema').onclick = () => {
 };
 
 function tok(t, cls) {
-  if (isMark(t)) {
-    if (!işaretGöster) return '';
-    return `<span class="t hm ${cls||''}">${esc(t)}</span>`;
-  }
   if (t === '0') t = '∅';
-  return `<span class="t ${cls||''}">${esc(t)}</span>`;
+  return `<span class="t ${cls || (isTag(t) ? 'tg' : '')}">${esc(t)}</span>`;
 }
 function biçim(ts) { return ts.length ? ts.map(t => tok(t)).join('') : '<span class="muted">∅</span>'; }
 
@@ -283,15 +277,15 @@ function eskiBiçim(adımlar) {
 
 function kartlar() {
   const Ö = V.özet;
-  const k = V.klasik;
   const derin = V.dallar.map(d => `${d.ad} ${d.L}`).join(' · ');
   const ort = V.dallar.map(d => `${d.ad} ${d.ortalama}`).join(' · ');
+  const sil = V.dallar.map(d => `${d.ad} ${d.silme} (kaçınılmaz ${d.en_az_silme})`).join(' · ');
   const c = [
-    [Ö.proto.length, 'Ön Dil harfi', `çapa ${Ö.çapalar.length} + işaret ${Ö.işaretler.length}` + (k ? ` (klasik: ${k.harf})` : '')],
-    [0, 'türetilmiş harf', k ? `klasik: ${k.türetilmiş} türetilmiş + ${k.etiket} etiket` : 'alt simgeli harf yok'],
+    [Ö.proto.length, 'Ön Dil harfi', `temel ${Ö.temel.length} + türetilmiş ${Ö.türetilmiş.length}`],
+    [Ö.etiketler.length, 'ara katmanda etiketli harf', `seri boyunca ${Ö.tüm_harf} ayrı harf`],
     [V.dallar.map(d => d.L).join(' / '), 'katman (ön dile uzaklık)', derin],
-    [Ö.toplam_kural, 'kural', `${Ö.toplam_katman} katmanda`],
     [Ö.ortalama, 'kural / katman (ortalama)', ort],
+    [V.dallar.map(d => d.silme).join(' / '), 'ses düşmesi', sil],
     ['%' + Ö.düzenlilik, 'düzenlilik', `${Ö.istisna} istisna / ${Ö.türetim} türetim`],
   ];
   $('#kartlar').innerHTML = c.map(([b, s, m]) =>
@@ -311,7 +305,7 @@ function ağaç() {
       const sel = seçili.d === d && seçili.j === j ? 'sel' : '';
       s += `<div class="edge"></div><button class="node ${son ? 'leaf' : ''} ${sel}" data-d="${d}" data-j="${j}">
         <div class="n">${esc(son ? D.ad : K.ad)}</div>
-        <div class="m">katman ${j} · ${K.harf.length} harf (+${K.doğan.length}) · ${K.kurallar.length} kural${K.kurallar.length && K.kurallar.every(r => r.i) ? ' · yalnız işaret' : ''}</div></button>`;
+        <div class="m">katman ${j} · ${K.harf.length} harf (+${K.doğan.length}) · ${K.kurallar.length} kural</div></button>`;
     }
     return s + '</div></div>';
   }).join('');
@@ -331,41 +325,39 @@ function eşleşir(W) {
 function araçlar() {
   return `<div class="tools">
     <input type="search" id="ara" placeholder="anlam ya da sözcük ara" value="${esc(arama)}">
-    <label><input type="checkbox" id="işg" ${işaretGöster ? 'checked' : ''}> gırtlaksıl işaretleri göster</label>
     <span class="muted">Bir satıra basınca sözcüğün bütün yolu açılır.</span></div>`;
 }
 function araçBağla() {
   const a = $('#ara');
   a.oninput = () => { arama = a.value; tablo(); };
-  $('#işg').onchange = (e) => { işaretGöster = e.target.checked; panel(); };
 }
 
 function panel() {
   const P = $('#panel');
   if (seçili.d < 0) {
     const Ö = V.özet;
-    const sanal = new Set(Ö.sanal);
+    const sanal = new Set(Ö.sanal), tür = new Set(Ö.türetilmiş);
     P.innerHTML = `<h2>*Ön Dil (katman 0)</h2>
       <h3>Harf dağarcığı · ${Ö.proto.length} harf</h3>
-      <div class="chips">${Ö.çapalar.map(t => `<span class="chip">${esc(t)}</span>`).join('')}
-        ${Ö.işaretler.map(t => `<span class="chip mk">${esc(t)}</span>`).join('')}</div>
-      <p class="legend">Düz: çapa harfleri${Ö.sanal.length ? ' (' + Ö.sanal.map(esc).join(' ') + ' sanal: hiçbir yazıda yok)' : ''}.
-      Sarı: gizli gırtlaksıl işaretler (laringaller). İşaretler önlerindeki sesi boyar ve sonradan düşer; H⁰ yalnız yer tutucudur.
-      Her refleks çapasından en çok ${Ö.D} doğal ses adımı uzaktadır.</p>
+      <div class="chips">${Ö.proto.map(t => `<span class="chip ${tür.has(t) ? 'tg' : ''}">${esc(t)}</span>`).join('')}</div>
+      <p class="legend">Sarı: türetilmiş (alt simgeli) harf — yansımaları hiçbir doğal ortamla ya da yasa sırasıyla aynı yerdeki öbür sesten ayrılamadığı için ayrı ses sayılır.
+      ${Ö.sanal.length ? 'Sanal harfler (' + Ö.sanal.map(esc).join(' ') + ') hiçbir yazıda yoktur, özellik uzayından kurulur. ' : ''}
+      Ön dil sözcüğü, hizalamanın sütun başına bir sesidir (ortalama ${Ö.proto_boy} ses).</p>
       ${araçlar()}<div class="tbl" id="tablo"></div>`;
     araçBağla(); tablo(); return;
   }
   const D = V.dallar[seçili.d], K = D.katmanlar[seçili.j];
   const önceki = seçili.j === 1 ? '*Ön Dil' : D.katmanlar[seçili.j - 1].ad;
   const yeni = new Set(K.doğan);
-  const kural = K.kurallar.map((r, i) => `<div class="${r.i ? 'mkr' : ''}">${esc(r.m)} <span class="cnt" id="kc${i}"></span></div>`).join('');
+  const kural = K.kurallar.map((r, i) => `<div>${esc(r.m)} <span class="cnt" id="kc${i}"></span></div>`).join('');
   P.innerHTML = `<h2>${esc(K.ad)} <span class="muted">· ${esc(D.ad)} dalı, katman ${seçili.j} / ${D.L}</span></h2>
     <p class="muted">${esc(önceki)} → ${esc(K.ad)}</p>
     <h3>Harf dağarcığı · ${K.harf.length} harf</h3>
-    <div class="chips">${K.harf.map(t => `<span class="chip ${isMark(t) ? 'mk' : yeni.has(t) ? 'new' : ''}">${esc(t)}</span>`).join('')}
+    <div class="chips">${K.harf.map(t => `<span class="chip ${yeni.has(t) ? 'new' : isTag(t) ? 'tg' : ''}">${esc(t)}</span>`).join('')}
       ${K.yiten.map(t => `<span class="chip lost">${esc(t)}</span>`).join('')}</div>
-    <p class="legend">Yeşil: bu katmanda doğan harf · üstü çizili: bu katmanda yiten harf · sarı: işaret.</p>
+    <p class="legend">Yeşil: bu katmanda doğan harf · üstü çizili: bu katmanda yiten harf · sarı: etiketli (alt simgeli) harf.</p>
     <h3>Bu katmanın kuralları · ${K.kurallar.length}</h3>
+    <p class="legend">Aynı harfe birden çok yasa uyarsa üstteki önce işler.</p>
     <div class="rules">${kural || '<span class="muted">Bu katmanda kural yok.</span>'}</div>
     ${araçlar()}<div class="tbl" id="tablo"></div>`;
   // kural başına uygulama sayısı
@@ -417,7 +409,7 @@ function yol(k) {
       const a = W.iz[d].a[j];
       const ch = a.some(([x, y, r]) => r >= 0 && !(y.length === 1 && y[0] === x));
       const kurallar = [...new Set(a.filter(([x, y, r]) => r >= 0 && !(y.length === 1 && y[0] === x)).map(x => x[2]))]
-        .map(r => D.katmanlar[j].kurallar[r].m).filter(m => !/^\*H/.test(m) || işaretGöster);
+        .map(r => D.katmanlar[j].kurallar[r].m);
       s += `<li><span class="ly">${j}. ${esc(D.katmanlar[j].ad)}</span><span class="f">${ch ? yeniBiçim(a) : '<span class="muted">' + biçim(W.iz[d].b[j]) + '</span>'}</span>
         <span class="muted" style="font-size:.8rem">${kurallar.map(esc).join(' · ')}</span></li>`;
     }

@@ -298,7 +298,7 @@ GEVŞEKLİK = 0.5
 
 # Gerçekçilik sınırı: bir Ön Dil harfinin herhangi bir refleksi, harfin
 # çapasından en çok bu kadar doğal adım uzakta olabilir.
-EN_UZUN_YOL = 4
+EN_UZUN_YOL = 5
 
 
 def _çapa_bul(korrlar, korr_yerleri):
@@ -1180,6 +1180,26 @@ def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
             KatmanKural(dizi_yap([x, y]), dizi_yap([y, x]), GÖÇÜŞÜM)
             for x, y in met_kuralları
         ]
+
+    # hiç işlemeyen yasaları at (aynı çıktılı önceki bir yasa bütün
+    # sözcüklerini almıştır); türetim değişmez, aşağıda yine doğrulanır
+    for dal in DALLAR:
+        kullanılan = set()
+        for kno in range(len(çiftler)):
+            w = list(protolar[kno])
+            for j in range(1, katman[dal] + 1):
+                ks = tablolar[dal].get(j, [])
+                if ks and ks[0].bağlam == GÖÇÜŞÜM:
+                    kullanılan |= {id(k) for k in ks}
+                    w = kör_türet(w, dal, {1: ks}, 1)[-1]
+                    continue
+                for i in range(len(w)):
+                    k = _kural_seç(ks, w, i)
+                    if k is not None:
+                        kullanılan.add(id(k))
+                w = kör_türet(w, dal, {1: ks}, 1)[-1]
+        for j in tablolar[dal]:
+            tablolar[dal][j] = [k for k in tablolar[dal][j] if id(k) in kullanılan]
 
     türevler = []
     istisnalar = []
