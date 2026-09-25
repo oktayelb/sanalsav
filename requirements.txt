@@ -1,0 +1,1 @@
+# Dış bağımlılık yok: yalnız Python 3.10+ standart kütüphanesi kullanılır.

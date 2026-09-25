@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sanalsav"
+version = "2.0.0"
+description = "Anlamca sıralı sözcük listelerinden düzenli ses yasalarıyla varsayımsal ön dil serisi kurar"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "oktayelb" }]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/oktayelb/sanalsav"
+Changelog = "https://github.com/oktayelb/sanalsav/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+py-modules = ["ana"]
+packages = ["ondil", "sesbiçim"]
