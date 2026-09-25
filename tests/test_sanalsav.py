@@ -114,6 +114,18 @@ class ÖlçütTesti(unittest.TestCase):
         self.assertGreater(m["kural"], 0)
 
 
+class GeçAyrışmaTesti(unittest.TestCase):
+    def test_birleştirme_istisnasız_ve_tutumlu(self):
+        çiftler = listeler("türkçe", "azerbaycanca", boy=25)
+        taban = insa.seri_oluştur(çiftler, ("A", "B"))
+        seri = insa.seri_oluştur(çiftler, ("A", "B"), geç_ayrışma="mdl")
+        self.assertEqual(seri.istisnalar, [])
+        harf = lambda s: len({t for w in s.proto_kelimeler for t in w})
+        self.assertLessEqual(harf(seri), harf(taban))
+        self.assertLessEqual(istatistik(seri)["mdl"]["toplam"],
+                             istatistik(taban)["mdl"]["toplam"] + 1e-6)
+
+
 class KomutSatırıTesti(unittest.TestCase):
     def test_rapor_ve_html_yazılır(self):
         with tempfile.TemporaryDirectory() as dizin:

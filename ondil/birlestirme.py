@@ -127,8 +127,10 @@ def birleştir(atama, düzensiz, korr_yerleri, hizalamalar, metatezler, çiftler
         başarısız = {ç for ç in başarısız if not (set(ç) & etkilenen)}
         günlük(f"  kabul: {', '.join(kabul_edilen)} -> "
                f"{_harf_sayısı(geçerli_atama)} harf, MDL {geçerli_mdl:.0f}")
+    if geçerli_sonuç is taban_sonuç:
+        return geçerli_atama, taban_sonuç
     son = insa._tamamla(geçerli_atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
                         çiftler, en_az_katman, geç_ayrışma=True)
-    if son["istisnalar"]:
+    if son["istisnalar"] or ölç(son, dal_adları) > geçerli_mdl:
         son = geçerli_sonuç
     return geçerli_atama, son
