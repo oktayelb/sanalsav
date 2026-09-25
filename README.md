@@ -124,3 +124,7 @@ python3 -m unittest discover -s tests
 ## Değişiklikler
 
 Bkz. [CHANGELOG.md](CHANGELOG.md).
+
+## Lisans
+
+[MIT](LICENSE)

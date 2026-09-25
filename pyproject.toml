@@ -8,6 +8,7 @@ version = "2.0.0"
 description = "Anlamca sıralı sözcük listelerinden düzenli ses yasalarıyla varsayımsal ön dil serisi kurar"
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 authors = [{ name = "oktayelb" }]
 dependencies = []
 
