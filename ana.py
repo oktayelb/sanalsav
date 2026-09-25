@@ -7,7 +7,7 @@ from sesbiçim.harf import YAZILI_HARFLER
 from ondil import hizalama, insa
 from ondil.html import html_üret
 from ondil.insa import seri_oluştur
-from ondil.rapor import rapor_üret
+from ondil.rapor import istatistik, rapor_üret
 
 
 def liste_yükle(yol):
@@ -120,24 +120,14 @@ def main(argv=None):
     B = len(yollar)
 
     if args.tarama:
-        print("Eşik taraması (harf sayısı ~ düzenlilik ödünleşimi):")
-        print(f"  {'eşik':>4}  {'Ön Dil harfi':>12}  {'türetilmiş':>10}  "
-              f"{'kural':>6}  {'istisna':>7}  {'düzenlilik':>10}")
+        print("Eşik taraması (harf ~ düzenlilik ~ açıklama uzunluğu):")
+        print(f"  {'eşik':>4}  {'harf':>5}  {'kural':>6}  {'tek tanık':>9}  "
+              f"{'istisna':>7}  {'düzenlilik':>10}  {'MDL (bit)':>10}")
         for eşik in (1, 2, 3, 4, 5, 8):
-            s = seri_oluştur(çiftler, adlar, args.en_az_katman, eşik)
-            dağarcık = {t for w in s.proto_kelimeler for t in w}
-            türetilmiş = sum(1 for t in dağarcık if any(c in "₀₁₂₃₄₅₆₇₈₉" for c in t))
-            kural = sum(
-                1
-                for dal in range(B)
-                for ks in s.tablolar[dal].values()
-                for k in ks
-                if k.hedef != k.kaynak
-            )
-            türetim = B * boy
-            düzenlilik = 100.0 * (türetim - len(s.istisnalar)) / türetim
-            print(f"  {eşik:>4}  {len(dağarcık):>12}  {türetilmiş:>10}  "
-                  f"{kural:>6}  {len(s.istisnalar):>7}  %{düzenlilik:>9.1f}")
+            ist = istatistik(seri_oluştur(çiftler, adlar, args.en_az_katman, eşik))
+            print(f"  {eşik:>4}  {len(ist['proto']):>5}  {ist['toplam_kural']:>6}  "
+                  f"{ist['tek_tanıklı']:>9}  {ist['istisna']:>7}  "
+                  f"%{ist['düzenlilik']:>9.1f}  {ist['mdl']['toplam']:>10.0f}")
         print()
 
     seri = seri_oluştur(çiftler, adlar, args.en_az_katman,

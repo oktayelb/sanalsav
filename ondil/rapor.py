@@ -1,6 +1,9 @@
 from sesbiçim.harf import BOŞ, SANAL_HARFLER, dizi_harfleri, dizi_mi, taban
 
-from .insa import GÖÇÜŞÜM
+import math
+
+from .insa import GÖÇÜŞÜM, _kural_seç
+from .kurallar import BİRLEŞTİRİCİ, _KABALAR, _SINIFLAR
 
 _SANAL = set(SANAL_HARFLER)
 
@@ -45,6 +48,42 @@ def kural_metni(k):
 
 def _etiketli(t):
     return t != BOŞ and not dizi_mi(t) and t != taban(t)
+
+
+def kural_kullanımı(seri):
+    sayı = {}
+    for d in range(len(seri.dal_adları)):
+        for kt in seri.türevler:
+            for j in range(1, seri.katman[d] + 1):
+                ks = seri.tablolar[d].get(j, [])
+                if ks and ks[0].bağlam == GÖÇÜŞÜM:
+                    for k in ks:
+                        sayı[id(k)] = sayı.get(id(k), 0) + 1
+                    continue
+                w = kt[d][j - 1]
+                for i in range(len(w)):
+                    k = _kural_seç(ks, w, i)
+                    if k is not None:
+                        sayı[id(k)] = sayı.get(id(k), 0) + 1
+    return sayı
+
+
+def açıklama_uzunluğu(seri, evren):
+    A = evren + 1
+    atom_sayısı = len(_KABALAR) - 1 + len(_SINIFLAR) + 2 * A
+    proto = {t for w in seri.proto_kelimeler for t in w}
+    sözlük = sum(len(w) for w in seri.proto_kelimeler) * math.log2(max(2, len(proto)))
+    kural = 0.0
+    for d in range(len(seri.dal_adları)):
+        L = max(2, seri.katman[d])
+        for ks in seri.tablolar[d].values():
+            for k in ks:
+                kural += 2 * math.log2(A) + math.log2(L)
+                if k.bağlam not in ("her yerde", GÖÇÜŞÜM):
+                    kural += len(k.bağlam.split(BİRLEŞTİRİCİ)) * math.log2(atom_sayısı)
+    istisna = sum(len(beklenen) for _, _, beklenen, _ in seri.istisnalar) * math.log2(A)
+    return {"sözlük": sözlük, "kural": kural, "istisna": istisna,
+            "toplam": sözlük + kural + istisna}
 
 
 def istatistik(seri):
@@ -95,6 +134,9 @@ def istatistik(seri):
             for b in kt[d]:
                 tüm_harf |= set(b)
     toplam_kural = sum(x["kural"] for x in dallar)
+    kullanım = kural_kullanımı(seri)
+    tek_tanıklı = sum(1 for d in range(B) for ks in seri.tablolar[d].values()
+                      for k in ks if k.hedef != k.kaynak and kullanım.get(id(k)) == 1)
     toplam_katman = sum(x["katman"] for x in dallar)
     proto_boy = sum(len(w) for w in seri.proto_kelimeler) / len(seri.proto_kelimeler)
     çocuk_boy = [sum(len(row[1 + d]) for row in seri.çiftler) / len(seri.çiftler)
@@ -115,6 +157,8 @@ def istatistik(seri):
         "genel_ortalama": toplam_kural / toplam_katman if toplam_katman else 0.0,
         "proto_boy": proto_boy,
         "çocuk_boy": çocuk_boy,
+        "tek_tanıklı": tek_tanıklı,
+        "mdl": açıklama_uzunluğu(seri, len(tüm_harf)),
     }
 
 
@@ -159,6 +203,10 @@ def rapor_üret(seri):
                  f"({x['kural']} kural / {x['katman']} katman)")
     S.append(f"      {'bütün seri':<14} {ist['genel_ortalama']:.2f} kural/katman "
              f"({ist['toplam_kural']} kural / {ist['toplam_katman']} katman)")
+    S.append(f"  tek konumda işleyen kural       : {ist['tek_tanıklı']} / {ist['toplam_kural']}")
+    m = ist["mdl"]
+    S.append(f"  AÇIKLAMA UZUNLUĞU (MDL)         : {m['toplam']:.0f} bit "
+             f"(sözlük {m['sözlük']:.0f} + kural {m['kural']:.0f} + istisna {m['istisna']:.0f})")
     S.append(f"  ön dil sözcük uzunluğu (ort.)   : {ist['proto_boy']:.2f} ses "
              f"({', '.join(f'{a} {b:.2f}' for a, b in zip(adlar, ist['çocuk_boy']))})")
     S.append("  silinen ses (ses düşmesi)       :")

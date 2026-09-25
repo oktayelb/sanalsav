@@ -90,6 +90,8 @@ def _veri(seri):
             "ortalama": round(ist["genel_ortalama"], 2),
             "tüm_harf": ist["tüm_harf"],
             "proto_boy": round(ist["proto_boy"], 2),
+            "tek_tanıklı": ist["tek_tanıklı"],
+            "mdl": {k: round(v) for k, v in ist["mdl"].items()},
         },
         "dallar": dallar,
         "kelimeler": kelimeler,
@@ -273,6 +275,7 @@ function kartlar() {
     [Ö.ortalama, 'kural / katman (ortalama)', ort],
     [V.dallar.map(d => d.silme).join(' / '), 'ses düşmesi', sil],
     ['%' + Ö.düzenlilik, 'düzenlilik', `${Ö.istisna} istisna / ${Ö.türetim} türetim`],
+    [Ö.mdl.toplam, 'açıklama uzunluğu (bit)', `sözlük ${Ö.mdl.sözlük} + kural ${Ö.mdl.kural} + istisna ${Ö.mdl.istisna}; ${Ö.tek_tanıklı} kural tek konumda`],
   ];
   $('#kartlar').innerHTML = c.map(([b, s, m]) =>
     `<div class="card"><b>${esc(b)}</b><span>${esc(s)}</span><small>${esc(m)}</small></div>`).join('');

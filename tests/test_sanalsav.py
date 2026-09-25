@@ -95,6 +95,25 @@ class SeriTesti(unittest.TestCase):
         self.assertEqual(seri.istisnalar, [])
 
 
+class EşikTesti(unittest.TestCase):
+    def test_istisna_yalnız_kural_dışı_sözcüklerde(self):
+        çiftler = listeler("türkçe", "azerbaycanca", boy=40)
+        seri = insa.seri_oluştur(çiftler, ("A", "B"), 0, 2)
+        beklenen = {(kno, d) for d in range(2) for ç in seri.düzensiz[d]
+                    for kno, _ in seri.korr_yerleri[ç]}
+        bozuk = {(kno, d) for kno, d, _, _ in seri.istisnalar}
+        self.assertLessEqual(bozuk, beklenen)
+
+
+class ÖlçütTesti(unittest.TestCase):
+    def test_açıklama_uzunluğu(self):
+        seri = insa.seri_oluştur(listeler("türkçe", "azerbaycanca", boy=20), ("A", "B"))
+        m = istatistik(seri)["mdl"]
+        self.assertAlmostEqual(m["toplam"], m["sözlük"] + m["kural"] + m["istisna"])
+        self.assertEqual(m["istisna"], 0)
+        self.assertGreater(m["kural"], 0)
+
+
 class KomutSatırıTesti(unittest.TestCase):
     def test_rapor_ve_html_yazılır(self):
         with tempfile.TemporaryDirectory() as dizin:
