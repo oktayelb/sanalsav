@@ -5,6 +5,13 @@ Bu projedeki önemli değişiklikler bu dosyada tutulur. Biçim
 [Anlamsal Sürümleme](https://semver.org/lang/tr/) esaslıdır. 2.0.0 öncesi sürümler git
 geçmişinden geriye dönük çıkarılmıştır.
 
+## [Yayımlanmamış]
+
+### Eklenenler
+- Deneysel `--geç-ayrışma mdl|harf`: ön dil harf çiftlerini geç ayrışmayla (ortak ön ek,
+  geç ilk adım) birleştirir; istisnasız ve (mdl ölçütünde) açıklama uzunluğunu
+  artırmayan birleşmeler kabul edilir. Adaylar paralel denenir.
+
 ## [2.1.0] - 2026-09-25
 
 ### Eklenenler

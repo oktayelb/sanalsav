@@ -42,6 +42,7 @@ Dil adları `diller/<ad>.txt` dosyalarına çözülür (27 dil hazırdır, bkz.
 | `--tarama` | | harf ~ düzenlilik ödünleşim tablosunu yazdır |
 | `--en-az-katman N` | 0 | dal başına en az katman |
 | `--ön-dil-incelt` | | türetilmiş harfleri tabanına katmayı dene (yavaş) |
+| `--geç-ayrışma mdl\|harf` | | ön dil harflerini geç ayrışmayla birleştir (deneysel, yavaş) |
 
 ## Çıktı
 
@@ -107,6 +108,24 @@ Daha küçük MDL daha tutumlu bir açıklamadır. `--tarama` harf, düzenlilik 
      5     28     164         92       25  %     87.5        6382
      8     19     144         79      101  %     49.5        7235
 ```
+
+## Geç ayrışmalı birleştirme (deneysel)
+
+`--geç-ayrışma` yakın ön dil harf çiftlerini birleştirmeyi dener. Birleşik harfin
+yansımaları 1. katmanda ayrılamıyorsa iki yol denenir: **ortak ön ek** (yansımalar önce
+birlikte değişir, sonra ayrışır) ve **geç ilk adım** (değişim sonraki bir katmanda,
+o katmanın ortamıyla olur). Birleşme yalnız istisna 0 kalırsa kabul edilir; `mdl`
+ölçütünde ayrıca açıklama uzunluğu artmamalıdır. Adaylar bütün çekirdeklerde paralel
+denenir; Türkçe ~ İngilizce'de bir çalıştırma 40-50 dakika sürer.
+
+| Diller | Ölçüt | Ön dil harfi | Kural | Ara etiket | Katman | MDL (bit) |
+|---|---|---|---|---|---|---|
+| Türkçe ~ Azerbaycanca | yok | 39 | 185 | 9 | 5 + 5 | 6408 |
+| | `mdl` | 35 | 182 | 10 | 5 + 5 | 6277 |
+| | `harf` | 32 | 198 | 11 | 5 + 6 | 7085 |
+| Türkçe ~ İngilizce | yok | 70 | 442 | 39 | 4 + 6 | 15190 |
+| | `mdl` | 70 | 442 | 39 | 4 + 6 | 15190 |
+| | `harf` | 56 | 467 | 58 | 4 + 7 | 16444 |
 
 ## Örnek sonuçlar
 
