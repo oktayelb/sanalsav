@@ -563,7 +563,7 @@ def _gruplar_kur(atama, korr_yerleri, hizalamalar, düzensiz):
 
 
 def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
-             çiftler, en_az_katman):
+             çiftler, en_az_katman, katmanlar=None, geç_ayrışma=False):
     sayaç = _sayaç_tohumu(atama)
     protolar = _proto_kelimeler(hizalamalar, atama)
     gruplar = _gruplar_kur(atama, korr_yerleri, hizalamalar, düzensiz)
@@ -593,7 +593,9 @@ def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
         T0 = max([len(g.zincir) - 1 for g in dal_grupları if g.zincir] + [0])
         T, tablo, etiket, _ = zamanlama.zamanla(
             dal_grupları + serbestler, sözcükler, sütun_grubu,
-            T0, sayaç, en_az_katman)
+            T0, sayaç, en_az_katman,
+            katmanlar=katmanlar[dal] if katmanlar else None,
+            geç_ayrışma=geç_ayrışma)
         etiketli_sayısı += etiket
         katman.append(T)
         tablolar.append({
@@ -691,7 +693,8 @@ def _proto_inceleme(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
 
 
 def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
-                 türetim_eşiği=1, ön_dil_incelt=False, göçüşüm_yasak=frozenset()):
+                 türetim_eşiği=1, ön_dil_incelt=False, göçüşüm_yasak=frozenset(),
+                 geç_ayrışma=None, günlük=None):
     global DALLAR
     kurallar.MIN_BAĞLAM_DESTEĞİ = max(2, türetim_eşiği)
     sözcükler = [[list(w) for w in row[1:]] for row in çiftler]
@@ -740,6 +743,12 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
     else:
         sonuç = taban_sonuç
 
+    if geç_ayrışma:
+        from .birlestirme import birleştir
+        atama, sonuç = birleştir(
+            atama, düzensiz, korr_yerleri, hizalamalar, metatezler, çiftler,
+            en_az_katman, sonuç, tuple(dal_adları), ölçüt=geç_ayrışma, günlük=günlük)
+
     gruplar = sonuç["gruplar"]
     katman = sonuç["katman"]
     tablolar = sonuç["tablolar"]
@@ -752,7 +761,8 @@ def seri_oluştur(çiftler, dal_adları=("A", "B"), en_az_katman=0,
     met_kelimeleri = {kno for kno, _, _ in metatezler}
     if met_kelimeleri and any(dal == 1 for _, dal, _, _ in istisnalar):
         return seri_oluştur(çiftler, dal_adları, en_az_katman, türetim_eşiği,
-                            ön_dil_incelt, göçüşüm_yasak | met_kelimeleri)
+                            ön_dil_incelt, göçüşüm_yasak | met_kelimeleri,
+                            geç_ayrışma, günlük)
 
     return Seri(
         dal_adları=dal_adları,

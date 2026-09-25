@@ -55,6 +55,10 @@ def main(argv=None):
                    help="bir Ön Dil harfinin herhangi bir yansımasına en çok kaç "
                         "doğal ses adımı olabilir (büyüdükçe harf azalabilir, "
                         "katman artar)")
+    p.add_argument("--geç-ayrışma", choices=("mdl", "harf"), default=None,
+                   help="ön dil harflerini geç ayrışmayla birleştirmeyi dene: "
+                        "mdl = açıklama uzunluğu artmıyorsa kabul et, "
+                        "harf = istisnasız her birleşmeyi kabul et (yavaş)")
     p.add_argument("--html", default=None,
                    help="etkileşimli HTML görünümü (boşsa rapor adından türetilir)")
     p.add_argument("--en-az-katman", type=int, default=0,
@@ -131,7 +135,9 @@ def main(argv=None):
         print()
 
     seri = seri_oluştur(çiftler, adlar, args.en_az_katman,
-                        args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt)
+                        args.türetim_eşiği, ön_dil_incelt=args.ön_dil_incelt,
+                        geç_ayrışma=args.geç_ayrışma,
+                        günlük=lambda m: print(m, file=sys.stderr, flush=True))
     metin = rapor_üret(seri)
     html_yolu = args.html or str(pathlib.Path(args.rapor).with_suffix(".html"))
     pathlib.Path(html_yolu).write_text(html_üret(seri), encoding="utf-8")

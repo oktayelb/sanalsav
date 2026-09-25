@@ -1,4 +1,4 @@
-from sesbiçim.harf import BOŞ, alt_yazı, dizi_mi, taban
+from sesbiçim.harf import BOŞ, DOĞUM_KAYNAĞI, alt_yazı, dizi_mi, taban, yol
 
 from .kurallar import sıralı_ayır
 
@@ -80,7 +80,23 @@ def _serbest_ilerlet(sözcükler, zh, j, kurallar, serbest):
                 z[jj] = y
 
 
-def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
+def _ortak_önekli(g, n, T):
+    R = g.refleks
+    b = taban(n)
+    if dizi_mi(R):
+        kaynak = DOĞUM_KAYNAĞI[R]
+        kalan = (yol(b, kaynak) if b != kaynak else [b])[1:] + [R]
+    elif R == BOŞ or b != R:
+        kalan = yol(b, R)[1:]
+    else:
+        kalan = []
+    p = [g.token, n] + kalan
+    if len(p) - 1 > T:
+        return None
+    return _yerleştir(p, T)
+
+
+def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç, geç_ayrışma=False):
     for g in gruplar:
         g.yol_sırası = 0
         if g.serbest:
@@ -141,7 +157,7 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
         g.zincir = z
         return değişti
 
-    def onar(g, j):
+    def onar(g, j, komşu_hedefler=()):
         z = g.zincir
         X = z[j - 1]
         hareket = z[j] != X
@@ -169,6 +185,19 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
             etiketli = any(d != taban(d) and d != g.token for d in z[1:-1]
                            if d != BOŞ and not dizi_mi(d))
             return etiketle(g, 1 if etiketli else j - 1)
+        if geç_ayrışma and X == g.token:
+            denenen = g.__dict__.setdefault("ortak_denenen", set())
+            for n in sorted(komşu_hedefler, key=str):
+                if n in denenen or n in (BOŞ, X, z[j]) or dizi_mi(n):
+                    continue
+                denenen.add(n)
+                aday = _ortak_önekli(g, n, T)
+                if aday is not None and aday != z:
+                    g.zincir = aday
+                    return True
+            if hareket and pay >= 1:
+                g.zincir = ertele(z, j)
+                return True
         return False
 
     def çakışma_onar(j, çakışma):
@@ -181,8 +210,9 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
             for k, s in yerler[Y]:
                 g = sütun_grubu[k][s]
                 grs[id(g)] = g
+            komşular = {a[0] for a in yerler if a[0] != Y[0]}
             for g in sorted(grs.values(), key=lambda g: (g.token, str(g.refleks))):
-                if onar(g, j):
+                if onar(g, j, komşular):
                     return True
         return False
 
@@ -221,14 +251,17 @@ def _yerleştir(yol_, T):
 
 
 def zamanla(gruplar, sözcükler, sütun_grubu, T_başlangıç, sayaç,
-            en_az_katman=0):
+            en_az_katman=0, katmanlar=None, geç_ayrışma=False):
     en_iyi = None
     taban_T = max(T_başlangıç, en_az_katman)
-    for ek in EK_KATMANLAR:
-        T = taban_T + ek
+    denenecek = katmanlar or [taban_T + ek for ek in EK_KATMANLAR]
+    for T in denenecek:
+        T = max(T, taban_T)
         deneme_sayaç = dict(sayaç)
+        for g in gruplar:
+            g.__dict__.pop("ortak_denenen", None)
         tablo, etiket, çözülemeyen = _dene(gruplar, sözcükler, sütun_grubu,
-                                           T, deneme_sayaç)
+                                           T, deneme_sayaç, geç_ayrışma)
         puan = (çözülemeyen, etiket, T)
         if en_iyi is None or puan < en_iyi[0]:
             en_iyi = (puan, T, tablo, etiket, çözülemeyen, deneme_sayaç,
