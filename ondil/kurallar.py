@@ -198,13 +198,14 @@ def ayır(kendi_yerleri, diğer_yerleri, protolar):
     return _bağlam_ara(kendi, diğer)
 
 
-def sıralı_ayır(gruplar, protolar, varsayılan_adayı=6, hedef=None):
+def sıralı_ayır(gruplar, protolar, varsayılan_adayı=6, hedef=None, kısmi=False):
     hedef = hedef or (lambda a: a)
     if not gruplar:
         return {}, None
     if len({hedef(a) for a, _ in gruplar}) < 2:
         return {a: ("her yerde", 0) for a, _ in gruplar}, None
     en_kötü = None
+    en_iyi_kısmi = None
     for v in range(min(max(varsayılan_adayı, 1), len(gruplar))):
         varsayılan = gruplar[v]
         vh = hedef(varsayılan[0])
@@ -234,5 +235,11 @@ def sıralı_ayır(gruplar, protolar, varsayılan_adayı=6, hedef=None):
             return sonuç, None
         if en_kötü is None or len(kalan) < len(en_kötü):
             en_kötü = [a for a, _ in kalan]
+        takılan_konum = sum(len(yy) for _, yy in kalan)
+        if en_iyi_kısmi is None or takılan_konum < en_iyi_kısmi[0]:
+            sonuç[varsayılan[0]] = ("her yerde", len(sonuç))
+            en_iyi_kısmi = (takılan_konum, sonuç, [a for a, _ in kalan])
+    if kısmi:
+        return en_iyi_kısmi[1], en_iyi_kısmi[2]
     return None, en_kötü
 

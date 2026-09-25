@@ -28,6 +28,7 @@ class Grup:
     korrlar: tuple = ()
     zincir: list = None
     öncelik: int = 0
+    serbest: bool = False
 
 
 @dataclass
@@ -575,23 +576,23 @@ def _tamamla(atama, düzensiz, korr_yerleri, hizalamalar, metatezler,
     etiketli_sayısı = 0
     for dal in DALLAR:
         dal_grupları = [g for g in gruplar if g.dal == dal]
-        sabitler = {}
+        serbestler = []
         sözcükler, sütun_grubu = [], []
         for kno, sütunlar in enumerate(hizalamalar):
             sg = {}
             for s, ç in enumerate(sütunlar):
                 tok = atama[ç]
                 if ç in düzensiz[dal]:
-                    if tok not in sabitler:
-                        sabitler[tok] = Grup(token=tok, dal=dal, refleks=tok)
-                    sg[s] = sabitler[tok]
+                    g = Grup(token=tok, dal=dal, refleks=tok, serbest=True)
+                    serbestler.append(g)
+                    sg[s] = g
                 else:
                     sg[s] = grup_bul[(tok, dal, ç[dal])]
             sözcükler.append(list(range(len(sütunlar))))
             sütun_grubu.append(sg)
         T0 = max([len(g.zincir) - 1 for g in dal_grupları if g.zincir] + [0])
         T, tablo, etiket, _ = zamanlama.zamanla(
-            dal_grupları + list(sabitler.values()), sözcükler, sütun_grubu,
+            dal_grupları + serbestler, sözcükler, sütun_grubu,
             T0, sayaç, en_az_katman)
         etiketli_sayısı += etiket
         katman.append(T)

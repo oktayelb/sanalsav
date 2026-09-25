@@ -15,7 +15,7 @@ def _biçimler(sıra, zincir, j):
     return çıktı
 
 
-def katman_öğren(sözcükler, zincirler, j):
+def katman_öğren(sözcükler, zincirler, j, serbest=frozenset()):
     önceki = [[t for t, _ in _biçimler(sıra, zincirler[k], j - 1)]
               for k, sıra in enumerate(sözcükler)]
     öbek = {}
@@ -23,6 +23,8 @@ def katman_öğren(sözcükler, zincirler, j):
     for k, sıra in enumerate(sözcükler):
         for i, (t, s) in enumerate(_biçimler(sıra, zincirler[k], j - 1)):
             z = zincirler[k][s]
+            if id(z) in serbest:
+                continue
             öbek.setdefault(t, {}).setdefault((z[j], id(z)), []).append((k, i))
             sütun_yeri[(k, i)] = s
     kurallar = {}
@@ -40,13 +42,13 @@ def katman_öğren(sözcükler, zincirler, j):
             boy[Y] = boy.get(Y, 0) + len(yy)
         sıralı = sorted(anahtarlar.items(),
                         key=lambda kv: (-boy[kv[0][0]], str(kv[0][0]), -len(kv[1])))
-        ayrım, takılan = sıralı_ayır(sıralı, önceki, hedef=lambda a: a[0])
-        if ayrım is None:
+        ayrım, takılan = sıralı_ayır(sıralı, önceki, hedef=lambda a: a[0],
+                                     kısmi=True)
+        if takılan:
             çakışmalar.append((X, takılan, {
                 a: [(k, sütun_yeri[(k, i)]) for k, i in yy]
                 for a, yy in anahtarlar.items()
             }))
-            continue
         for (Y, _), (bağlam, öncelik) in ayrım.items():
             if Y == X and bağlam == "her yerde":
                 continue
@@ -60,11 +62,48 @@ def _yollar(g):
     return _yol_seçenekleri(g) or [[g.token]]
 
 
+def _serbest_ilerlet(sözcükler, zh, j, kurallar, serbest):
+    from .insa import KatmanKural, _kural_seç
+    ks = [KatmanKural(x, y, b, öncelik=o) for x, y, b, o in kurallar]
+    for k, sıra in enumerate(sözcükler):
+        biçim = _biçimler(sıra, zh[k], j - 1)
+        w = [t for t, _ in biçim]
+        for i, (t, s) in enumerate(biçim):
+            z = zh[k][s]
+            if id(z) not in serbest:
+                continue
+            kural = _kural_seç(ks, w, i)
+            y = t if kural is None else kural.hedef
+            if dizi_mi(y) and j < len(z) - 1:
+                y = t
+            for jj in range(j, len(z)):
+                z[jj] = y
+
+
 def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
     for g in gruplar:
-        yol_ = min(_yollar(g), key=len)
         g.yol_sırası = 0
-        g.zincir = _yerleştir(yol_, T)
+        if g.serbest:
+            g.zincir = [g.token] * (T + 1)
+        else:
+            g.zincir = _yerleştir(min(_yollar(g), key=len), T)
+    serbest = {id(g.zincir) for g in gruplar if g.serbest}
+
+    def öğren(dur):
+        zh = zincir_haritası()
+        tablo, ilk, toplam = {}, None, 0
+        for j in range(1, T + 1):
+            kurallar, çakışmalar = katman_öğren(sözcükler, zh, j, serbest)
+            tablo[j] = kurallar
+            if serbest:
+                _serbest_ilerlet(sözcükler, zh, j, kurallar, serbest)
+            if çakışmalar:
+                toplam += len(çakışmalar)
+                if ilk is None:
+                    ilk = (j, çakışmalar)
+                if dur:
+                    break
+        return tablo, ilk, toplam
 
     def zincir_haritası():
         return [{s: g.zincir for s, g in sg.items()} for sg in sütun_grubu]
@@ -148,15 +187,7 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
         return False
 
     for tur in range(EN_ÇOK_TUR):
-        zh = zincir_haritası()
-        tablo = {}
-        ilk = None
-        for j in range(1, T + 1):
-            kurallar, çakışmalar = katman_öğren(sözcükler, zh, j)
-            tablo[j] = kurallar
-            if çakışmalar:
-                ilk = (j, çakışmalar)
-                break
+        tablo, ilk, _ = öğren(dur=True)
         if ilk is None:
             return tablo, _etiket_say(gruplar), 0
         j, çakışmalar = ilk
@@ -172,15 +203,13 @@ def _dene(gruplar, sözcükler, sütun_grubu, T, sayaç):
                 onarılan |= gids
         if not onarıldı:
             break
-    zh = zincir_haritası()
-    tablo = {jj: katman_öğren(sözcükler, zh, jj)[0] for jj in range(1, T + 1)}
-    çözülemeyen = sum(len(katman_öğren(sözcükler, zh, jj)[1]) for jj in range(1, T + 1))
+    tablo, _, çözülemeyen = öğren(dur=False)
     return tablo, _etiket_say(gruplar), çözülemeyen
 
 
 def _etiket_say(gruplar):
     ön = {g.token for g in gruplar}
-    return len({d for g in gruplar for d in g.zincir
+    return len({d for g in gruplar if not g.serbest for d in g.zincir
                 if d != BOŞ and not dizi_mi(d) and d != taban(d) and d not in ön})
 
 
