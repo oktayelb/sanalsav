@@ -1,19 +1,5 @@
-# -*- coding: utf-8 -*-
-"""Sesbiçimsel ağırlıklı sözcük hizalaması (Needleman-Wunsch).
-
-İki sözcüğün harfleri, yerine koyma maliyeti = harf grafiğindeki uzaklık,
-boşluk maliyeti = harfin silinme yolu uzunluğu + BOŞLUK_CEZASI olacak
-biçimde hizalanır.
-Sonuç, her sütunu (a_harfi, b_harfi) olan bir karşılıklık listesidir;
-boşluklar BOŞ ("0") ile gösterilir.
-"""
-
 from sesbiçim.harf import BOŞ, silme_maliyeti, özellik_uzaklığı as uzaklık
 
-# Her boşluğa eklenen ceza. Boşluk ucuz olursa akrabasız sözcükler yan yana
-# dizilir: ön biçim iki sözcüğün yapıştırılması olur, her dal öbürünün
-# harflerini siler (sahte türetim). Ceza, karşı karşıya gelen harflerin
-# ses değişimiyle açıklanmasını yeğletir; akraba dillerde etkisi küçüktür.
 BOŞLUK_CEZASI = 1.0
 
 
@@ -53,3 +39,4 @@ def hizala(a, b):
             sütunlar.append((BOŞ, b[j - 1]))
             j -= 1
     return list(reversed(sütunlar))
+

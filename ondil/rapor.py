@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Ön Dil serisi sonuç raporu üretimi."""
-
 from sesbiçim.harf import BOŞ, SANAL_HARFLER, dizi_harfleri, dizi_mi, taban
 
 from .insa import GÖÇÜŞÜM
@@ -51,7 +48,6 @@ def _etiketli(t):
 
 
 def istatistik(seri):
-    """Rapor ve HTML'in ortak sayıları."""
     adlar = list(seri.dal_adları)
     B = len(adlar)
     proto = sorted({t for w in seri.proto_kelimeler for t in w})
@@ -252,3 +248,4 @@ def rapor_üret(seri):
                  f"beklenen '{beklenen}', kurallar '{bulunan}' üretti")
     S.append("")
     return "\n".join(S)
+

@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""SANAL SAV — verilen sözcük listelerinden varsayımsal Ön Dil serisi kurar.
-
-Kullanım:
-    python3 ana.py türkçe ingilizce
-    python3 ana.py türkçe azerbaycanca türkmence [--eşik 2]
-
-İKİ ya da DAHA ÇOK dil ADI verilir (diller/<ad>.txt olarak çözülür); ikiden
-çok dilde ortak ön dil yıldız hizalamayla kurulur. Dosya biçimi: her satırda
-"anlam<boşluk>sözcük"; bütün dosyalar aynı anlam sırasını izlemelidir
-(bkz. diller/README.md). Rapor adı verilmezse 'rapor_<kısaltmalar>.txt'
-olarak dillerden türetilir. Varsayılan diller: Türkçe ve İngilizce.
-"""
-
 import argparse
 import pathlib
 import sys
@@ -49,7 +35,8 @@ def harfleri_doğrula(ad, sözcükler):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(
+        description="Verilen sözcük listelerinden varsayımsal Ön Dil serisi kurar.")
     p.add_argument("diller", nargs="*",
                    default=["türkçe", "ingilizce"],
                    help="iki ya da DAHA ÇOK dil ADI (ör. türkçe ingilizce); "
@@ -90,8 +77,6 @@ def main(argv=None):
     hizalama.BOŞLUK_CEZASI = args.boşluk_cezası
     insa.EN_UZUN_YOL = args.en_uzun_yol
 
-    # kullanıcı sadece dil ADI yazar (türkçe); diller/<ad>.txt olarak çözülür.
-    # Geriye uyum: dosya yolu (/ içeren ya da .txt ile biten) doğrudan kullanılır.
     def yola_çevir(d):
         if "/" in d or d.endswith(".txt"):
             return pathlib.Path(d)
@@ -128,7 +113,6 @@ def main(argv=None):
     for ad, l in zip(adlar, listeler):
         harfleri_doğrula(ad, [s for _, s in l])
 
-    # her satır: (anlam, sözcük0, sözcük1, ...)  — değişken sayıda dil
     çiftler = [
         (listeler[0][i][0],) + tuple(l[i][1] for l in listeler)
         for i in range(boy)
@@ -170,3 +154,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+

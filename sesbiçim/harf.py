@@ -1,16 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Harfler arası "doğal ses yolu" hesabı.
-
-Bütün harfler (ünlü + ünsüz + boş ses) bir grafiğin düğümleridir; iki harf
-arasında tek adımlık doğal bir ses değişimi varsa kenar vardır. Böylece
-README'deki k -> f sorunu kendiliğinden çözülür: k ile f arasındaki en kısa
-yol k -> g -> ... -> f gibi ara duraklardan geçer ve her Ön Dil katmanı bu
-zincirin bir adımını üstlenir.
-
-Boş ses (0) yalnız uç düğümdür: silinme/türeme yolun son/ilk adımı olabilir
-ama iki gerçek harf arasındaki yol boş sesin "içinden" geçemez.
-"""
-
 from collections import deque
 
 from .ünlü import DOĞUMLAR, ÜNLÜLER, TÜM_ÜNLÜLER, ünlü_komşu_mu
@@ -24,12 +11,10 @@ _ALT_RAKAMLAR = "₀₁₂₃₄₅₆₇₈₉"
 
 
 def alt_yazı(n):
-    """Bir sayıyı alt simge dizgesine çevirir (2 -> ₂)."""
     return "".join(_ALT_RAKAMLAR[int(c)] for c in str(n))
 
 
 def taban(token):
-    """Türetilmiş/etiketli bir harfin (b₂ gibi) taban harfini verir."""
     s = "".join(c for c in token if c not in _ALT_RAKAMLAR)
     return s or token
 
@@ -38,11 +23,6 @@ def ünlü_mü(token):
     return taban(token) in TÜM_ÜNLÜLER
 
 
-# --- çok-harf (doğum) dizileri ---------------------------------------------
-# README'deki "grupça değişim"in tek harften çok harf yarısı: şimdilik
-# yalnız uzun ünlüler doğurabilir (bkz. ünlü.DOĞUMLAR). Bir dizi, ayırıcıyla
-# birleştirilmiş harf dizgesidir ("u+v+u"); böylece karşılıklık ve kural
-# tablolarında tek bir belirteç gibi taşınır ama harflerine açılabilir.
 DİZİ_AYIRICI = "+"
 
 
@@ -61,35 +41,27 @@ def dizi_harfleri(token):
 DOĞUM_KAYNAĞI = {dizi_yap(g): v for g, v in DOĞUMLAR.items()}
 
 
-# Özellik adımlarıyla yakalanamayan ama doğal dillerde iyi bilinen geçişler.
-# (g ~ ğ artık doğal kenardır: aynı yer, patlamalı ~ sızıcı, ikisi de ötümlü.)
 ÖZEL_KOMŞULAR = {
-    frozenset(("y", "i")),  # yarı ünlü ~ ünlü
+    frozenset(("y", "i")),
     frozenset(("w", "u")),
     frozenset(("ğ", "ı")),
-    frozenset(("ğ", "y")),  # Türkçe yazım gerçeği: değil ~ deyil
-    frozenset(("ğ", "v")),  # ağız/dialekt geçişi (öğün ~ övün)
-    frozenset(("b", "w")),  # b ~ w (README'deki *winer > bier örneği)
-    frozenset(("a", "e")),  # açık ünlü incelmesi
-    frozenset(("a", "o")),  # açık ünlü yuvarlaklaşması
-    # boğumsuzlaşma (debuccalization): ağız kapanması gırtlağa iner
+    frozenset(("ğ", "y")),
+    frozenset(("ğ", "v")),
+    frozenset(("b", "w")),
+    frozenset(("a", "e")),
+    frozenset(("a", "o")),
     frozenset(("p", "ʔ")),
     frozenset(("t", "ʔ")),
     frozenset(("k", "ʔ")),
     frozenset(("s", "h")),
 }
 
-# Tek adımda düşebilen / türeyebilen "zayıf" sesler. Güçlü ünsüzler ancak
-# önce bu seslerden birine zayıflayarak (lenisyon) silinebilir. Ad listesi
-# yerine özellik kuralı: ünlüler, genizsil/akıcı/kayıcı ünsüzler ve
-# gırtlaksıllar zayıftır (hesaplamayla üretilen harfler de kapsanır).
-
 
 def _zayıf_mı(h):
     if h in TÜM_ÜNLÜLER:
         return True
     if h == "ğ":
-        return True  # yumuşak g yazıda da sıkça düşer (dağ ~ da)
+        return True
     yer, biçim, _ = TÜM_ÜNSÜZLER[h]
     return (
         biçim in ("genizsil", "yansıl", "çarpmalı", "kayıcı")
@@ -101,9 +73,7 @@ ZAYIFLAR = {
     h for h in set(TÜM_ÜNLÜLER) | set(TÜM_ÜNSÜZLER) if _zayıf_mı(h)
 }
 
-# Yazılı harfler: girdi dillerinin alfabelerinde bulunabilenler.
 YAZILI_HARFLER = sorted(set(ÜNLÜLER) | set(ÜNSÜZLER))
-# Sanal harfler: yalnız Ön Dil çapası ve ara durak olarak kullanılanlar.
 SANAL_HARFLER = sorted(
     (set(TÜM_ÜNLÜLER) | set(TÜM_ÜNSÜZLER)) - set(YAZILI_HARFLER)
 )
@@ -126,8 +96,6 @@ def _komşu_mu(a, b):
 
 _SANAL_KÜME = set(SANAL_HARFLER)
 
-# Komşular yazılı harfler, sonra bilinen özel geçişler önce gelecek biçimde
-# sıralanır: eş uzunluktaki yollar arasında doğal/yazılı duraklı olan seçilsin.
 _KOMŞULUK = {
     d: sorted(
         (e for e in _DÜĞÜMLER if e != d and _komşu_mu(d, e)),
@@ -149,7 +117,7 @@ def _yolları_kur(düğümler, komşuluk):
         while kuyruk:
             d = kuyruk.popleft()
             if d == BOŞ and d != kaynak:
-                continue  # boş sesin içinden geçilmez
+                continue
             for e in komşuluk[d]:
                 if e not in önce:
                     önce[e] = d
@@ -168,12 +136,6 @@ _YOLLAR = _yolları_kur(_DÜĞÜMLER, _KOMŞULUK)
 
 
 def özellik_uzaklığı(a, b):
-    """Hizalama için doğrudan özellik uzaklığı (türetim yolundan bağımsız).
-
-    Hizalama yazılı sözcükleri karşılaştırır; iki harfin BENZERLİĞİNİ ölçer,
-    aralarındaki tarihsel yolu değil. Bu yüzden grafik adımı yerine özellik
-    farklarının toplamı kullanılır; ince yer ölçeği hizalamayı bozamaz.
-    """
     a, b = taban(a), taban(b)
     if a == b:
         return 0
@@ -190,20 +152,14 @@ def özellik_uzaklığı(a, b):
     if a in TÜM_ÜNLÜLER and b in TÜM_ÜNLÜLER:
         (ha, aa, ya, ua), (hb, ab, yb, ub) = TÜM_ÜNLÜLER[a], TÜM_ÜNLÜLER[b]
         return max(1, abs(ha - hb) + (aa != ab) + (ya != yb) + (ua != ub))
-    return 5  # ünlü ~ ünsüz (köprü çiftleri dışında uzak)
+    return 5
 
 
 def silme_maliyeti(h):
-    """Hizalamada bir harfi boşlukla eşlemenin maliyeti."""
     return 1 if taban(h) in ZAYIFLAR else 3
 
 
 def uzaklık(a, b):
-    """İki harf arasındaki en kısa doğal yolun adım sayısı.
-
-    Hedef bir doğum dizisiyse (u+v+u gibi) yol, doğuran uzun ünlüye gidip
-    son adımda doğurmaktır: uzaklık = (a -> uzun ünlü) + 1.
-    """
     if dizi_mi(b):
         kaynak = DOĞUM_KAYNAĞI.get(b)
         if kaynak is None:
@@ -218,17 +174,11 @@ def uzaklık(a, b):
 
 
 def yol(a, b):
-    """İki harf arasındaki en kısa doğal yol (uç noktalar dahil)."""
     a, b = taban(a), taban(b)
     return list(_YOLLAR[(a, b)])
 
 
 def yollar(a, b, en_çok=12):
-    """İki harf arasındaki BÜTÜN en kısa doğal yollar (en fazla en_çok).
-
-    Ara katman çakışmalarında harf etiketlemeden önce eşdeğer uzunlukta
-    başka bir doğal yol denemek için kullanılır.
-    """
     a, b = taban(a), taban(b)
     if a == b:
         return [[a]]
@@ -260,3 +210,4 @@ def yollar(a, b, en_çok=12):
 
     geri(b, [])
     return sonuçlar
+

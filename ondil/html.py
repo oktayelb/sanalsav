@@ -1,14 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Ön Dil serisi için etkileşimli, tek dosyalık HTML görünümü.
-
-Üstte Ön Dil, altında her dalın ara katmanları, en altta girdi diller
-durur. Bir katmana basınca o katmanın harf dağarcığı (doğan / yiten
-harfler), o katmanda uygulanan kurallar (kaç konumda işlediği) ve bütün
-sözcüklerin o katmandaki biçimi, bir önceki katmana göre değişen harfler
-imlenmiş olarak görünür. Bir sözcüğe basınca sözcüğün bütün dallardaki
-tam yolu açılır.
-"""
-
 import html as _html
 import json
 
@@ -19,7 +8,6 @@ from .rapor import istatistik, katman_adı, kural_metni
 
 
 def _izli_katman(w, kurallar):
-    """Bir katmanı uygular; her kaynak harf için (harf, çıktılar, kural_no)."""
     if kurallar and kurallar[0].bağlam == GÖÇÜŞÜM:
         çiftler = {tuple(dizi_harfleri(k.kaynak)): n for n, k in enumerate(kurallar)}
         adımlar = [[t, [t], -1] for t in w]
@@ -257,7 +245,6 @@ function tok(t, cls) {
 }
 function biçim(ts) { return ts.length ? ts.map(t => tok(t)).join('') : '<span class="muted">∅</span>'; }
 
-// j. katmandaki biçim; değişen çıktılar imli
 function yeniBiçim(adımlar) {
   let s = '';
   for (const [kaynak, çıktı, k] of adımlar) {
@@ -265,7 +252,6 @@ function yeniBiçim(adımlar) {
   }
   return s || '<span class="muted">∅</span>';
 }
-// önceki katmandaki biçim; değişecek/düşecek harfler imli
 function eskiBiçim(adımlar) {
   let s = '';
   for (const [kaynak, çıktı, k] of adımlar) {
@@ -360,7 +346,6 @@ function panel() {
     <p class="legend">Aynı harfe birden çok yasa uyarsa üstteki önce işler.</p>
     <div class="rules">${kural || '<span class="muted">Bu katmanda kural yok.</span>'}</div>
     ${araçlar()}<div class="tbl" id="tablo"></div>`;
-  // kural başına uygulama sayısı
   const say = new Array(K.kurallar.length).fill(0);
   for (const W of V.kelimeler) for (const a of W.iz[seçili.d].a[seçili.j]) if (a[2] >= 0) say[a[2]]++;
   say.forEach((n, i) => { const e = $('#kc' + i); if (e) e.textContent = `(${n} konum)`; });
@@ -432,3 +417,4 @@ if (h.has('k')) yol(+h.get('k'));
 </body>
 </html>
 """
+

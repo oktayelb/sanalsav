@@ -1,25 +1,11 @@
-# -*- coding: utf-8 -*-
-# ünsüzleri tek tek tanımlamak yerine ünsüz harflerin sahip olabildikleri özellikleri tanımlayıp,
-# herhangi bir ünsüz harfi de bu özelliklere sahip/nasahip bir vektör olarak tanımlarsak her türlü
-# yeni ünsüz sesin harfini burada tanımlamamız gerekmez, model kendisi bu özellikler üzerinden anlar.
-
-# dudaksıllar, patlayıcılar, burunsullar gibi.
-
-# Her ünsüz üç özellikten oluşur: (yer, biçim, ötümlülük)
-#   yer    : boğumlanma bölgesi (IPA sırasına uygun 7'li ölçek; komşu
-#            bölgeler arası geçiş tek adımdır)
-#   biçim  : çıkış biçimi (doğal geçişlere göre komşuluk tanımlıdır;
-#            yansıl (l) ile çarpmalı/titrek (r) ayrı sınıflardır)
-#   ötümlü : True/False (ötümlüleşme/ötümsüzleşme tek adımdır)
-
 YERLER = [
-    "dudaksıl",      # çift dudak: p, b, m, w
-    "dişdudaksıl",   # diş-dudak: f, v
-    "dişsil",        # diş / dişeti: t, d, n, s, z, l, r
-    "öndamaksıl",    # dişeti-damak / öndamak: ç, c, ş, j, y
-    "artdamaksıl",   # artdamak: k, g, x, ğ
-    "küçükdilsil",   # küçükdil: q
-    "gırtlaksıl",    # gırtlak: h
+    "dudaksıl",
+    "dişdudaksıl",
+    "dişsil",
+    "öndamaksıl",
+    "artdamaksıl",
+    "küçükdilsil",
+    "gırtlaksıl",
 ]
 
 BİÇİMLER = [
@@ -27,21 +13,19 @@ BİÇİMLER = [
     "yarıkapantılı",
     "sızıcı",
     "genizsil",
-    "yansıl",      # yan akıcı (lateral): l
-    "çarpmalı",    # çarpmalı/titrek (rhotic): r
+    "yansıl",
+    "çarpmalı",
     "kayıcı",
 ]
 
-# Doğal dillerde sık görülen biçim geçişleri; bunlar tek adım sayılır.
-# l ~ r artık sıfır değil tek adımdır (yansıl ~ çarpmalı).
 BİÇİM_KOMŞULUĞU = {
     frozenset(("patlamalı", "yarıkapantılı")),
     frozenset(("yarıkapantılı", "sızıcı")),
     frozenset(("patlamalı", "sızıcı")),
     frozenset(("patlamalı", "genizsil")),
-    frozenset(("patlamalı", "çarpmalı")),  # çarpmalılaşma (t -> ɾ)
+    frozenset(("patlamalı", "çarpmalı")),
     frozenset(("sızıcı", "kayıcı")),
-    frozenset(("sızıcı", "yansıl")),       # ɬ köprüsü
+    frozenset(("sızıcı", "yansıl")),
     frozenset(("genizsil", "yansıl")),
     frozenset(("genizsil", "çarpmalı")),
     frozenset(("yansıl", "çarpmalı")),
@@ -59,7 +43,7 @@ BİÇİM_KOMŞULUĞU = {
     "t": ("dişsil", "patlamalı", False),
     "d": ("dişsil", "patlamalı", True),
     "n": ("dişsil", "genizsil", True),
-    "ţ": ("dişsil", "yarıkapantılı", False),  # [ts] (Romence ț, Gagavuzca/Sloven c)
+    "ţ": ("dişsil", "yarıkapantılı", False),
     "s": ("dişsil", "sızıcı", False),
     "z": ("dişsil", "sızıcı", True),
     "l": ("dişsil", "yansıl", True),
@@ -72,19 +56,14 @@ BİÇİM_KOMŞULUĞU = {
     "k": ("artdamaksıl", "patlamalı", False),
     "g": ("artdamaksıl", "patlamalı", True),
     "x": ("artdamaksıl", "sızıcı", False),
-    "ğ": ("artdamaksıl", "sızıcı", True),  # tarihsel /ɣ/: kayıcı değil sızıcı
-    "ñ": ("artdamaksıl", "genizsil", True),  # [ŋ] (Kazakça ñ; artdamak geniz)
+    "ğ": ("artdamaksıl", "sızıcı", True),
+    "ñ": ("artdamaksıl", "genizsil", True),
     "q": ("küçükdilsil", "patlamalı", False),
     "h": ("gırtlaksıl", "sızıcı", False),
 }
 
 
 def ünsüz_komşu_mu(a, b):
-    """İki ünsüz arasında tek adımlık doğal bir ses değişimi var mı?
-
-    Yalnız bir özelliği, yalnız bir basamak değişen çiftler komşu sayılır
-    (yer ölçekte ±1, biçim komşuluk çizelgesinden, ötümlülük serbest).
-    """
     ya, ba, sa = TÜM_ÜNSÜZLER[a]
     yb, bb, sb = TÜM_ÜNSÜZLER[b]
     yf = abs(YERLER.index(ya) - YERLER.index(yb))
@@ -96,24 +75,16 @@ def ünsüz_komşu_mu(a, b):
     return değişen == 1 and yf <= 1 and bf <= 1
 
 
-# Yazıda karşılığı olmayan ünsüz bileşimleri tek tek tanımlanmaz: özellik
-# uzayının tamamı hesaplamayla taranır (insan ses aygıtının üretemeyeceği
-# bileşimler dışarıda bırakılır). Bilinen bileşimler IPA imini alır,
-# kalanlar ad havuzundan im alır. Bu harfler hem ara durak hem de Ön Dil
-# harfi (çapa) olarak kullanılabilir (ör. k > ʔ > ∅, k > g > ŋ > n).
-
-
 def _olanaksız_mı(yer, biçim, ötümlü):
-    """Gerçekçilik kuralı: söylenemeyen bileşim, harf olamaz."""
     if yer == "gırtlaksıl":
         if biçim not in ("patlamalı", "sızıcı"):
-            return True  # gırtlakta geniz/yan/çarpma/kayma olmaz
+            return True
         if biçim == "patlamalı" and ötümlü:
-            return True  # kapalı gırtlak titreşemez (ötümlü hamza yok)
+            return True
     if biçim == "yansıl" and yer in ("dudaksıl", "dişdudaksıl", "küçükdilsil"):
-        return True  # dudakla ve küçükdille yan akıcı yapılmaz
+        return True
     if biçim == "çarpmalı" and yer == "artdamaksıl":
-        return True  # dil sırtı çarpamaz/titreyemez
+        return True
     if biçim == "kayıcı" and yer == "küçükdilsil":
         return True
     return False
@@ -145,13 +116,9 @@ _IPA_İMLERİ = {
     ("gırtlaksıl", "patlamalı", False): "ʔ",
     ("gırtlaksıl", "sızıcı", True): "ɦ",
 }
-# Adlandırma sırası: (1) bilinen IPA imi, (2) ötümlülük eşinin adından
-# türetme (m -> m̥ "ötümsüz m", φ -> φ̬ "ötümlü φ"), (3) soyut ad havuzu.
-# Havuz imleri bilerek IPA-dışı (Yunan) seçilmiştir: yanlış ses çağrışımı
-# yapmasınlar; ne oldukları yalnız özellik vektörüyle tanımlıdır.
 _AD_HAVUZU = ["φ", "ψ", "θ", "δ", "γ", "λ", "μ", "ν", "π", "σ", "ζ", "ω"]
-_ÖTÜMSÜZ_İMİ = "̥"  # birleşik alt halka (X̥)
-_ÖTÜMLÜ_İMİ = "̬"   # birleşik alt çengel (X̬)
+_ÖTÜMSÜZ_İMİ = "̥"
+_ÖTÜMLÜ_İMİ = "̬"
 
 VARSAYIMSAL_ÜNSÜZLER = {}
 _yazılı_bileşimler = set(ÜNSÜZLER.values())
@@ -159,7 +126,6 @@ _havuz_no = 0
 
 
 def _bileşimin_adı(bileşim):
-    """Bileşimin yazılı, IPA ya da üretilmiş adını arar."""
     ad = _IPA_İMLERİ.get(bileşim)
     if ad is not None:
         return ad
@@ -189,3 +155,4 @@ for _yer in YERLER:
             VARSAYIMSAL_ÜNSÜZLER[_ad] = _b
 
 TÜM_ÜNSÜZLER = {**ÜNSÜZLER, **VARSAYIMSAL_ÜNSÜZLER}
+
