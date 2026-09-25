@@ -5,6 +5,20 @@ Bu projedeki önemli değişiklikler bu dosyada tutulur. Biçim
 [Anlamsal Sürümleme](https://semver.org/lang/tr/) esaslıdır. 2.0.0 öncesi sürümler git
 geçmişinden geriye dönük çıkarılmıştır.
 
+## [2.1.0] - 2026-09-25
+
+### Eklenenler
+- Açıklama uzunluğu (MDL) ölçütü: rapor, HTML ve `--tarama` seriyi ön dil sözlüğü,
+  kurallar ve istisnalar için gereken bit sayısıyla da ölçer.
+- Tek konumda işleyen (ezbere yakın) kural sayısı raporlanır.
+- `--tarama` tablosuna tek tanıklı kural ve MDL sütunları eklendi.
+
+### Düzeltilenler
+- `--eşik` 1'den büyükken kural dışı bırakılan bir karşılık öğrenmeye kısıt olarak
+  giriyor ve başka sözcükleri de bozuyordu (Türkçe ~ Azerbaycanca eşik 2'de 5 yerine 50
+  istisna). Kural dışı konumlar artık serbesttir; çözülemeyen çakışmada ayrılabilen
+  kısmın kuralları yine yazılır.
+
 ## [2.0.0] - 2026-09-25
 
 Ön dil harf sayısı gerçekçi türetim ağaçları korunarak azaltıldı. Türkçe ~ İngilizce
@@ -90,6 +104,7 @@ yine 0.
 - Proje fikri ve varsayımsal yöntemler (README).
 - Ses sınıflandırması taslağı ve dil listelerinin biçimi.
 
+[2.1.0]: https://github.com/oktayelb/sanalsav/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/oktayelb/sanalsav/compare/4ec3d22...v2.0.0
 [1.0.2]: https://github.com/oktayelb/sanalsav/compare/94b02ad...4ec3d22
 [1.0.1]: https://github.com/oktayelb/sanalsav/compare/73ac812...94b02ad

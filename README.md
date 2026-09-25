@@ -48,7 +48,8 @@ Dil adları `diller/<ad>.txt` dosyalarına çözülür (27 dil hazırdır, bkz.
 **Metin raporu** (`rapor_tür_ing.txt`):
 
 - Özet: ön dil harf sayısı, ara katman etiketleri, dalların ön dile uzaklığı,
-  katman başına ortalama kural, ses düşmesi, istisna ve düzenlilik
+  katman başına ortalama kural, tek konumda işleyen kural, açıklama uzunluğu (MDL),
+  ses düşmesi, istisna ve düzenlilik
 - Katman katman harf dağarcığı ve kural sayısı
 - Bütün ses yasaları, katman ve uygulanma sırasıyla
 - Her sözcüğün türetimi: `*ÖnDil > *ara biçimler > çocuk dil`
@@ -83,14 +84,38 @@ işlediğiyle bütün yolu açılır. Adrese `#d=1&j=3` eklenirse 2. dilin 3. ka
 5. **Doğrulama**: Yasalar ön biçime körce (köken bilgisi olmadan) uygulanır; her sözcüğün
    her dilde hedef sözcüğü birebir üretmesi denetlenir.
 
+## Açıklama uzunluğu (MDL)
+
+Harf, kural ve istisna birbirine dönüştürülebilir: harf azaltılınca bilgi kurallara
+ya da sözcüklere kayar. Bu yüzden seri tek bir sayıyla da ölçülür, seriyi yazmak için
+gereken bit:
+
+- **sözlük**: ön dil sözcüklerinin toplam uzunluğu × log₂(ön dil harf sayısı)
+- **kural**: her kural için kaynak ve hedef harf 2·log₂(A), katmanı log₂(L), ortamının
+  her öğesi log₂(olası öğe sayısı) (A: serideki harf evreni + ∅, L: dalın katman sayısı)
+- **istisna**: kurallarla türetilemeyen her sözcük açıkça yazılır, uzunluk × log₂(A)
+
+Daha küçük MDL daha tutumlu bir açıklamadır. `--tarama` harf, düzenlilik ve MDL
+ödünleşimini birlikte gösterir (Türkçe ~ Azerbaycanca):
+
+```
+  eşik   harf   kural  tek tanık  istisna  düzenlilik   MDL (bit)
+     1     39     185        113        0  %    100.0        6408
+     2     38     177        100        5  %     97.5        6371
+     3     30     163         92       20  %     90.0        6297
+     4     29     161         92       22  %     89.0        6266
+     5     28     164         92       25  %     87.5        6382
+     8     19     144         79      101  %     49.5        7235
+```
+
 ## Örnek sonuçlar
 
 Swadesh-100, varsayılan ayarlar, istisna 0 (düzenlilik %100):
 
-| Diller | Ön dil harfi | Ara etiket | Katman | Kural / katman |
-|---|---|---|---|---|
-| Türkçe ~ İngilizce | 70 | 39 | 4 + 6 | 44,7 |
-| Türkçe ~ Azerbaycanca | 39 | 9 | 5 + 5 | 18,5 |
+| Diller | Ön dil harfi | Ara etiket | Katman | Kural / katman | MDL (bit) |
+|---|---|---|---|---|---|
+| Türkçe ~ İngilizce | 70 | 39 | 4 + 6 | 44,2 | 15190 |
+| Türkçe ~ Azerbaycanca | 39 | 9 | 5 + 5 | 18,5 | 6408 |
 
 Örnek türetimler (Türkçe ~ İngilizce):
 
