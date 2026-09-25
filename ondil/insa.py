@@ -39,7 +39,7 @@ _SANAL_KÜME = set(SANAL_HARFLER)
 from .hizalama import hizala
 from . import kurallar, zamanlama
 from .kurallar import (
-    ayır, ayır_biçimlerle, bağlam_işlevi, bağlam_özgüllük, sıralı_ayır,
+    ayır, bağlam_işlevi, bağlam_özgüllük, sıralı_ayır,
 )
 
 DALLAR = (0, 1)
@@ -55,12 +55,7 @@ class Grup:
     bağlam: str = "her yerde"
     korrlar: tuple = ()
     zincir: list = None  # [token, ara..., refleks]; kimliğe eşitse None
-    etiketli: bool = False
-    yedek_yolları: list = None  # çakışmada denenecek eşdeğer doğal yollar
-    etiketli_konum: set = None  # zincirde alt simge takılmış ara düğüm konumları
-    katman_bağlamı: dict = None  # {katman_no: bağlam}: ara katmanda koşullu kural
     öncelik: int = 0  # ilk adım kuralının sırası (küçük önce uygulanır)
-    gecikme: int = 0  # çakışmayı önlemek için zincire eklenen bekleme sayısı
 
 
 @dataclass
@@ -626,172 +621,8 @@ def _yol_seçenekleri(g):
     return [[g.token] + p[1:] for p in yollar(b, R, 24)]
 
 
-def _zamanla(gruplar, T, ağırlık, sayaç):
-    """Bir dalın zincirlerini T katmana yerleştirir.
-
-    İlk adım (katman 1) ön biçimdeki bağlama koşulludur ve ön dil harfine
-    özgüdür. Sonraki bütün adımlar KOŞULSUZ ses değişimidir; bu yüzden
-    "j. katmanda X harfi" her sözcükte aynı yere gitmelidir. Her zincir için
-    eşdeğer doğal yollar ve bekleme yerleri (ses değişiminin daha geç
-    olması) denenir. Hiçbiri sığmazsa son çare etiketdir: çakışan ara
-    harfler ayrı ses sayılır (alt simge alır). Zincirin kendi ucu (gerçek
-    çıktı) etiketlenemeyeceğinden, gerekirse içinden GEÇEN öbür zincirin
-    ara harfleri etiketlenir.
-    Döner: ({id(g): zincir}, etiket sayısı).
-    """
-    tablo = {}   # (katman, harf) -> hedef
-    sahip = {}   # (katman, harf) -> {id(g)}
-    zincirler = {}
-    etiketler = set()
-    bul = {id(g): g for g in gruplar}
-
-    def anahtarlar(z):
-        for j in range(2, T + 1):
-            if z[j - 1] == BOŞ:
-                return
-            yield (j, z[j - 1]), z[j]
-
-    def çakışanlar(z):
-        return [(a, h) for a, h in anahtarlar(z)
-                if a in tablo and tablo[a] != h]
-
-    def işle(gid, z):
-        zincirler[gid] = z
-        for a, h in anahtarlar(z):
-            tablo[a] = h
-            sahip.setdefault(a, set()).add(gid)
-
-    def sök(gid):
-        for a, _ in anahtarlar(zincirler.pop(gid)):
-            sahip[a].discard(gid)
-            if not sahip[a]:
-                del sahip[a], tablo[a]
-
-    def etiketle(z, başla, son):
-        yeni = {}
-        z = list(z)
-        for i in range(başla, son + 1):
-            düğüm = z[i]
-            if düğüm == BOŞ or dizi_mi(düğüm):
-                continue
-            if düğüm not in yeni:
-                b = taban(düğüm)
-                sayaç[b] = sayaç.get(b, 1) + 1
-                yeni[düğüm] = b + alt_yazı(sayaç[b])
-                etiketler.add(yeni[düğüm])
-            z[i] = yeni[düğüm]
-        return z
-
-    def son_ara(z):
-        """Etiketlenebilir son düğüm (uçtaki gerçek çıktıdan önceki)."""
-        i = len(z) - 1
-        while i > 0 and z[i] == z[-1]:
-            i -= 1
-        return i
-
-    for g in gruplar:
-        if g.refleks == g.token:
-            işle(id(g), [g.token] * (T + 1))
-
-    hareketli = [g for g in gruplar if g.refleks != g.token]
-    hareketli.sort(key=lambda g: (-ağırlık(g), g.token, g.refleks))
-    for g in hareketli:
-        seçenekler = [p for p in _yol_seçenekleri(g) if len(p) - 1 <= T]
-        doğum = dizi_mi(g.refleks)
-        yerleşti = None
-        for p in seçenekler:
-            ℓ = len(p) - 1
-            boş = T - ℓ
-            # bekleme bloğu: k. düğümden sonra d katman (k=0 yalnız doğumda)
-            for k in range(0 if doğum else 1, ℓ + 1):
-                if doğum and k == ℓ:
-                    continue  # doğum son katmanda olmalı
-                for d in ([boş] if doğum else range(boş, -1, -1)):
-                    z = p[:k + 1] + [p[k]] * d + p[k + 1:]
-                    z += [z[-1]] * (T + 1 - len(z))
-                    if not çakışanlar(z):
-                        yerleşti = z
-                        break
-                if yerleşti:
-                    break
-            if yerleşti:
-                break
-        if yerleşti is None:
-            p = seçenekler[0]
-            ℓ = len(p) - 1
-            if doğum:
-                z = p[:-1] + [p[-2]] * (T - ℓ) + p[-1:]
-            else:
-                z = p + [p[-1]] * (T - ℓ)
-            for _ in range(T + 2):
-                ç = çakışanlar(z)
-                if not ç:
-                    break
-                (j, X), _h = ç[0]
-                son = son_ara(z)
-                if 1 <= j - 1 <= son:
-                    # kendi ara harfini etiketle (girişi ilk adımdan: serbest)
-                    z = etiketle(z, 1, son)
-                else:
-                    # uç harfte oturuyor: içinden geçen zincirleri etiketle
-                    for gid in list(sahip.get((j, X), ())):
-                        ö = zincirler[gid]
-                        if tablo[(j, X)] == z[j]:
-                            continue
-                        sön = son_ara(ö)
-                        if not (1 <= j - 1 <= sön):
-                            continue
-                        sök(gid)
-                        işle(gid, etiketle(ö, 1, sön))
-            yerleşti = z
-        işle(id(g), yerleşti)
-    return zincirler, len(etiketler)
 
 
-def _katman_tablosu(gruplar, katman):
-    """Dal başına {katman_no: [KatmanKural]}; özdeş kurallar birleştirilir."""
-    tablolar = []
-    for dal in DALLAR:
-        tablo = {j: {} for j in range(1, katman[dal] + 1)}
-        değişenler = {g.token for g in gruplar if g.dal == dal and g.zincir}
-        for g in gruplar:
-            if g.dal != dal:
-                continue
-            if not g.zincir:
-                # Değişmeyen harf: aynı harfin değişen bir grubu varsa,
-                # "her yerde" kuralından korunmak için açık korunma kuralı.
-                if g.token in değişenler and 1 in tablo:
-                    anahtar = (g.token, g.token, g.bağlam)
-                    kural = tablo[1].get(anahtar)
-                    if kural is None:
-                        kural = KatmanKural(*anahtar, öncelik=g.öncelik)
-                        tablo[1][anahtar] = kural
-                    kural.öncelik = min(kural.öncelik, g.öncelik)
-                    kural.gruplar.append(g)
-                continue
-            ilk = True
-            for j in range(1, len(g.zincir)):
-                if g.zincir[j - 1] == g.zincir[j]:
-                    continue  # doğum zinciri dolgusu: bu katmanda durulur
-                if g.katman_bağlamı and j in g.katman_bağlamı:
-                    # ara katmanda bulunmuş koşul (proto bağlamı değil, o
-                    # katmanın biçimlerinden çıkan ayrım)
-                    bağlam = g.katman_bağlamı[j]
-                else:
-                    bağlam = g.bağlam if ilk else "her yerde"
-                öncelik = g.öncelik if ilk else 50
-                ilk = False
-                anahtar = (g.zincir[j - 1], g.zincir[j], bağlam)
-                kural = tablo[j].get(anahtar)
-                if kural is None:
-                    kural = KatmanKural(*anahtar, öncelik=öncelik)
-                    tablo[j][anahtar] = kural
-                kural.öncelik = min(kural.öncelik, öncelik)
-                kural.gruplar.append(g)
-        tablolar.append({j: sorted(t.values(),
-                                   key=lambda k: (k.kaynak, k.öncelik, k.hedef))
-                         for j, t in tablo.items()})
-    return tablolar
 
 
 def _kural_seç(kurallar, w, i):
@@ -808,216 +639,22 @@ def _kural_seç(kurallar, w, i):
 # 5. aşama: kör uygulamada çakışan zincirleri etiketleyerek ayrıştırma
 # ---------------------------------------------------------------------------
 
-def _gezinge(g, token, L):
-    z = g.zincir or [token]
-    return [z[min(j, len(z) - 1)] for j in range(L + 1)]
 
 
-def _çakışmaları_bul(çift_sayısı, hizalamalar, atama, grup_bul, metatezler,
-                     katman, tablolar, düzensiz):
-    """Kör türetimde yanlış sonuç veren grupları, EN SIĞ hata katmanlarıyla
-    döndürür: {grup_kimliği: en_küçük_hata_katmanı}.
-
-    Hata katmanı j ise, o gruba özgü ayrım j-1 konumundaki ara düğümü
-    damgalamakla yapılır; böylece etiket zincirin tamamına değil yalnız
-    ayrımın gerektiği derinliğe basılır (ön ek paylaşılır).
-    """
-    çakışan = {}
-    kelime_gez = {}  # (kno, dal) -> (gezingeler, grup_sırası, atla)
-    met_kelime = {}
-    for kno, sütun, _ in metatezler:
-        met_kelime.setdefault(kno, []).append(sütun)
-    for kno in range(çift_sayısı):
-        sütunlar = hizalamalar[kno]
-        for dal in DALLAR:
-            gezingeler = []
-            grup_sırası = []
-            atla = []  # kural dışı (istisna) konumlar denetlenmez
-            for ç in sütunlar:
-                tok = atama[ç]
-                if ç in düzensiz[dal]:
-                    gezingeler.append([tok] * (katman[dal] + 1))
-                    grup_sırası.append(None)
-                    atla.append(True)
-                else:
-                    g = grup_bul[(tok, dal, ç[dal])]
-                    gezingeler.append(_gezinge(g, tok, katman[dal]))
-                    grup_sırası.append(g)
-                    atla.append(False)
-            if dal == 1:
-                for s in met_kelime.get(kno, []):
-                    gezingeler[s], gezingeler[s + 1] = gezingeler[s + 1], gezingeler[s]
-                    grup_sırası[s], grup_sırası[s + 1] = grup_sırası[s + 1], grup_sırası[s]
-                    atla[s], atla[s + 1] = atla[s + 1], atla[s]
-            kelime_gez[(kno, dal)] = (gezingeler, grup_sırası, atla)
-            for j in range(1, katman[dal] + 1):
-                konumlar = [p for p in range(len(gezingeler))
-                            if gezingeler[p][j - 1] != BOŞ]
-                w = [gezingeler[p][j - 1] for p in konumlar]
-                for idx, p in enumerate(konumlar):
-                    if atla[p]:
-                        continue
-                    beklenen = gezingeler[p][j]
-                    kural = _kural_seç(tablolar[dal].get(j, []), w, idx)
-                    bulunan = kural.hedef if kural else w[idx]
-                    if bulunan != beklenen:
-                        # Hem bu konumun grubu hem de yanlış seçilen kuralı
-                        # üreten gruplar j. katmanda çakışır; ikisi de o
-                        # katmanda damgalanabilir (kısa/kimlik zincirli grup
-                        # damgalanamadığında, o düğümden GEÇEN uzun zincir
-                        # damgalanarak ayrım sağlanır).
-                        adaylar = [grup_sırası[p]]
-                        if kural:
-                            adaylar.extend(kural.gruplar)
-                        for g2 in adaylar:
-                            if g2 is None:
-                                continue
-                            önceki = çakışan.get(id(g2))
-                            çakışan[id(g2)] = j if önceki is None else min(önceki, j)
-    return çakışan, kelime_gez
 
 
-def _ara_katman_dene(g, j, kelime_gez):
-    """Hata katmanı j'deki çakışmayı, ETİKETLEMEDEN, o katmanın biçimleri
-    üzerinde bir bağlam koşuluyla ayırmayı dener.
-
-    g'nin j. katmandaki geçişi (kaynak s -> hedef t); aynı kaynaktan FARKLI
-    hedefe giden konumlardan ayıran bir bağlam, layer-(j-1) biçimleri üzerinde
-    aranır. Bulunursa s->t geçişine sahip bütün gruplara o katman için bağlam
-    yazılır (kural koşullu olur, yeni harf doğmaz). Böylece ayrım proto'da
-    değil, gerçekte ayrıştığı alt dilde belirir.
-    """
-    z = g.zincir or [g.token]
-    s = z[min(j - 1, len(z) - 1)]
-    t = z[min(j, len(z) - 1)]
-    if s == t:
-        return False  # bu katmanda g zaten durağan
-    if g.katman_bağlamı and j in g.katman_bağlamı:
-        return False  # bu katmanda bağlam zaten denendi: ilerleme yok
-    kendi, diğer = [], []
-    for (kno, dal), (gez, gs, atla) in kelime_gez.items():
-        if dal != g.dal:
-            continue
-        konumlar = [p for p in range(len(gez)) if gez[p][j - 1] != BOŞ]
-        w = [gez[p][j - 1] for p in konumlar]
-        for idx, p in enumerate(konumlar):
-            if atla[p] or gez[p][j - 1] != s:
-                continue
-            (kendi if gez[p][j] == t else diğer).append((w, idx))
-    # Ara katmanda yalnız kaba (sınıf) bağlam: harfe özgü koşullar ideal
-    # zincir ile kör türetilen biçim ayrıştığında kırılır.
-    bağlam = ayır_biçimlerle(kendi, diğer, kaba="sınıf")
-    if bağlam is None:
-        return False
-    for g2 in kelime_gez_grupları(kelime_gez, g.dal, j, s, t):
-        if g2.katman_bağlamı is None:
-            g2.katman_bağlamı = {}
-        g2.katman_bağlamı[j] = bağlam
-    return True
 
 
-def kelime_gez_grupları(kelime_gez, dal, j, s, t):
-    """j. katmanda s->t geçişine sahip (çakışan değil) bütün grupları toplar."""
-    bulunan = {}
-    for (kno, d), (gez, gs, atla) in kelime_gez.items():
-        if d != dal:
-            continue
-        for p in range(len(gez)):
-            if atla[p] or gs[p] is None:
-                continue
-            if gez[p][j - 1] == s and gez[p][j] == t:
-                bulunan[id(gs[p])] = gs[p]
-    return list(bulunan.values())
 
 
-def _yol_değiştir(g):
-    """Çakışan zincire, harf etiketlemeden önce eşdeğer başka yol dener."""
-    if not g.zincir or len(g.zincir) <= 2 or g.etiketli:
-        return False
-    if g.yedek_yolları is None:
-        boy = len(g.zincir)
-        g.yedek_yolları = [
-            p + [p[-1]] * (boy - len(p))
-            for p in (_yol_seçenekleri(g) or []) if len(p) <= boy
-        ]
-    while g.yedek_yolları:
-        aday = g.yedek_yolları.pop(0)
-        if aday != g.zincir:
-            g.zincir = aday
-            return True
-    return False
 
 
-EN_ÇOK_GECİKME = 3
-# Zamanlamada en kısa zincirin üstüne denenecek en çok ek katman: ek katman
-# ses değişimlerini bekletip çakışmaları çözer (etiketli harf yerine katman).
-EK_KATMAN = 6
 
 
-def _geciktir(g, j):
-    """Çakışan adımı bir katman geciktirir (ses değişimi daha geç olur).
-
-    Harf etiketlemeden önce denenir: yeni harf yerine yeni katman harcanır.
-    İlk (ön dil bağlamına koşullu) adım geciktirilmez; bağlamı ön biçimde
-    değerlendirildiğinden yerinde kalmalıdır.
-    """
-    z = g.zincir
-    if not z or g.gecikme >= EN_ÇOK_GECİKME or j < 2 or j > len(z) - 1:
-        return False
-    if z[j - 1] == z[j]:
-        return False  # bu katmanda zaten bekliyor
-    g.zincir = z[:j] + [z[j - 1]] + z[j:]
-    g.gecikme += 1
-    if g.katman_bağlamı:
-        g.katman_bağlamı = {(k + 1 if k >= j else k): v
-                            for k, v in g.katman_bağlamı.items()}
-    if g.etiketli_konum:
-        g.etiketli_konum = {(k + 1 if k >= j else k) for k in g.etiketli_konum}
-    g.yedek_yolları = None
-    return True
 
 
-def _doğum_doldur(gruplar, katman):
-    """Doğum (tek harf > çok harf) zincirleri dalın son katmanında bitmeli."""
-    for g in gruplar:
-        if g.zincir and dizi_mi(g.zincir[-1]):
-            eksik = katman[g.dal] - (len(g.zincir) - 1)
-            if eksik > 0:
-                g.zincir = (g.zincir[:-1]
-                            + [g.zincir[-2]] * eksik + [g.zincir[-1]])
 
 
-def _etiketle(gruplar, sayaç):
-    """Çakışan bir zincirin YALNIZ hata katmanındaki ara düğümüne alt simge
-    takar (zincirin tamamına değil): ayrım, gerektiği derinlikte doğar, daha
-    sığ katmanlar paylaşılmaya devam eder. Damga bir katmanda yetmezse
-    (öncül kural artık damgalı düğümü üretemiyorsa) çakışma döngüsü bir
-    sonraki turda bir sol komşuyu da damgalar; böylece etiket olabildiğince
-    derinde tutulur ve ancak zorlanınca ön dile doğru genişler.
-    """
-    def uygula(g, hata_katmanı):
-        if not g.zincir or len(g.zincir) <= 2:
-            return False
-        if g.etiketli_konum is None:
-            g.etiketli_konum = set()
-        # Hata veren kuralın kaynak düğümü; zincirin gerçek orta-düğüm
-        # aralığına kıstırılır (kısa zincirler son düğüme sabitlendiği için
-        # hata katmanı boyu aşabilir). Düğüm zaten damgalıysa bir sol komşuya
-        # kayılır: ayrım olabildiğince derinde tutulur, gerekirse ön dile
-        # doğru genişler; en kötü durumda eski tam-damgalamaya iner.
-        konum = min(hata_katmanı - 1, len(g.zincir) - 2)
-        while konum >= 1 and konum in g.etiketli_konum:
-            konum -= 1
-        if konum < 1:
-            return False  # bütün ara düğümler damgalı: ilerleme yok
-        b = taban(g.zincir[konum])
-        sayaç[b] = sayaç.get(b, 1) + 1
-        g.zincir[konum] = b + alt_yazı(sayaç[b])
-        g.etiketli_konum.add(konum)
-        g.etiketli = True
-        return True
-
-    return uygula
 
 
 # ---------------------------------------------------------------------------

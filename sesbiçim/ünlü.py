@@ -46,7 +46,6 @@ for _ad, (_yük, _ark, _yuv, _) in {**ÜNLÜLER, **_KISA_SANALLAR}.items():
     VARSAYIMSAL_ÜNLÜLER[_ad + UZUNLUK_İMİ] = (_yük, _ark, _yuv, 1)
 
 TÜM_ÜNLÜLER = {**ÜNLÜLER, **VARSAYIMSAL_ÜNLÜLER}
-UZUN_ÜNLÜLER = {_a for _a, _ö in TÜM_ÜNLÜLER.items() if _ö[3] == 1}
 
 # DOĞUMLAR: tek harften çok harf türetme (README'deki "grupça değişim"in
 # ilk yarısı) şimdilik yalnız uzun ünlülere tanınan bir hamledir. Her uzun

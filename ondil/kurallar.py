@@ -81,9 +81,6 @@ _SAĞ_KABA = [
 _TEKİL_KABA = [("söz içinde", _içte)]
 
 _KABALAR = dict(_SOL_KABA + _SAĞ_KABA + _TEKİL_KABA + [("her yerde", _her_yerde)])
-# Geriye-dönük uyum / kaba sıralama (özgül atomlar bu listede yer almaz)
-BAĞLAM_SIRASI = [ad for ad, _ in
-                 _SOL_KABA + _SAĞ_KABA + _TEKİL_KABA] + ["her yerde"]
 
 
 # --- doğal sınıflar ----------------------------------------------------------
@@ -194,7 +191,7 @@ def _ayrı(f, kendi, diğer):
     return all(f(w, i) for w, i in kendi) and not any(f(w, i) for w, i in diğer)
 
 
-def _bağlam_ara(kendi, diğer, kaba=False):
+def _bağlam_ara(kendi, diğer):
     """kendi'yi diğer'den ayıran EN GENEL bağlamı arar (yoksa None).
 
     Kademe: (A) kaba tekil atomlar, (B) harfe özgü tekil atomlar, (C) bir
@@ -214,8 +211,6 @@ def _bağlam_ara(kendi, diğer, kaba=False):
     for ad in (a for a, _ in _SOL_KABA + _SAĞ_KABA + _TEKİL_KABA):
         if _ayrı(_KABALAR[ad], kendi, diğer):
             return ad
-    if kaba is True:
-        return None
 
     # B1) doğal sınıf atomları (ön ünlü önünde, ötümlü ünsüz ardında, uyum).
     # Sınıfa koşullu yasa geneldir ve öbür bütün sözcüklere karşı sınanır
@@ -233,8 +228,6 @@ def _bağlam_ara(kendi, diğer, kaba=False):
         for rad, rf in sağ_sınıf:
             if not any(sf(w, i) and rf(w, i) for w, i in diğer):
                 return sad + BİRLEŞTİRİCİ + rad
-    if kaba == "sınıf":
-        return None
 
     # Harfe özgü bağlamlar ancak yeterli tanık varsa: belirli bir komşu
     # harfe bağlı bir kuralı tek örneğe uydurmak ezberdir.
@@ -260,17 +253,6 @@ def _bağlam_ara(kendi, diğer, kaba=False):
             if not any(sf(w, i) and rf(w, i) for w, i in diğer):
                 return sad + BİRLEŞTİRİCİ + rad
     return None
-
-
-def ayır_biçimlerle(kendi, diğer, kaba=False):
-    """_bağlam_ara'nın doğrudan (kelime_biçimi, konum) çiftleriyle çağrılışı.
-
-    `kendi`/`diğer` herhangi bir katmanın biçimlerinden gelebilir; böylece
-    aynı bağlam koşulları ara Ön Dil katmanlarında da denenir (ayrım proto'da
-    değil, sesler kaydıktan sonraki bir alt dilde belirebilir). Ara katman
-    için kaba=True verilir (harfe özgü koşullar kör türetimde kırılgandır).
-    """
-    return _bağlam_ara(kendi, diğer, kaba=kaba)
 
 
 def ayır(kendi_yerleri, diğer_yerleri, protolar):
